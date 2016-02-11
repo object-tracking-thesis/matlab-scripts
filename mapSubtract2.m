@@ -3,8 +3,8 @@ clc; close all;
 
 limit = 0.1;
 
-path1 = 'matlabPCapi/';
-path2 = 'crossing/';
+path1 = '../';
+path2 = 'matlab-scripts/pcd/';
 
 staticMapFull = pcd2matlab(strcat(path1,path2,'0000000000.pcd'));
 staticMap = staticMapFull(:,1:3);
