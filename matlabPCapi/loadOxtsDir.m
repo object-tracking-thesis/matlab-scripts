@@ -8,7 +8,7 @@ Num = length(D(not([D.isdir])));
 oxtsData = cell(1,Num);
 
     for j = 1:Num
-        strcat(path,D(j).name)
+        strcat(path,D(j).name);
         oxtsData{j} = oxts2matlab(strcat(path,D(j).name)); 
     end
 
