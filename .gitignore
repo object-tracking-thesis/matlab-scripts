@@ -1,3 +1,4 @@
 *.pcd
 oxts/*.txt
 test.m
+*~*
