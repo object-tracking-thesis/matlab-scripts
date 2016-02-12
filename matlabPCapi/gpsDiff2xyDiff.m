@@ -13,8 +13,8 @@ gpsDiff = gpsNew - gpsOld;
 radius=6371;
 
 %pythagorean distance in meters
-x=gpsDiff(2)*cos((gpsOld(1)+gpsNew(1))/2)*radius*1000;
-y=gpsDiff(1)*radius*1000;
+x=double(gpsDiff(2)*cos((gpsOld(1)+gpsNew(1))/2)*radius*1000);
+y=double(gpsDiff(1)*radius*1000);
 d=sqrt(x*x + y*y);
 xyDiff = [x y];
 
