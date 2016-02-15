@@ -13,16 +13,16 @@ gpsDiff = gpsNew - gpsOld;
 radius=6371;
 
 %pythagorean distance in meters
-x=double(gpsDiff(2)*cos((gpsOld(1)+gpsNew(1))/2)*radius*1000);
-y=double(gpsDiff(1)*radius*1000);
-d=sqrt(x*x + y*y);
+y=-gpsDiff(2)*cos((gpsOld(1)+gpsNew(1))/2)*radius*1000;
+x=gpsDiff(1)*radius*1000;
+%d=sqrt(x*x + y*y);
+
 xyDiff = [x y];
 
 end
 
-% Haversine distance is the distance along the earth's surface and not the
-% straight distance, but this is literally the same for these short diffs
-% a=sin((gpsDiff(1))/2)^2 + cos(gpsOld(1))*cos(gpsNew(1)) * sin(gpsDiff(2)/2)^2;
-% c=2*atan2(sqrt(a),sqrt(1-a));
-% d1km=radius*c;
-% meterDiff(1) = d1km*1000;
+%Haversine distance is the distance along the earth's surface and not the
+%straight distance
+%a=sin((gpsDiff(1))/2)^2 + cos(gpsOld(1))*cos(gpsNew(1)) * sin(gpsDiff(2)/2)^2;
+%c=2*atan2(sqrt(a),sqrt(1-a));
+%d2=radius*c*1000
