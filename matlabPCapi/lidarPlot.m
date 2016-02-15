@@ -10,7 +10,7 @@ function [varargout] = lidarPlot(lidarData)
    str = sprintf('# of Points: %d',length(lidarData));
    text(1,1,40,str);
    
-   if nargout > 1
+   if nargout > 0
        varargout{1} = h;
    end
        
