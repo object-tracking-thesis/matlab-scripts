@@ -1,9 +1,8 @@
 %% load lidar and oxts data
 path1 = '../matlab-scripts/';
-path1 = '~/Google Drive/Thesis Work AF - Object Tracking in Point Cloud/Data/2011_09_26_drive_crossing_dynamic/';
-path2 = 'oxts/data/';
-path3 = 'kitti/';
-path4 = 'oxts/dataformat.txt';
+path2 = 'oxts/';
+path3 = 'pcd/';
+path4 = 'dataformat.txt';
 
 oxtsData = loadOxtsDir(strcat(path1,path2));
 lidarData = loadLidarDir(strcat(path1,path3));
@@ -17,35 +16,40 @@ staticGPS = [oxtsStruct.lat(s) oxtsStruct.lon(s)];
 staticAlt = oxtsStruct.alt(s);
 staticYaw = oxtsStruct.yaw(s);
 
-%% translate the live frames to the static environment
+%% rotate the live frames to the static environment
 liveFrames = cell(1,Num);
+for i=1:Num
+    liveYaw = oxtsStruct.yaw(i);
+    liveFrames{i} = rotateFrame(lidarData{i}(:,1:3),liveYaw,-staticYaw);
+end
+
+%% translate the live frames to the static environment
 for i=1:Num
     liveGPS = oxtsData{i}(1:2);
     liveAlt = oxtsData{i}(3);
-    liveFrames{i} = translateFrame(lidarData{i}(:,1:3), staticGPS, liveGPS, staticAlt, liveAlt);
+    liveFrames{i} = translateFrame(liveFrames{i}, staticGPS, liveGPS, staticAlt, liveAlt);
 end
 
-%% rotate the live frames to the static environment
-for i=1:Num
-    liveYaw = oxtsStruct.yaw(i);
-    liveFrames{i} = rotateFrame(liveFrames{i},liveYaw,-staticYaw);
-end
 
 %% subtract the static part from all frames
 cleanedFrames = cell(1,Num);
-limit = 0.1;
+limit = 0.5;
 for i=180:Num
     cleanedFrames{i} = subPC(staticFrame,liveFrames{i}(:,1:3),limit); 
 end
 
 %% Plot Animation 
 wd = 50; % Axis size
-   figure('Name','Removing static map',...
+   h = figure('Name','Removing static map',...
           'Position', [50 100 1200 500]);
+   h.Renderer = 'opengl';
 for i = 180:Num
    
    subplot(1,2,1)
         lidarPlot(cleanedFrames{i})
+        %hold on
+        %scatter3(0,0,0,'MarkerEdgeColor',[0 1 0],'MarkerFaceColor',[0 1 0])
+        %hold off
         axis(wd*[-1 1 -1 1 -1/(0.5*wd) 1])
         grid off; box off;
         str = sprintf('Frame: %d / %d', [i length(lidarData)]);
@@ -59,19 +63,38 @@ for i = 180:Num
    
 end
 
-%% test plot difference between frame 200 and frame 180 translated to 200
-frame200 = lidarData{201}(:,1:3);
+%% test plot difference between frame 180 and frame X translated to 180
+x = 200;
+frameX = lidarData{x}(:,1:3);
 frame180 = lidarData{181}(:,1:3);
-frame180to200 = translateFrame(lidarData{181}(:,1:3), oxtsData{181}(1:2),...
-                                oxtsData{201}(1:2), oxtsData{181}(3), oxtsData{201}(3));
+frameXto180 = translateFrame(lidarData{x}(:,1:3), oxtsData{181}(1:2),...
+                                oxtsData{x}(1:2), oxtsData{181}(3), oxtsData{x}(3));
+frameXto180 = rotateFrame(frameXto180,oxtsStruct.yaw(x),-oxtsStruct.yaw(181));
+%limit = 1;
+%frameXto180 = subPC(frame180,frameXto180,limit);
+
+figure;
+lidarPlot(frame180,[0.5 0 0])
+hold on
+lidarPlot(frameXto180,[0 0.5 0])
+hold on
+lidarPlot(frameX,[0 0 0.5])
+legend('180','Xto180','X')
+axis(wd*[-1 1 -1 1 -1/(0.5*wd) 1])
+grid off; box off;
+
+%% test plot conjunction between before crossing and after
+wd = 100;
+frame180 = cleanedFrames{181}(:,1:3);
+frame269 = cleanedFrames{210}(:,1:3);
+
 figure;
 lidarPlot(frame180,0.2)
 hold on
-%lidarPlot(frame180to200,0.5)
-hold on
-lidarPlot(frame200,0.8)
+lidarPlot(frame269,0.8)
 axis(wd*[-1 1 -1 1 -1/(0.5*wd) 1])
 grid off; box off;
+
 
 %% test diff on the forward and leftwards velocity
 velx = [];
