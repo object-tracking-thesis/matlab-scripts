@@ -1,4 +1,6 @@
 *.pcd
 oxts/*.txt
 test.m
+.DS_Store
+stateMeasurementData.m
 *~*
