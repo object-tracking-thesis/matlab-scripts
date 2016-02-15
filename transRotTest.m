@@ -1,8 +1,9 @@
 %% load lidar and oxts data
 path1 = '../matlab-scripts/';
-path2 = 'oxts/';
-path3 = 'pcd/';
-path4 = 'dataformat.txt';
+path1 = '~/Google Drive/Thesis Work AF - Object Tracking in Point Cloud/Data/2011_09_26_drive_crossing_dynamic/';
+path2 = 'oxts/data/';
+path3 = 'kitti/';
+path4 = 'oxts/dataformat.txt';
 
 oxtsData = loadOxtsDir(strcat(path1,path2));
 lidarData = loadLidarDir(strcat(path1,path3));
@@ -44,13 +45,14 @@ wd = 50; % Axis size
 for i = 180:Num
    
    subplot(1,2,1)
-        lidarPlot(cleanedFrames{i},0.3)
+        lidarPlot(cleanedFrames{i})
         axis(wd*[-1 1 -1 1 -1/(0.5*wd) 1])
         grid off; box off;
         str = sprintf('Frame: %d / %d', [i length(lidarData)]);
         title(str);
    subplot(1,2,2)
-        lidarPlot(lidarData{i},0.3)
+        h = lidarPlot(lidarData{i});
+        set(h,'MarkerEdgeColor', [1 0 0],'MarkerFaceColor', [1 0 0]);
         axis(wd*[-1 1 -1 1 -1/(0.5*wd) 1])
         grid off; box off;
         pause(0.25)
