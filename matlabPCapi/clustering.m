@@ -3,7 +3,7 @@ function pcdClusters = clustering(pcdXYZ, d, min)
 % in:
 %   pcdXYZ  - point cloud data in XYZ, nx3 matrix
 %   d       - max. distance to be considered a relevant neighbor, scalar
-%   min     - minimum number of points to be a cluster
+%   min     - minimum number of points to be a cluster in the end
 % out:
 %   pcdClusters - clusters of point cloud data in XYZ, cell of vectors
 %
@@ -11,15 +11,20 @@ function pcdClusters = clustering(pcdXYZ, d, min)
 
 clusters = rangesearch(pcdXYZ, pcdXYZ, d);
 
+%remove all miniclusters in the beginning (makes it a lot faster)
+clusters = removeCellBelowLengthThreshold(clusters, 5);
+
 %recursively combine all subsets that have at least one point in common
 i = 1;
 while i < (length(clusters)+1)
     j = 1;
     while j < length(clusters)
+        %don't compare with itself
         if i==j
             j = j+1;
             continue;
         end
+        %when they have no elements in common, proceed
         if ~ismember(clusters{i},clusters{j})
             j = j+1;
         else
@@ -31,15 +36,8 @@ while i < (length(clusters)+1)
     i = i+1;
 end
 
-%remove all clusters with less than min points
-i = 1;
-while i < length(clusters)
-    if length(clusters{i}) < min
-        clusters(i) = [];
-    else
-        i = i+1;
-    end
-end
+%remove all combined clusters with less than min points
+clusters = removeCellBelowLengthThreshold(clusters, min);
 
 %go from indices to actual points
 pcdClusters = cell(1,length(clusters));
