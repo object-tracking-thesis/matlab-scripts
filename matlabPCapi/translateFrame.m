@@ -12,7 +12,7 @@ function translatedFrame = translateFrame(pcdXYZ, gpsStatic, gpsLive, altStatic,
 
 xyDiff = gpsDiff2xyDiff(gpsStatic, gpsLive);
 zDiff = altLive - altStatic;
-xyzDiff = [xyDiff zDiff] %1x3
+xyzDiff = [xyDiff zDiff]; %1x3
 
 %translate for x, y and z
 %e.g. if the position difference is x=+1 then
