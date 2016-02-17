@@ -6,7 +6,7 @@ path4 = 'dataformat.txt';
 
 oxtsData = loadOxtsDir(strcat(path1,path2));
 lidarData = loadLidarDir(strcat(path1,path3));
-oxtsStruct = oxts2struct(oxtsData,strcat(path1,path4));
+oxtsStruct = oxts2struct(oxtsData,strcat(path1,path2,path4));
 Num = length(lidarData);
 
 %% create the static frame
