@@ -12,20 +12,22 @@ function pcdClusters = clustering(pcdXYZ, d, min)
 clusters = rangesearch(pcdXYZ, pcdXYZ, d);
 
 %remove all miniclusters in the beginning (makes it a lot faster)
-clusters = removeCellBelowLengthThreshold(clusters, 5);
+clusters = removeCellBelowLengthThreshold(clusters, 3);
 
 %recursively combine all subsets that have at least one point in common
 i = 1;
-while i < (length(clusters)+1)
+length(clusters)
+while i < (length(clusters)-1)
     j = 1;
-    while j < length(clusters)
+    while j < length(clusters)-1
         %don't compare with itself
         if i==j
             j = j+1;
             continue;
         end
         %when they have no elements in common, proceed
-        if ~ismember(clusters{i},clusters{j})
+        %or ismember
+        if ~ismembc(clusters{i},clusters{j})
             j = j+1;
         else
             %combine their unique elements
