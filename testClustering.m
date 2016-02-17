@@ -3,13 +3,33 @@ points = [1 1; 0.9 0.9; 1.4 1; 3 3; 2.9 2.9; 1.1 1.1];
 
 %% real points
 %use ground-removed points here
-points = lidarData{8};
+lidarData = ptCloudFiltered{2};
+size(lidarData.Location)
+
+lidarData = pcdownsample(lidarData,'gridAverage', 0.5);
+
+size(lidarData.Location)
+
+points = lidarData.Location;%{8};
 
 %% find clusters
 %clustering(pcdXYZ,max-distance,min-points-per-cluster)
-tic
-clusters = clustering(points,0.5,50);
+tic 
+clusters = clustering(points,1,50);
 toc
+
+%% Port clusters to pointcloud class with separate color
+clusteredPC = [];
+for k = 1:length(clusters)
+   [r, ~] = size(clusters{k});
+   clusteredPC = [clusteredPC; [clusters{k} repmat((rand(1,3).*255),r,1)]]; 
+end
+%%
+myJam = pointCloud(clusteredPC(:,1:3),'Color',uint8(clusteredPC(:,4:6)));
+
+player = pcplayer([-40 40],[-40 40], [-3 40]);
+view(player,myJam)  
+
 %% plot all clusters
 figure;
 wd = 50;
