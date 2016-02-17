@@ -7,8 +7,9 @@ points = lidarData{8};
 
 %% find clusters
 %clustering(pcdXYZ,max-distance,min-points-per-cluster)
+tic
 clusters = clustering(points,0.5,50);
-
+toc
 %% plot all clusters
 figure;
 wd = 50;
