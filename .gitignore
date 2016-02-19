@@ -1,5 +1,6 @@
 *.pcd
 oxts/*.txt
+static/*.txt
 test.m
 .DS_Store
 stateMeasurementData.m
