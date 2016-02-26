@@ -190,22 +190,3 @@ hold on
 plot(bestPostT1(1,:),bestPostT1(2,:),'db')
 plot(bestPostT2(1,:),bestPostT2(2,:),'dr')
 
-%% Plot hypo tree 
-
-figure
-
-
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
