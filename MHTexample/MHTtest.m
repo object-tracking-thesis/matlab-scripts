@@ -3,6 +3,8 @@
 % No clustering, pruning or gating. No new tracks, no dead tracks, no
 % clutter.
 
+run('twoTracks2.m')
+
 %% Movement and Measurement model knowledge
 
 % Movement model
