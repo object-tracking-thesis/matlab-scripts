@@ -51,10 +51,10 @@ for k = 1:N
     if k == 1
         % Predict moments (mu & P)
         s_mu(:,1) = A*x1_init;
-        s_P(:,1:2) = A*zeros(2,2)*A' + Q_sigma;
+        s_P(:,:,1) = A*zeros(2,2)*A' + Q_sigma;
         
         s_mu(:,2) = A*x2_init;
-        s_P(:,3:4) = A*zeros(2,2)*A' + Q_sigma;
+        s_P(:,:,2) = A*zeros(2,2)*A' + Q_sigma;
         
         % Formulate hypotheses, should be changed to combvec
         hypMat = perms(fliplr(1:length(Z(:,:,k))));
