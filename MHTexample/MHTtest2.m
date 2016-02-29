@@ -1,28 +1,32 @@
-%% MHT filter implementation for twoTracks2.m
-% MAKE SURE TO RUN twoTracks2.m FIRST! 
+%% MHT filter implementation for twoTracks.m
+% MAKE SURE TO RUN twoTracks.m FIRST! 
 % No clustering, pruning or gating. No new tracks, no dead tracks, no
 % clutter.
 
-run('twoTracks2.m')
+run('twoTracks.m')
 
 %% Movement and Measurement model knowledge
 
-% Movement model
-A = [1 0;
-    0 1];
-% Measurement model
-H = [1 0;
-     0 1];
+T = 1;
+A = [1 T 0 0;
+     0 1 0 0;
+     0 0 1 T;
+     0 0 0 1];
 
-% Movement model uncertainty
-Q_mu = [0 0]';
-Q_sigma = [1 0;
-           0 1];
+Q_mu = [0 0 0 0]';
 
-% Measurement model unceartainty
+Q_sigma = 0.05.*[0 0 0 0;
+                 0 1 0 0;
+                 0 0 0 0;
+                 0 0 0 1];
+
+H = [1 0 0 0;
+     0 0 1 0];
+
 R_mu = [0 0]';
-R_sigma = 0.1.*[1 0;
-                0 1];
+
+R_sigma = 0.125.*[1 0;
+                  0 1];
 
 %% MHT loop
 % These values are set when twoTracks2.m is run
@@ -42,8 +46,8 @@ for k = 1:N
 end
 %% Set up init state vector for predictions
 
-s_mu = zeros(2,2);
-s_P = zeros(2,2,2);
+s_mu = zeros(4,2);
+s_P = zeros(4,4,2);
 %% Struct storage for filter componentes in each time step
 storage = cell(1,N); % storage for generated hypotheses
 
@@ -53,10 +57,10 @@ for k = 1:N
     if k == 1
         % Predict moments (mu & P)
         s_mu(:,1) = A*x1_init;
-        s_P(:,:,1) = A*zeros(2,2)*A' + Q_sigma;
+        s_P(:,:,1) = A*zeros(4,4)*A' + Q_sigma;
         
         s_mu(:,2) = A*x2_init;
-        s_P(:,:,2) = A*zeros(2,2)*A' + Q_sigma;
+        s_P(:,:,2) = A*zeros(4,4)*A' + Q_sigma;
         
         % Formulate hypotheses, should be changed to combvec
         hypMat = perms(fliplr(1:length(Z(:,:,k))));
@@ -72,13 +76,13 @@ for k = 1:N
             h.predCov = s_P;
             h.hypo = hypMat(hyp,:);
             h.beta = 1;
-            h.postCov = ones(2,2,c);
-            h.postMu = ones(2,1,c);
+            h.postCov = ones(4,4,c);
+            h.postMu = ones(4,1,c);
             h.parentHypo = 'root';
             for tg = 1:c % Choses target to calc post. for
                
-                h.postMu(:,1,tg) = h.predMu(:,tg) + h.predCov(:,:,tg)*H'\(H*h.predCov(:,:,tg)*H' + R_sigma)*(Z(:,h.hypo(tg),k) - H*h.predMu(:,tg));
-                h.postCov(:,:,tg) = h.predCov(:,:,tg) - h.predCov(:,:,tg)*H'\(H*h.predCov(:,:,tg)*H' + R_sigma)*H*h.predCov(:,:,tg);
+                h.postMu(:,1,tg) = h.predMu(:,tg) + h.predCov(:,:,tg)*H'*inv(H*h.predCov(:,:,tg)*H' + R_sigma)*(Z(:,h.hypo(tg),k) - H*h.predMu(:,tg));
+                h.postCov(:,:,tg) = h.predCov(:,:,tg) - h.predCov(:,:,tg)*H'*inv(H*h.predCov(:,:,tg)*H' + R_sigma)*H*h.predCov(:,:,tg);
                
                 % Calculate Beta
                 h.beta = h.beta*mvnpdf(Z(:,h.hypo(tg),k), H*h.predMu(:,tg), H*h.predCov(:,:,tg)*H' + R_sigma);
@@ -108,8 +112,8 @@ for k = 1:N
         rootHypos = storage{k-1};
         % Nr of hypotheses we have at root, start out with first
         for j = 1:length(rootHypos)
-            s_mu = ones(2,1,2);
-            s_P = ones(2,2,2);
+            s_mu = ones(4,1,2);
+            s_P = ones(4,4,2);
             % Predict moments (mu & P)
             s_mu(:,1,1) = A*rootHypos{j}.postMu(:,1,1);
             s_P(:,:,1) = A*rootHypos{j}.postCov(:,:,1)*A' + Q_sigma;
@@ -130,13 +134,13 @@ for k = 1:N
                 h.predCov = s_P;
                 h.hypo = hypMat(hyp,:);
                 h.beta = 1;
-                h.postCov = ones(2,2,c);
-                h.postMu = ones(2,1,c);
+                h.postCov = ones(4,4,c);
+                h.postMu = ones(4,1,c);
                 h.parentHypo = rootHypos{j}.hypoNr;
                 for tg = 1:c % Choses target to calc post. for
 
-                    h.postMu(:,1,tg) = h.predMu(:,tg) + h.predCov(:,:,tg)*H'\(H*h.predCov(:,:,tg)*H' + R_sigma)*(Z(:,h.hypo(tg),k) - H*h.predMu(:,tg));
-                    h.postCov(:,:,tg) = h.predCov(:,:,tg) - h.predCov(:,:,tg)*H'\(H*h.predCov(:,:,tg)*H' + R_sigma)*H*h.predCov(:,:,tg);
+                    h.postMu(:,1,tg) = h.predMu(:,tg) + h.predCov(:,:,tg)*H'*inv(H*h.predCov(:,:,tg)*H' + R_sigma)*(Z(:,h.hypo(tg),k) - H*h.predMu(:,tg));
+                    h.postCov(:,:,tg) = h.predCov(:,:,tg) - h.predCov(:,:,tg)*H'*inv(H*h.predCov(:,:,tg)*H' + R_sigma)*H*h.predCov(:,:,tg);
                     
                     % Calculate Beta
                     h.beta = h.beta*mvnpdf(Z(:,h.hypo(tg),k), H*h.predMu(:,tg), H*h.predCov(:,:,tg)*H' + R_sigma);
@@ -174,8 +178,8 @@ end
 
 % Get best hypo posterior mu
 
-bestPostT1 = ones(2,1,N);
-bestPostT2 = ones(2,1,N);
+bestPostT1 = ones(4,1,N);
+bestPostT2 = ones(4,1,N);
 
 for k = 1:length(storage)
    bestPostT1(:,:,k) = storage{k}{idx(k)}.postMu(:,:,1);
@@ -189,6 +193,6 @@ end
 figure(h1)
 hold on
 
-plot(bestPostT1(1,:),bestPostT1(2,:),'db')
-plot(bestPostT2(1,:),bestPostT2(2,:),'dr')
+plot(bestPostT1(1,:),bestPostT1(3,:),'db','MarkerFaceColor','b')
+plot(bestPostT2(1,:),bestPostT2(3,:),'dr','MarkerFaceColor','r')
 
