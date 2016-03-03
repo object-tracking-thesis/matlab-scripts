@@ -1,7 +1,10 @@
 *.pcd
 oxts/*.txt
 static/*.txt
+static/*.mat
+gps/*.txt
 test.m
 .DS_Store
 stateMeasurementData.m
 *~*
+*.swp
