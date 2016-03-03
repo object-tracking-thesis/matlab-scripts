@@ -26,7 +26,7 @@ fileID = fopen(file);
 for k=1:limit % skip uneccessary lines
     fgets(fileID); 
 end
-C = textscan(fileID,'%f32 %f32 %f32 %f32'); % Read as 32-bit double precision floats
+C = textscan(fileID,'%f32 %f32 %f32 %f32 %f32 %f32 %f32'); % Read as 32-bit double precision floats
 fclose(fileID);
 
 pcCoord = cell2mat(C);
