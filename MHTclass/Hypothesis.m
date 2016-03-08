@@ -7,7 +7,7 @@ classdef Hypothesis < handle
         tracks
     end
     
-    %% =====================================================================
+    %% ====================================================================
     % API functions & constructor. These are used to create a hypothesis 
     % from a parent hypothesis, as well as performing necessary actions 
     % when creating children hypotheses. These functions include performing 
@@ -21,6 +21,7 @@ classdef Hypothesis < handle
             if nargin == 3
                 % Update trace for this hypothesis
                 currentTimestep = parentHypothesis.hypoHistory(1)+1;
+                this.hypoHistory = ones(parentHypothesis.hypoHistory);
                 this.hypoHistory(1) = currentTimestep;
                 this.hypoHistory(2:end) = parentHypothesis.hypoHistory(1:end-1);
                 % Use Assignment & Update tracks (Calculate Posterior for
@@ -52,7 +53,7 @@ classdef Hypothesis < handle
         
     end
 
-    %% =====================================================================
+    %% ====================================================================
     % Internal functions used for calculating necessary parameters when
     % initiating a hypothesis. These include performing track update with
     % assigned measurements, initiating new tracks and calculating the Beta
