@@ -4,6 +4,9 @@
 % ones, calling upon hypotheses to perform prediction, merging and pruning
 % hypotheses, as well as generating new ones based on LP programming
 % techniques (Murty's Method).
+%
+% MHTFinstance(nrHypos, scanDepth, Scan) 
+%
 classdef MHTFinstance < handle
     
     properties
@@ -49,7 +52,9 @@ classdef MHTFinstance < handle
             
             % TODO - Implement assignmentAlgorithm
             % associationMatrix = assigmentAlgorithm(assignmentMatrix, nrHypos);
-            associationMatrix = [0 2 3 4 5]';
+            
+            % DEBUG! ONLY FOR 2 measurements AND 3 hypos
+            associationMatrix = [[0 1]' [2 1]' [1 2]'];
             
             [~, c] = size(associationMatrix);
 
@@ -81,9 +86,16 @@ classdef MHTFinstance < handle
             
             % Get best hypothesis
             allAlphas = [this.hypoStorage(:).alpha];
-            bestNr = find(max(allAlphas), allAlphas);
+            a = max(allAlphas);
+            bestNr = find(allAlphas == a(1));
             
-            this.bestHypo = this.hypoStorage(bestNr);
+            this.bestHypo = this.hypoStorage(bestNr(1));
+            
+        end
+        
+        function iterate(this, Scan)
+            % Used for new measurements
+            
             
         end
     end

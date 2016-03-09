@@ -31,7 +31,7 @@ classdef Hypothesis < handle
                 this.updateTracks(parentHypothesis.tracks, association, Scan);
                                                                                 
             elseif nargin == 0
-                warning('Empty hypothesis object created (no parent, association and scan present). Use only for debugging or initiation of MHTF');
+                warning('Empty hypothesis object created (no parent). Only for debugging or initiation of MHTF');
             else
                 error('Wrong Nr of arguments (0 or 3 expected)');
             end
@@ -86,6 +86,7 @@ classdef Hypothesis < handle
                     tr = parentTracks.tracks.track(idx);
                     m = Scan(k);
                     a = calcPosterior(m,tr);
+                    
                     this.tracks.addTrack(a);
                     
                     gN = gN * calcGn(tr, m);
@@ -94,12 +95,12 @@ classdef Hypothesis < handle
                     % The measurement is designated as False Alarm
                 else
                     % The measurement is designated as a New Track
-                    tr = this.initiateTrack(Scan.measurements(:,k));
+                    tr = this.initiateTrack(Scan.measurements(:,association(k)));
                     this.tracks.addTrack(tr);
                     
                     % Likelihood for new track, Not 100% sure that this is
                     % how it should be.                    
-                    gN = gN * mvnpdf(Scan.measurements(:,k),Scan.measurements(:,k), Model.R*eye(2)); 
+                    gN = gN * mvnpdf(Scan.measurements(:,association(k)),Scan.measurements(:,association(k)), Model.R*eye(2)); 
                 end
             end
             

@@ -27,7 +27,7 @@ x3_init = [5 1 -10 1]';
 x4_init = [14 0 -18 2]';
 % Generate State & Measurement Sequence for two targets
 
-N = 16;
+N = 4;
 vLimit = round(N/2);
 % x1 & x2 always present. x3 is birthed halfway through, x4 dies halfway through 
 x1_state = ones(4,N);
