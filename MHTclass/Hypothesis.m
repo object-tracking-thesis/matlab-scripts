@@ -100,7 +100,7 @@ classdef Hypothesis < handle
                     
                     % Likelihood for new track, Not 100% sure that this is
                     % how it should be.                    
-                    gN = gN * mvnpdf(Scan.measurements(:,association(k)),Scan.measurements(:,association(k)), Model.R*eye(2)); 
+                    gN = gN * mvnpdf(Scan.measurements(:,association(k)),Scan.measurements(:,association(k)), Model.R); 
                 end
             end
             
@@ -131,7 +131,7 @@ classdef Hypothesis < handle
             post = Posterior; % Empty Posterior object.
             
             mu = [meas(1) meas(2) 0 0]';
-            P = diag([Model.R, Model.R, (Model.vmax/Model.kappa)^2, (Model.vmax/Model.kappa)^2]);
+            P = diag([Model.Rm, Model.Rm, (Model.vmax/Model.kappa)^2, (Model.vmax/Model.kappa)^2]);
             post.expectedValue = mu;
             post.covariance = P;
         end

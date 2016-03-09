@@ -80,7 +80,8 @@ classdef MHTFinstance < handle
             end
             
             % Since first set of hypotheses, we do no N-scan pruning,
-            % altough hypotheses merging should occur.
+            % altough hypotheses merging should occur, aswell as keeping
+            % the nrHypos best hypos.
             
             % TODO - hypotheses merging
             
@@ -96,6 +97,20 @@ classdef MHTFinstance < handle
         function iterate(this, Scan)
             % Used for new measurements
             
+            % run through each hypothesis 
+            for h = 1:length(this.hypoStorage)
+                
+                this.hypoStorage(h).predictTracks; % make prediction 
+                
+                associationMatrix = [[0 1]' [2 1]' [1 2]'];
+                [~, c] = size(associationMatrix);
+                % Start generating hypotheses
+%                 for j = 1:c
+%                     association = associationMatrix(:,j);
+%                     this.hypoStorage(j) = Hypothesis(initHypo, association, Scan);
+%                 end
+                                
+            end
             
         end
     end

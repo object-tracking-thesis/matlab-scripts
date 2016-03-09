@@ -26,18 +26,16 @@ end
 nrHypos = 3;
 bestHypos(1,4) = Hypothesis;
 for k = 1:4
-    
     if k == 1
         % We have 2 hypos that have 2 targets, and one hypo with 1 target
         MHTF = MHTFinstance(nrHypos,1,Scans(k));
         bestHypos(k) = MHTF.bestHypo;
+    else
+        % Now we iterate through each hypothesis and investigate
+        disp(k)
+        MHTF.iterate(Scans(k));
+        bestHypos(k) = MHTF.bestHypo;
+        
     end
-    
-    % Now we iterate through each hypothesis and investigate
-    MHTFinstance.iterate(Scans(k));
-    bestHypos(k) = MHTF.bestHypo;
-    
-    
-    
 end
 
