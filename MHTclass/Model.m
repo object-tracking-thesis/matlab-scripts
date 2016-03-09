@@ -14,5 +14,7 @@ classdef Model
         rho = 0.1; % False Measurement Density 
         V = 1;     % Volume/Area of Measurement Space
         Pd = 1;    % Detection Probability 
+        
+        spwn = 0.01; % New target spawning density 
     end
 end

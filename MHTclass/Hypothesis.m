@@ -2,7 +2,7 @@
 classdef Hypothesis < handle
     properties
         beta
-        alpha
+        alpha = 0;
         hypoHistory
         tracks
     end
@@ -16,7 +16,7 @@ classdef Hypothesis < handle
     % =====================================================================
     methods (Access = public)
         
-        function this = Hypothesis(parentHypothesis, assignment, Scan)
+        function this = Hypothesis(parentHypothesis, association, Scan)
             % Create active hypothesis from parentHypothesis
             if nargin == 3
                 % Update trace for this hypothesis
@@ -27,10 +27,11 @@ classdef Hypothesis < handle
                 % Use Assignment & Update tracks (Calculate Posterior for
                 % each target), i.e. prediction assumed to be done in
                 % previously in parent hypo. Will also set Beta.
-                this.tracks = updateTracks(parentHypothesis.tracks, assignment, Scan);
+                this.tracks = Tracks; % Empty Tracks object
+                this.updateTracks(parentHypothesis.tracks, association, Scan);
                                                                                 
             elseif nargin == 0
-                warning('Empty hypothesis object created (no parent, assignment and scan present). Use only for debugging')
+                warning('Empty hypothesis object created (no parent, association and scan present). Use only for debugging or initiation of MHTF');
             else
                 error('Wrong Nr of arguments (0 or 3 expected)');
             end
@@ -61,9 +62,8 @@ classdef Hypothesis < handle
     % =====================================================================
     methods (Access = public)
         
-
-        function updatedTracks = updateTracks(this, parentTracks, assignment, Scan)
-            % Updates all tracks based on the assignment of measurements.
+        function updateTracks(this,parentTracks, association, Scan)
+            % Updates all tracks based on the association of measurements.
             % These include assigning each measurement to either an
             % existing track, as a FA or as a new target. If a measurement
             % is assigned to an existing track, then we expect it to be
@@ -75,34 +75,35 @@ classdef Hypothesis < handle
             % then there occurs NO UPDATE, i.e. we use its predicted value
             % instead. 
             % Function also calculates and sets beta for current hypo. 
-            updatedTracks = Tracks; % Empty Tracks Object
+            
+            %updatedTracks = Tracks; % Empty Tracks Object
             gN = 1;
-            for k = 1:length(assignment)
+            for k = 1:length(association)
                 
-                if ismember(assignment(k),parentTracks.tracks.trackId)
+                if ismember(association(k),parentTracks.trackId)
                     % The measurement is associated with an existing track
-                    idx = assignment(k); % The index of the track that the measurement is associated with
+                    idx = association(k); % The index of the track that the measurement is associated with
                     tr = parentTracks.tracks.track(idx);
                     m = Scan(k);
                     a = calcPosterior(m,tr);
-                    updatedTracks.addTrack(a);
+                    this.tracks.addTrack(a);
                     
                     gN = gN * calcGn(tr, m);
                     
-                elseif assignment(k) == 0
+                elseif association(k) == 0
                     % The measurement is designated as False Alarm
                 else
                     % The measurement is designated as a New Track
-                    tr = initiateTrack(Scan(k));
-                    updatedTracks.addTrack(tr);
+                    tr = this.initiateTrack(Scan.measurements(:,k));
+                    this.tracks.addTrack(tr);
                     
                     % Likelihood for new track, Not 100% sure that this is
-                    % how it should be.
-                    gN = gN * mvnpdf(Scan(k),Scan(k), Model.R); 
+                    % how it should be.                    
+                    gN = gN * mvnpdf(Scan.measurements(:,k),Scan.measurements(:,k), Model.R*eye(2)); 
                 end
             end
             
-            this.beta = calcGzero(assignment)*gN;
+            this.beta = this.calcGzero(association)*gN;
         end
         
         function post = calcPosterior(measurement, prediction)
@@ -122,31 +123,32 @@ classdef Hypothesis < handle
             post.covariance = P - K*S*K';
         end
         
-        function post = initiateTrack(meas)
+        function post = initiateTrack(~,meas)
             % Initiates a new track from the given measurement using single
             % point initation techniques. These necessitate the use of the
             % Model class and its variables. 
             post = Posterior; % Empty Posterior object.
+            
             mu = [meas(1) meas(2) 0 0]';
-            P = diag(Model.R, Model.R, (Model.vmax/Model.kappa)^2, (Model.vmax/Model.kappa)^2);
+            P = diag([Model.R, Model.R, (Model.vmax/Model.kappa)^2, (Model.vmax/Model.kappa)^2]);
             post.expectedValue = mu;
             post.covariance = P;
         end
         
-        function beta = calcBeta(parentHypo, assignment, Scan)
-            gZero = calcGzero(parentHypo.tracks, assignment);
-            gN = calcGn(parentHypo.tracks, assignment, Scan);
+        function beta = calcBeta(parentHypo, association, Scan)
+            gZero = calcGzero(parentHypo.tracks, association);
+            gN = calcGn(parentHypo.tracks, association, Scan);
             
             beta = parentHypo.alpha*gZero*gN;
         end
         
-        function gZero = calcGzero(this, assignment)
+        function gZero = calcGzero(this, association)
             % Calculates the likelihood of detecting new targets and not
             % detecting existing targets. 
-            % Note that Pr{association} is omitted 
-            tgD = sum(assignment > 0); % The number of targets detected (both new and old), i.e. targets associateed to measurements 
+            % Note that Pr{association} is omitted             
+            tgD = sum(association > 0); % The number of targets detected (both new and old), i.e. targets associateed to measurements 
             tgE = length(this.tracks.trackId); % Number of existing targets in current hypothesis
-            nrFA = sum(assignment == 0); % The number of false alarms
+            nrFA = sum(association == 0); % The number of false alarms
             
             gZero = Model.rho^(nrFA)*exp(-Model.rho*Model.V)*(1-Model.Pd)^(tgE-tgD)*Model.Pd^(tgD);
         end
