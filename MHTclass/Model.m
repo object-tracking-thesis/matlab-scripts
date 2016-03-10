@@ -28,6 +28,6 @@ classdef Model
         V = 1;     % Volume/Area of Measurement Space
         Pd = 1;    % Detection Probability
         
-        spwn = 0.01; % New target spawning density
+        spwn = 0.0001; % New target spawning density
     end
 end

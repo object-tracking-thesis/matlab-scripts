@@ -15,8 +15,10 @@ for j = 1:4
     rawscan{j} = rawscan{j}(:, randperm(length(rawscan{j}))); % Shuffle measurement order (columns)
 end
 
-% Place measurements in scanobject vector
+%% Place measurements in scanobject vector
+clear Scans
 Scans(1,4) = Scan;
+
 for j = 1:4
     Scans(j).addMeasurements(rawscan{j});
 end
@@ -25,7 +27,7 @@ end
 %% Create MHTF instance
 nrHypos = 3;
 bestHypos(1,4) = Hypothesis;
-for k = 1:4
+for k = 1:2
     if k == 1
         % We have 2 hypos that have 2 targets, and one hypo with 1 target
         MHTF = MHTFinstance(nrHypos,1,Scans(k));

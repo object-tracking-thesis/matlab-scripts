@@ -21,7 +21,7 @@ classdef Hypothesis < handle
             if nargin == 3
                 % Update trace for this hypothesis
                 currentTimestep = parentHypothesis.hypoHistory(1)+1;
-                this.hypoHistory = ones(parentHypothesis.hypoHistory);
+                this.hypoHistory = ones(size(parentHypothesis.hypoHistory));
                 this.hypoHistory(1) = currentTimestep;
                 this.hypoHistory(2:end) = parentHypothesis.hypoHistory(1:end-1);
                 % Use Assignment & Update tracks (Calculate Posterior for
@@ -31,7 +31,7 @@ classdef Hypothesis < handle
                 this.updateTracks(parentHypothesis.tracks, association, Scan);
                                                                                 
             elseif nargin == 0
-                warning('Empty hypothesis object created (no parent). Only for debugging or initiation of MHTF');
+                % warning('Empty hypothesis object created (no parent). Only for debugging or initiation of MHTF');
             else
                 error('Wrong Nr of arguments (0 or 3 expected)');
             end
@@ -78,24 +78,27 @@ classdef Hypothesis < handle
             
             %updatedTracks = Tracks; % Empty Tracks Object
             gN = 1;
+            
             for k = 1:length(association)
-                
+                % TODO!? Put tracks in current hypo, then do association related logic????? 
                 if ismember(association(k),parentTracks.trackId)
                     % The measurement is associated with an existing track
                     idx = association(k); % The index of the track that the measurement is associated with
-                    tr = parentTracks.tracks.track(idx);
-                    m = Scan(k);
-                    a = calcPosterior(m,tr);
+                    
+                    tr = parentTracks.track(idx);
+                    m = Scan.measurements(:,k);
+                    a = this.calcPosterior(m,tr);
                     
                     this.tracks.addTrack(a);
                     
-                    gN = gN * calcGn(tr, m);
+                    gN = gN * this.calcGn(tr, m);
                     
                 elseif association(k) == 0
+                    disp('FA')
                     % The measurement is designated as False Alarm
                 else
                     % The measurement is designated as a New Track
-                    tr = this.initiateTrack(Scan.measurements(:,association(k)));
+                    tr = this.initiateTrack(Scan.measurements(:, association(k)));
                     this.tracks.addTrack(tr);
                     
                     % Likelihood for new track, Not 100% sure that this is
@@ -107,7 +110,7 @@ classdef Hypothesis < handle
             this.beta = this.calcGzero(association)*gN;
         end
         
-        function post = calcPosterior(measurement, prediction)
+        function post = calcPosterior(~, measurement, prediction)
             % Calculates the new posterior based on a prediction and a
             % measurement. Calculates new posterior based on Kalman Filter
             % equations. Uses the Model class. 
@@ -115,13 +118,13 @@ classdef Hypothesis < handle
             mu = prediction.expectedValue;
             P = prediction.covariance;
             y = measurement;
-            
-            S = Model.H * P * Model.H + Model.R;
+            S = Model.H * P * Model.H' + Model.R;
             v = y - Model.H*mu;
             K = P*Model.H'*inv(S);
             
             post.expectedValue = mu + K*v;
             post.covariance = P - K*S*K';
+            %post;
         end
         
         function post = initiateTrack(~,meas)
@@ -130,8 +133,8 @@ classdef Hypothesis < handle
             % Model class and its variables. 
             post = Posterior; % Empty Posterior object.
             
-            mu = [meas(1) meas(2) 0 0]';
-            P = diag([Model.Rm, Model.Rm, (Model.vmax/Model.kappa)^2, (Model.vmax/Model.kappa)^2]);
+            mu = [meas(1) 0 meas(2) 0]';
+            P = diag([Model.Rm, (Model.vmax/Model.kappa)^2, Model.Rm, (Model.vmax/Model.kappa)^2]);
             post.expectedValue = mu;
             post.covariance = P;
         end
@@ -154,7 +157,7 @@ classdef Hypothesis < handle
             gZero = Model.rho^(nrFA)*exp(-Model.rho*Model.V)*(1-Model.Pd)^(tgE-tgD)*Model.Pd^(tgD);
         end
         
-        function gN = calcGn(predictedTrack, measurement)
+        function gN = calcGn(~, predictedTrack, measurement)
             % Calculates the likelihood for the measurement given the
             % (predicted) track. 
             predMu = predictedTrack.expectedValue;
