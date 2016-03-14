@@ -19,7 +19,8 @@ classdef Tracks < handle
         function addTrack(this,posteriors)
             if ~isempty(posteriors)
                 this.track = [this.track, posteriors];
-                this.trackId = 1:length(this.track);
+                [~, c] = size(this.track);
+                this.trackId = 1:c;
             else
                error('No Posteriors'); 
             end

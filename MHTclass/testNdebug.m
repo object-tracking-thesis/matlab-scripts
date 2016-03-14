@@ -28,7 +28,7 @@ end
 nrHypos = 3;
 bestHypos(1,N) = Hypothesis;
 bestTracks(1,N) = Tracks;
-for k = 1:3
+for k = 1:N
     if k == 1
         % We have 2 hypos that have 2 targets, and one hypo with 1 target
         MHTF = MHTFinstance(nrHypos,5,Scans(k));
@@ -40,7 +40,6 @@ for k = 1:3
         end
     else
         % Now we iterate through each hypothesis and investigate
-        %disp(k)
         MHTF.iterate(Scans(k));
         bestHypos(k) = MHTF.bestHypo.copy();
         bestTracks(k) = bestHypos(k).tracks.copy();
@@ -50,7 +49,11 @@ for k = 1:3
         end
         
     end
+    fprintf('k = %d, length(hypoStorage) = %d, length(tempStorage) = %d\n', [k, length(MHTF.hypoStorage),length(MHTF.tempStorage)]);
+    fprintf('')
 end
+
+
 
 %% Look at best hypo history 
 T1 = ones(4,N);

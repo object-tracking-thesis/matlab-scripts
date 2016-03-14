@@ -117,16 +117,18 @@ classdef MHTFinstance < handle
                 % keep the nrHypos best, based on beta. Then, set alpha.
                 % (Somwhere here is where N-scan pruning & merging should come in.)
                 % Sorting is based on beta values
-                [~, sortId] = sort([this.tempStorage(:).beta], 'descend');
-                this.tempStorage = this.tempStorage(:,sortId);
-                %
-                
-                % SOMETHING HERE IS FUCKED UP:
-                this.hypoStorage = this.tempStorage(1:this.hypoLimit); % Now we have final hypos
+                        %[~, sortId] = sort([this.tempStorage(:).beta], 'descend');
+                        %this.tempStorage = this.tempStorage(:,sortId);
+                this.sortHypos();
+                this.mergeHypos(); % Uses the sortHypos() function as well 
+                try 
+                    this.hypoStorage = this.tempStorage(1:this.hypoLimit); % Now we have final hypos
+                catch e
+                    this.hypoStorage = this.tempStorage;
+                end
                 this.setAlphas(); % Set the alpha values; 
                 this.setBestHypo();
-            
-            
+
         end
     end
     
@@ -155,6 +157,77 @@ classdef MHTFinstance < handle
             bestNr = find(allAlphas == a(1));
             
             this.bestHypo = this.hypoStorage(bestNr(1));
+        end
+        
+        function sortHypos(this)
+            % Will sort hypotheses according to their beta, descending
+            % order.
+            [~, sortId] = sort([this.tempStorage(:).beta], 'descend');
+            this.tempStorage = this.tempStorage(:,sortId);            
+        end
+        
+        function mergeHypos(this)
+            % Function for merging hypotheses that are similar to
+            % eachother. To merge two hypotheses, they need to have: i. The
+            % same amount of tracks. ii. the similarity between the tracks
+            % is high. Similarity is measured by the min-distance between
+            % the position estimates between the targets. The merged
+            % hypothesis is calculated by weighing each component with their
+            % beta. parentHistory is kept from the most proable of the two
+            % hypos. 
+            oldSize = 1;
+            newSize = 0;
+            mergedStorage = []; % Temporary storage for merged pairs 
+            while (oldSize > newSize) && length(this.tempStorage) > 1 % We keep iterating while we see change in nr of hypos merged
+                oldSize = length(this.tempStorage); % What is the current amount of hypos?            
+                for i = 1:2:length(this.tempStorage)-1 % Do pairwise comparisons between neighbors 
+                    
+                    left = this.tempStorage(i).tracks.track; % The left one of the pair 
+                    right = this.tempStorage(i+1).tracks.track; % the right one of the pair 
+                    
+                    if (length(left) == length(right)) && length(left) > 0 %#ok<ISMT>
+                        X = [left.expectedValue]; % Take all of the targets 
+                        Y = [right.expectedValue];
+                        % Investiage where min distance is. I points to
+                        % which target in Y is similar to target in X
+                        [D, I] = pdist2(X(1:2:3,:)',Y(1:2:3,:)','euclidean','Smallest',1); 
+                        
+                        if sum(D) < Model.mergeThreshold % This is our threshold for merging hypos 
+                            
+                            c = Tracks; % Empty tracks object 
+                            totB = this.tempStorage(i).beta + this.tempStorage(i+1).beta;
+                            leftB = this.tempStorage(i).beta;
+                            rightB = this.tempStorage(i+1).beta;
+                            % Merge the tracks according to I
+                            for k = 1:length(I)
+                                expVal = (leftB/totB)*X(:,k) + (rightB/totB)*Y(:,I(k));
+                                
+                                Xcov = this.tempStorage(i).tracks.track(k).covariance;
+                                Ycov = this.tempStorage(i+1).tracks.track(I(k)).covariance;
+                                cov = (leftB/totB)*Xcov  + (rightB/totB)*Ycov;
+                                
+                                p = Posterior(expVal, cov);
+                                c.addTrack(p);                                
+                            end
+                            h = this.tempStorage(i).copy(); % Make new hypo, based on most probable of the pair 
+                            h.beta = h.beta + this.tempStorage(i+1).beta; %
+                            h.tracks = c;
+                            mergedStorage = [mergedStorage, h]; %#ok<AGROW>
+                        else % If they are not similar enough we keep them as they are
+                            mergedStorage = [mergedStorage, this.tempStorage(i), this.tempStorage(i+1)]; %#ok<AGROW>                            
+                        end
+                        
+                    else % If they don't have the same amount of targets we keep them as they are
+                        mergedStorage = [mergedStorage, this.tempStorage(i), this.tempStorage(i+1)]; %#ok<AGROW>
+                    end                    
+                end
+                
+                this.tempStorage = mergedStorage; % Overwrite tempStorage with the new merged hypos
+                this.sortHypos(); % Sort them to enable next round of pairwise comparisons 
+                newSize = length(this.tempStorage); % Check the new size, i.e. have we managed to merge any hypos? 
+                mergedStorage = [];
+            end
+            
         end
         
     end

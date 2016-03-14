@@ -29,5 +29,7 @@ classdef Model
         Pd = 1;    % Detection Probability
         
         spwn = 0.0001; % New target spawning density
+        
+        mergeThreshold = 1; % The threshold for merging two hypos
     end
 end
