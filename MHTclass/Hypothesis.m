@@ -4,6 +4,7 @@ classdef Hypothesis < handle
         beta
         alpha = 0;
         hypoHistory
+        hypoNr;
         tracks
     end
     
@@ -16,24 +17,13 @@ classdef Hypothesis < handle
     % =====================================================================
     methods (Access = public)
         
-        function this = Hypothesis(parentHypothesis, association, Scan)
+        function this = Hypothesis(parentHypothesis, association, Scan, hypoNr)
             % Create active hypothesis from parentHypothesis
-            if nargin == 3
-                % Update trace for this hypothesis
-                currentTimestep = parentHypothesis.hypoHistory(1)+1;
-                this.hypoHistory = ones(size(parentHypothesis.hypoHistory));
-                this.hypoHistory(1) = currentTimestep;
-                this.hypoHistory(2:end) = parentHypothesis.hypoHistory(1:end-1);
-                % Use Assignment & Update tracks (Calculate Posterior for
-                % each target), i.e. prediction assumed to be done in
-                % previously in parent hypo. Will also set Beta.
+            if nargin == 4
+                this.hypoNr = hypoNr; % Set current hypoNr
                 this.tracks = Tracks; % Empty Tracks object
+                this.setHypoHistory(parentHypothesis); % Update trace for this hypothesis
                 this.updateTracks(parentHypothesis.tracks, association, Scan);
-                                                                                
-            elseif nargin == 0
-                % warning('Empty hypothesis object created (no parent). Only for debugging or initiation of MHTF');
-            else
-                error('Wrong Nr of arguments (0 or 3 expected)');
             end
         end
         
@@ -173,6 +163,21 @@ classdef Hypothesis < handle
             predCov = predictedTrack.covariance; 
             
             gN = mvnpdf(measurement, Model.H*predMu, Model.H*predCov*Model.H' + Model.R);
+        end
+        
+        function setHypoHistory(this, parentHypothesis)
+            % Updates and sets the hypothesis history current hypothesis.
+            % In each timestep, each generated hypothesis gets a hypothesis
+            % number (hypoNr) sequentially from 1:nrHypos. The hypothesis
+            % history for each history contains the hypoNumber of their
+            % parents, in each timestep. So the first element in
+            % hypoHistory is the hypoNr of their parent (at k-1), the
+            % second of their grandparent (at k-2). This can be used in
+            % N-scan pruning to detect which hypothesis are related for any
+            % given depth of the hypoHistory.
+            this.hypoHistory = ones(size(parentHypothesis.hypoHistory));
+            this.hypoHistory(1) = parentHypothesis.hypoNr;
+            this.hypoHistory(2:end) = parentHypothesis.hypoHistory(1:end-1);
         end
     end
     

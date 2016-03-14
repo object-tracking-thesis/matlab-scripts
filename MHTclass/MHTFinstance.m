@@ -34,6 +34,7 @@ classdef MHTFinstance < handle
             initHypo.alpha = 1;
             initHypo.hypoHistory = zeros(1,scanDepth+1);
             initHypo.tracks = Tracks; % Zero tracks to being with
+            initHypo.hypoNr = 1; % Since only one initHypo, hypoNr = 1; 
             
             % Create first assignment matrix (for k > 1 this will loop for each hypothesis instead)
             betaFA = Model.rho;
@@ -70,7 +71,7 @@ classdef MHTFinstance < handle
             for j = 1:c 
                 association = associationMatrix(:,j);
 
-                this.hypoStorage(j) = Hypothesis(initHypo, association, Scan);
+                this.hypoStorage(j) = Hypothesis(initHypo, association, Scan, j);
             end
             
             this.setAlphas();
@@ -109,7 +110,7 @@ classdef MHTFinstance < handle
                 % Start generating hypotheses
                 for j = 1:c
                     association = associationMatrix(:,j);
-                    this.tempStorage(hypoIdx(h,j)) = Hypothesis(this.hypoStorage(h), association, Scan);
+                    this.tempStorage(hypoIdx(h,j)) = Hypothesis(this.hypoStorage(h), association, Scan, j);
                 end
             end
             
