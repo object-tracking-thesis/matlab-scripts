@@ -16,15 +16,15 @@ classdef Model
                    0 0 0 1]; % Covariance for Transition
         Qm = 0.05;
         
-        R = 0.25.*[1 0;
+        R = 0.025.*[1 0;
                    0 1]; % Covariance for Measurement
-        Rm = 0.25;
+        Rm = 0.025;
         % Used for track initiation
         vmax = 4;  % Maximal (assumed) velocity
-        kappa = 3; % scaling factor
+        kappa = 30; % scaling factor
         
         % Contains detection probability and clutter specification
-        rho = 0.1; % False Measurement Density
+        rho = 0.0001; % False Measurement Density
         V = 1;     % Volume/Area of Measurement Space
         Pd = 1;    % Detection Probability
         

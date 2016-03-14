@@ -52,6 +52,18 @@ classdef Hypothesis < handle
             end
         end
         
+        % Make a copy of a handle object.
+        function new = copy(this)
+            % Instantiate new object of the same class.
+            new = feval(class(this));
+            
+            % Copy all non-hidden properties.
+            p = properties(this);
+            for i = 1:length(p)
+                new.(p{i}) = this.(p{i});
+            end
+        end
+        
     end
 
     %% ====================================================================
@@ -76,25 +88,23 @@ classdef Hypothesis < handle
             % instead. 
             % Function also calculates and sets beta for current hypo. 
             
-            %updatedTracks = Tracks; % Empty Tracks Object
+            % Initiate one of the likelihood parameters to be used 
             gN = 1;
-            
-            for k = 1:length(association)
-                % TODO!? Put tracks in current hypo, then do association related logic????? 
+            % Copy over all tracks
+            this.tracks = parentTracks.copy(); 
+            for k = 1:length(association)                
                 if ismember(association(k),parentTracks.trackId)
                     % The measurement is associated with an existing track
                     idx = association(k); % The index of the track that the measurement is associated with
                     
-                    tr = parentTracks.track(idx);
-                    m = Scan.measurements(:,k);
-                    a = this.calcPosterior(m,tr);
-                    
-                    this.tracks.addTrack(a);
-                    
+                    tr = parentTracks.track(idx); % Take out the track
+                    m = Scan.measurements(:,k); 
+                    % this is new: 
+                    this.tracks.track(idx) = this.calcPosterior(m,tr); % Calculate posterior and insert it into current object 
                     gN = gN * this.calcGn(tr, m);
                     
                 elseif association(k) == 0
-                    disp('FA')
+                    %disp('FA')
                     % The measurement is designated as False Alarm
                 else
                     % The measurement is designated as a New Track
@@ -107,7 +117,7 @@ classdef Hypothesis < handle
                 end
             end
             
-            this.beta = this.calcGzero(association)*gN;
+            this.beta = this.calcGzero(association)*gN; 
         end
         
         function post = calcPosterior(~, measurement, prediction)
@@ -124,7 +134,6 @@ classdef Hypothesis < handle
             
             post.expectedValue = mu + K*v;
             post.covariance = P - K*S*K';
-            %post;
         end
         
         function post = initiateTrack(~,meas)

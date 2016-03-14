@@ -51,7 +51,9 @@ classdef MHTFinstance < handle
             % use to create new hypotheses with. Each column an association
             % for the measurements (rows in the association- & assignmentMatrix)
             
+            %--------------------------------------------------------------
             % TODO - Implement assignmentAlgorithm
+            %--------------------------------------------------------------
             % associationMatrix = assigmentAlgorithm(assignmentMatrix, nrHypos);
             
             % DEBUG! ONLY FOR 2 measurements AND 3 hypos
@@ -67,42 +69,36 @@ classdef MHTFinstance < handle
             % Start generating hypotheses
             for j = 1:c 
                 association = associationMatrix(:,j);
+
                 this.hypoStorage(j) = Hypothesis(initHypo, association, Scan);
             end
             
-            % Calculate alpha for each generated hypo
-            %             totalBeta = 0;
-            %             for j = 1:c
-            %                 totalBeta = totalBeta + this.hypoStorage(j).beta;
-            %             end
-            %
-            %             for j = 1:c
-            %                this.hypoStorage(j).setAlpha(totalBeta)
-            %             end
             this.setAlphas();
-            % Since first set of hypotheses, we do no N-scan pruning,
-            % altough hypotheses merging should occur, aswell as keeping
-            % the nrHypos best hypos.
             
+            % Since first set of hypotheses, we do no N-scan pruning. But
+            % hypotheses merging should occur, 
+            
+            %--------------------------------------------------------------
             % TODO - hypotheses merging
+            %--------------------------------------------------------------
             
-            % Get best hypothesis
-            %             allAlphas = [this.hypoStorage(:).alpha];
-            %             a = max(allAlphas);
-            %             bestNr = find(allAlphas == a(1));
-            %
-            %             this.bestHypo = this.hypoStorage(bestNr(1));
             this.setBestHypo();
         end
         
-        % Used for new measurements
+        
         function iterate(this, Scan)
+            % Used for new measurements when k > 1. Works similarly to the
+            % constructor, expcept it generates hypoLimit^2 hypos and then
+            % filters this down to hypoLimit number of hypos. 
+            
             % Make room for hypos to be generated 
-            this.tempStorage(1, this.hypoLimit^2) = Hypothesis;
+            this.tempStorage(1, this.hypoLimit^2) = Hypothesis;            
+            
             % Generate indexmatrix to be used when generating new hypos
             % i.e. [1 2 3;4 5 6;7 8 9] where each rownr corresponds to 
             % parenthypo, and column entries to children 
             hypoIdx = reshape(1:this.hypoLimit^2, this.hypoLimit, [])';
+            
             % run through each hypothesis 
             for h = 1:length(this.hypoStorage)
                 
@@ -115,20 +111,20 @@ classdef MHTFinstance < handle
                     association = associationMatrix(:,j);
                     this.tempStorage(hypoIdx(h,j)) = Hypothesis(this.hypoStorage(h), association, Scan);
                 end
-                
+            end
+            
                 % keep the nrHypos best, based on beta. Then, set alpha.
-                % (Somwhere here is where N-scan pruning should come in.)
+                % (Somwhere here is where N-scan pruning & merging should come in.)
                 % Sorting is based on beta values
-                %[~, sortId] = sort([this.tempStorage(:).beta], 'descend');
-                %this.tempStorage = this.tempStorage(:,sortId);
+                [~, sortId] = sort([this.tempStorage(:).beta], 'descend');
+                this.tempStorage = this.tempStorage(:,sortId);
                 %
-%                 this.hypoStorage = this.tempStorage(1:this.hypoLimit); % Now we have final hypos
+                
+                % SOMETHING HERE IS FUCKED UP:
+                this.hypoStorage = this.tempStorage(1:this.hypoLimit); % Now we have final hypos
                 this.setAlphas(); % Set the alpha values; 
                 this.setBestHypo();
-                
-                
-                
-            end
+            
             
         end
     end
@@ -138,16 +134,16 @@ classdef MHTFinstance < handle
     % =====================================================================
     methods(Access = private)
         function setAlphas(this)
-            % Calculate alpha for each generated hypo
+            % Calculate alpha for each generated hypo stored in
+            % this.hypostorage. Calculates total beta by summing the betas
+            % of all hypos in this.hypoStorage, and then uses this to
+            % calculate 
             
             % Calculate total beta  
-            totalBeta = 0;
-            c = length(this.hypoStorage);
-            for j = 1:c
-                totalBeta = totalBeta + this.hypoStorage(j).beta;
-            end
+            totalBeta = sum([this.hypoStorage(:).beta]);
+
             % Set alpha 
-            for j = 1:c
+            for j = 1:length(this.hypoStorage)
                this.hypoStorage(j).setAlpha(totalBeta) 
             end
         end
