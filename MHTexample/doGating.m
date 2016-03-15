@@ -20,7 +20,7 @@ function okMeasurements = doGating(recMeas,predMeas, Sk, Pg)
         d = recMeas(:,j) - predMeas;
         cal = d'*inv(Sk)*d;
 
-        if cal < threshold
+        if cal < threshold;
             okMeasurements = [okMeasurements recMeas(:,j)];
         end
     end
