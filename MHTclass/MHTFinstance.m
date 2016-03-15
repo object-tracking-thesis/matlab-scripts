@@ -141,6 +141,21 @@ classdef MHTFinstance < handle
     methods(Access = private)
         
         function gatingMat = getGatingMatrix(this, tracks, scan, Pg)
+            % Generates a gating matrix. This is used to check which
+            % measurements fall inside which targets gate. The returned
+            % matrix is of size
+            % length(scan.measurements)-by-length(tracks.track),
+            % i.e. each row corresponds to a measurement and each column to
+            % a track. Elements in the matrix that are equal to 1 indicate
+            % that the given measurement is inside of the gate of the
+            % corresponding track.
+            %
+            % gatingMat = getGatingMatrix(tracks, scan, Pg)
+            % 
+            %   tracks - Tracks object containing tracks. 
+            %   scan   - Scaan object containing measurements 
+            %   Pg     - Confidence interval bound.
+            
             nrTg = length(tracks.trackId);
             nrMe = length(scan.measId);
             gatingMat = zeros(nrMe, nrTg);
@@ -154,6 +169,9 @@ classdef MHTFinstance < handle
         end
         
         function gatedMeasId = gating(~, scan, target, Pg)
+            % Support function for use in getGatingMatrix. This checks which
+            % measurements fall within the gate of the target supplied to
+            % the function. 
             [r, c] = size(scan.measurements);
             threshold = chi2inv(Pg, r);
             gatedMeasId = scan.measId;
