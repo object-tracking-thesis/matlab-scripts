@@ -20,8 +20,9 @@ classdef Model
                    0 1]; % Covariance for Measurement
         Rm = 0.025;
         % Used for track initiation
-        vmax = 4;  % Maximal (assumed) velocity
-        kappa = 30; % scaling factor
+        % THESE ARE ALSO VERY IMPORTANT FOR GATING TO WORK FOR NEW TARGETS
+        vmax = 6;  % Maximal (assumed) velocity
+        kappa = 2; % scaling factor
         
         % Contains detection probability and clutter specification
         rho = 0.0001; % False Measurement Density
@@ -30,6 +31,6 @@ classdef Model
         
         spwn = 0.0001; % New target spawning density
         
-        mergeThreshold = 1; % The threshold for merging two hypos
+        mergeThreshold = 0.1; % The threshold for merging two hypos
     end
 end

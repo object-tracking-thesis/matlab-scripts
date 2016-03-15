@@ -21,7 +21,7 @@ classdef MHTFinstance < handle
     % API functions & constructor.
     % =====================================================================
     methods(Access = public)
-        
+        % Constructor 
         function this = MHTFinstance(nrHypos, scanDepth, Scan)
             % Setup for the MHTF at k = 1
             this.hypoLimit = nrHypos;
@@ -103,7 +103,10 @@ classdef MHTFinstance < handle
             % run through each hypothesis 
             for h = 1:length(this.hypoStorage)
                 
-                this.hypoStorage(h).predictTracks; % make prediction 
+                this.hypoStorage(h).predictTracks; % make predictiosn
+                
+                confInt = 0.999936; % Confidence interval for gate. 
+                gatingMatrix = this.getGatingMatrix(this.hypoStorage(h).tracks, Scan, confInt);
                 
                 associationMatrix = [[0 1]' [2 1]' [1 2]'];
                 [~, c] = size(associationMatrix);
@@ -136,6 +139,44 @@ classdef MHTFinstance < handle
     % Internal functions
     % =====================================================================
     methods(Access = private)
+        
+        function gatingMat = getGatingMatrix(this, tracks, scan, Pg)
+            nrTg = length(tracks.trackId);
+            nrMe = length(scan.measId);
+            gatingMat = zeros(nrMe, nrTg);
+            
+            for tg = 1:nrTg
+                target = tracks.track(tg);
+                gatedMeasId = this.gating(scan, target, Pg);
+                gatingMat(:,tg) = gatedMeasId';
+            end
+            
+        end
+        
+        function gatedMeasId = gating(~, scan, target, Pg)
+            [r, c] = size(scan.measurements);
+            threshold = chi2inv(Pg, r);
+            gatedMeasId = scan.measId;
+            
+            Sk = Model.H*target.covariance*Model.H' + Model.R;
+            predictedMeas = Model.H*target.expectedValue;
+            
+            for m = 1:c
+                d = scan.measurements(:,m) - predictedMeas;
+                cal = d'*inv(Sk)*d;
+                
+                if (cal < threshold)
+                    gatedMeasId(m) = 1;
+                else
+                    gatedMeasId(m) = 0;
+                end
+            end
+            gatedMeasId(gatedMeasId == inf) = [];
+            
+        end
+
+        
+        
         function setAlphas(this)
             % Calculate alpha for each generated hypo stored in
             % this.hypostorage. Calculates total beta by summing the betas
@@ -196,6 +237,9 @@ classdef MHTFinstance < handle
                             
                             c = Tracks; % Empty tracks object 
                             totB = this.tempStorage(i).beta + this.tempStorage(i+1).beta;
+                            if totB == 0 % To avoid numerical instability
+                                totB = 1;
+                            end
                             leftB = this.tempStorage(i).beta;
                             rightB = this.tempStorage(i+1).beta;
                             % Merge the tracks according to I

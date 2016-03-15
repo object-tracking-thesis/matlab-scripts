@@ -161,7 +161,9 @@ classdef Hypothesis < handle
             % (predicted) track. 
             predMu = predictedTrack.expectedValue;
             predCov = predictedTrack.covariance; 
-            
+            %predictedTrack.expectedValue
+            %predCov
+            %Model.H*predCov*Model.H' + Model.R
             gN = mvnpdf(measurement, Model.H*predMu, Model.H*predCov*Model.H' + Model.R);
         end
         

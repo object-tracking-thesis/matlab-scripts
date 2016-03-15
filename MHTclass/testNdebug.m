@@ -28,10 +28,11 @@ end
 nrHypos = 3;
 bestHypos(1,N) = Hypothesis;
 bestTracks(1,N) = Tracks;
+tic
 for k = 1:N
     if k == 1
         % We have 2 hypos that have 2 targets, and one hypo with 1 target
-        MHTF = MHTFinstance(nrHypos,5,Scans(k));
+        MHTF = MHTFinstance(nrHypos,N,Scans(k));
         bestHypos(k) = MHTF.bestHypo.copy();
         bestTracks(k) = bestHypos(k).tracks.copy();
         
@@ -43,16 +44,13 @@ for k = 1:N
         MHTF.iterate(Scans(k));
         bestHypos(k) = MHTF.bestHypo.copy();
         bestTracks(k) = bestHypos(k).tracks.copy();
-        
         for j = 1:bestTracks(k).trackId(end)
             bestTracks(k).track(j) = bestTracks(k).track(j).copy();
         end
         
     end
-    fprintf('k = %d, length(hypoStorage) = %d, length(tempStorage) = %d\n', [k, length(MHTF.hypoStorage),length(MHTF.tempStorage)]);
-    fprintf('')
 end
-
+toc
 
 
 %% Look at best hypo history 
@@ -72,11 +70,10 @@ for k = 1:N
     plot(T1(1,k),T1(3,k),'sk','MarkerFaceColor','k')
     plot(T2(1,k),T2(3,k),'sk','MarkerFaceColor','k')
     hold off
-    pause(2)
+    txt = sprintf('k = %d',k);
+    title(txt)
+    pause(0.1)
 end
-
-
-
 
 %% DEBUG FUNCTIONS
 DEBUG = 0;
