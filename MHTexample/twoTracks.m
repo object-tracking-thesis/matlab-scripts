@@ -1,5 +1,5 @@
 %% Generate multiple tracks, 2D xy
-%rng(2) % 20,36 is good 
+rng(2) %2, 20,36 is good 
 T = 1;
 A = [1 T 0 0;
     0 1 0 0;
@@ -27,7 +27,7 @@ x3_init = [5 1 -10 1]';
 x4_init = [14 0 -18 2]';
 % Generate State & Measurement Sequence for two targets
 
-N = 100;
+N = 40;
 vLimit = round(N/2);
 % x1 & x2 always present. x3 is birthed halfway through, x4 dies halfway through 
 x1_state = ones(4,N);
@@ -95,17 +95,17 @@ end
 %% Generate Clutter
 
 % Set density rate 
-be = 5e-2;
+be = Model.rho;%5e-2;
 % Set Volume/Area 
-Vl = 36*42;
+Vl = Model.V;%36*42;
 
 % Draw poission value, use this to generate uniformly distributed xy values
 
 clutterMeas = cell(1,N);
-xa = -1;
-xb = 45;
-ya = -40;
-yb = 12;
+xa = 0;
+xb = 150;
+ya = 20;
+yb = -270;
 for k = 1:N
    poissValue = poissrnd(be*Vl);
    Xc = xa + (xb - xa)*rand(1,poissValue);
@@ -142,7 +142,8 @@ if 0
             if k > 1
                 % Plot Clutter
                 hold off
-                plot(clutterMeas{k-1}(1,:),clutterMeas{k-1}(2,:),'x','Color',[0.3 0.3 0.3])
+                allClutter = [clutterMeas{1:k-1}];
+                plot(allClutter(1,:),allClutter(2,:),'x','Color',[0.3 0.3 0.3])
                 hold on
                 %plot(X1m(1,2:k),X1m(2,2:k),'xb')
                 plotMeasurement(X1m(1,2:k),X1m(2,2:k),X1m(3,k),'b')
@@ -162,38 +163,38 @@ if 0
                 plotEllip(X4(1:2:3,a), Q_m, [1 2])
             end
             
-            axis([-1 45 -40 12])
+            %axis([-1 45 -40 12])
             xlabel('X')
             ylabel('Y')
             title(sprintf('TimeStep: %d/%d',[k-1, N]))
             
             plotEllip(X1(1:2:3,k), Q_m, [1 2])
             plotEllip(X2(1:2:3,k), Q_m, [1 2])
-            
-            if k < N+1
-                a = 1+k;
-                [xf, yf]=ds2nfu(X1(1,k:a),X1(3,k:a));
-                xf(xf < 0) = 0;
-                yf(yf < 0) = 0;
-                annotation('line', xf,yf);
-                
-                [xf, yf]=ds2nfu(X2(1,k:a),X2(3,k:a));
-                xf(xf < 0) = 0;
-                yf(yf < 0) = 0;
-                annotation('line', xf,yf)
-                
-                if k <= vLimit-1
-                    [xf, yf]=ds2nfu(X3(1,k:a),X3(3,k:a));
-                    xf(xf < 0) = 0;
-                    yf(yf < 0) = 0;
-                    annotation('line', xf,yf)
-                elseif k > vLimit
-                    [xf, yf]=ds2nfu(X4(1,k-vLimit:a-vLimit),X4(3,k-vLimit:a-vLimit));
-                    xf(xf < 0) = 0;
-                    yf(yf < 0) = 0;
-                    annotation('line', xf,yf)
-                end
-            end
+            axis equal
+%             if k < N+1
+%                 a = 1+k;
+%                 [xf, yf]=ds2nfu(X1(1,k:a),X1(3,k:a));
+%                 xf(xf < 0) = 0;
+%                 yf(yf < 0) = 0;
+%                 annotation('line', xf,yf);
+%                 
+%                 [xf, yf]=ds2nfu(X2(1,k:a),X2(3,k:a));
+%                 xf(xf < 0) = 0;
+%                 yf(yf < 0) = 0;
+%                 annotation('line', xf,yf)
+%                 
+%                 if k <= vLimit-1
+%                     [xf, yf]=ds2nfu(X3(1,k:a),X3(3,k:a));
+%                     xf(xf < 0) = 0;
+%                     yf(yf < 0) = 0;
+%                     annotation('line', xf,yf)
+%                 elseif k > vLimit
+%                     [xf, yf]=ds2nfu(X4(1,k-vLimit:a-vLimit),X4(3,k-vLimit:a-vLimit));
+%                     xf(xf < 0) = 0;
+%                     yf(yf < 0) = 0;
+%                     annotation('line', xf,yf)
+%                 end
+%             end
             
             if checker == 10
                 pause(0.750)
@@ -229,31 +230,37 @@ end
 
 
 %% Old plot
+if 1
 st = 1;
 sp = N;
 h1 = figure('Position',[50 50 1920*0.8 1080*0.8]);
     hold on
-    plot(x1_state(1,st:sp),x1_state(3,st:sp),'ob')
+    p1 = plot(x1_state(1,st:sp),x1_state(3,st:sp),'ob');
     plot(x1_init(1),x1_init(3),'ob','MarkerFaceColor','blue')
-    plot(x1_m(1,st:sp),x1_m(2,st:sp),'xb')
+    p11 = plot(x1_m(1,st:sp),x1_m(2,st:sp),'xb');
 
-    plot(x2_state(1,st:sp),x2_state(3,st:sp),'or')
+    p2 = plot(x2_state(1,st:sp),x2_state(3,st:sp),'or');
     plot(x2_init(1),x2_init(3),'or','MarkerFaceColor','red')
-    plot(x2_m(1,st:sp),x2_m(2,st:sp),'xr')
-
-    xlabel('X')
-    ylabel('Y')
-
+    p21 = plot(x2_m(1,st:sp),x2_m(2,st:sp),'xr');
+    
+    allClutter = [clutterMeas{1:end}];
+    plot(allClutter(1,:),allClutter(2,:),'x','Color',[0.3 0.3 0.3])
+    
+    xlabel('X [m]','FontSize',14)
+    ylabel('Y [m]','FontSize',14)
+    %legend([p1 p2], 'Target 1', 'Target 2')
+    
     X1 = [x1_init x1_state];
     X2 = [x2_init x2_state];
-%     for k = 1:length(X1)-1
-%         a = 1+k;
-%         [xf, yf]=ds2nfu(X1(1,k:a),X1(3,k:a));
-%         annotation('arrow', xf,yf)
-%         [xf, yf]=ds2nfu(X2(1,k:a),X2(3,k:a));
-%         annotation('arrow', xf,yf)
-%     end
+    axis equal
+    %     for k = 1:length(X1)-1
+    %         a = 1+k;
+    %         [xf, yf]=ds2nfu(X1(1,k:a),X1(3,k:a));
+    %         annotation('arrow', xf,yf)
+    %         [xf, yf]=ds2nfu(X2(1,k:a),X2(3,k:a));
+    %         annotation('arrow', xf,yf)
+    %     end
 
-
+end
 
 
