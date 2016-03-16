@@ -1,5 +1,5 @@
 %% Generate multiple tracks, 2D xy
-rng(36) % 20,36 is good 
+%rng(2) % 20,36 is good 
 T = 1;
 A = [1 T 0 0;
     0 1 0 0;
@@ -18,16 +18,16 @@ H = [1 0 0 0;
 
 mu_m = [0 0];
 
-Q_m = 0.25.*[1 0;
+Q_m = 0.025.*[1 0;
               0 1];
 
-x1_init = [1 2 1 0]';
-x2_init = [10 0 10 -2]';
+x1_init = [1 2 -10 0]';
+x2_init = [20 0 10 -2]';
 x3_init = [5 1 -10 1]';
 x4_init = [14 0 -18 2]';
 % Generate State & Measurement Sequence for two targets
 
-N = 16;
+N = 100;
 vLimit = round(N/2);
 % x1 & x2 always present. x3 is birthed halfway through, x4 dies halfway through 
 x1_state = ones(4,N);
@@ -127,123 +127,125 @@ X2m = [[0 0 0]' x2_m];
 X3m = [[0 0 0]' x3_m];
 X4m = [[0 0 0]' x4_m];
 
-
-button = 'Yes';
-h1 = figure('Position',[100, 400, 1920*0.7 1080*0.7]);
-
-k = 1;
-checker = 0;
-vLimit = vLimit +1;
-while h1.isvalid == 1 && strcmp('Yes',button)
-    %for k = 1:N+1
-    while k > 0 && k < N +2 && h1.isvalid
-        hold on
-        
-        if k > 1
-            % Plot Clutter
-            hold off
-            plot(clutterMeas{k-1}(1,:),clutterMeas{k-1}(2,:),'x','Color',[0.3 0.3 0.3])
-            hold on
-            %plot(X1m(1,2:k),X1m(2,2:k),'xb')
-            plotMeasurement(X1m(1,2:k),X1m(2,2:k),X1m(3,k),'b')
-            plotMeasurement(X2m(1,2:k),X2m(2,2:k),X2m(3,k),'r')
-        end
-        plot(X1(1,1:k),X1(3,1:k),'ob')
-        plot(X2(1,1:k),X2(3,1:k),'or')
-        
-        if k <= vLimit
-            plot(X3(1,1:k),X3(3,1:k),'og')
-            plotMeasurement(X3m(1,2:k),X3m(2,2:k),X3m(3,k),'g')
-            plotEllip(X3(1:2:3,k), Q_m, [1 2])
-        else 
-            a = k-vLimit;
-            plot(X4(1,1:a),X4(3,1:a),'om')
-            plot(X4m(1,2:a),X4m(2,2:a),'xm')
-            plotEllip(X4(1:2:3,a), Q_m, [1 2])
-        end
-                
-        axis([-1 45 -40 12])
-        xlabel('X')
-        ylabel('Y')
-        title(sprintf('TimeStep: %d/%d',[k-1, N]))
-        
-        plotEllip(X1(1:2:3,k), Q_m, [1 2])
-        plotEllip(X2(1:2:3,k), Q_m, [1 2])
-            
-        if k < N+1
-            a = 1+k;
-            [xf, yf]=ds2nfu(X1(1,k:a),X1(3,k:a));
-            xf(xf < 0) = 0;
-            yf(yf < 0) = 0;
-            annotation('line', xf,yf);
-            
-            [xf, yf]=ds2nfu(X2(1,k:a),X2(3,k:a));
-            xf(xf < 0) = 0;
-            yf(yf < 0) = 0;
-            annotation('line', xf,yf)
-            
-            if k <= vLimit-1
-                [xf, yf]=ds2nfu(X3(1,k:a),X3(3,k:a));
-                xf(xf < 0) = 0;
-                yf(yf < 0) = 0;
-                annotation('line', xf,yf)
-            elseif k > vLimit
-                [xf, yf]=ds2nfu(X4(1,k-vLimit:a-vLimit),X4(3,k-vLimit:a-vLimit));
-                xf(xf < 0) = 0;
-                yf(yf < 0) = 0;
-                annotation('line', xf,yf)
-            end
-        end
-
-        if checker == 10
-            pause(0.750)
-        end
-        
-        %checker
-        if  checker ~= 10
-            checker = mydialog;
-            if checker ~= 10
-                k = k + checker;
-            end
-        else 
-            k = k +1;
-        end
-        
-    end
+if 0
+    button = 'Yes';
+    h1 = figure('Position',[100, 400, 1920*0.7 1080*0.7]);
     
-    if h1.isvalid
-        button = questdlg('Replay Sequence?','MHT Player', 'Yes','No','Yes');
-        if strcmp(button,'Yes')
-            clf;
-            k = 1;
-            checker = 0;
-        else
-            close(h1);
+    k = 1;
+    checker = 0;
+    vLimit = vLimit +1;
+    while h1.isvalid == 1 && strcmp('Yes',button)
+        %for k = 1:N+1
+        while k > 0 && k < N +2 && h1.isvalid
+            hold on
+            
+            if k > 1
+                % Plot Clutter
+                hold off
+                plot(clutterMeas{k-1}(1,:),clutterMeas{k-1}(2,:),'x','Color',[0.3 0.3 0.3])
+                hold on
+                %plot(X1m(1,2:k),X1m(2,2:k),'xb')
+                plotMeasurement(X1m(1,2:k),X1m(2,2:k),X1m(3,k),'b')
+                plotMeasurement(X2m(1,2:k),X2m(2,2:k),X2m(3,k),'r')
+            end
+            plot(X1(1,1:k),X1(3,1:k),'ob')
+            plot(X2(1,1:k),X2(3,1:k),'or')
+            
+            if k <= vLimit
+                plot(X3(1,1:k),X3(3,1:k),'og')
+                plotMeasurement(X3m(1,2:k),X3m(2,2:k),X3m(3,k),'g')
+                plotEllip(X3(1:2:3,k), Q_m, [1 2])
+            else
+                a = k-vLimit;
+                plot(X4(1,1:a),X4(3,1:a),'om')
+                plot(X4m(1,2:a),X4m(2,2:a),'xm')
+                plotEllip(X4(1:2:3,a), Q_m, [1 2])
+            end
+            
+            axis([-1 45 -40 12])
+            xlabel('X')
+            ylabel('Y')
+            title(sprintf('TimeStep: %d/%d',[k-1, N]))
+            
+            plotEllip(X1(1:2:3,k), Q_m, [1 2])
+            plotEllip(X2(1:2:3,k), Q_m, [1 2])
+            
+            if k < N+1
+                a = 1+k;
+                [xf, yf]=ds2nfu(X1(1,k:a),X1(3,k:a));
+                xf(xf < 0) = 0;
+                yf(yf < 0) = 0;
+                annotation('line', xf,yf);
+                
+                [xf, yf]=ds2nfu(X2(1,k:a),X2(3,k:a));
+                xf(xf < 0) = 0;
+                yf(yf < 0) = 0;
+                annotation('line', xf,yf)
+                
+                if k <= vLimit-1
+                    [xf, yf]=ds2nfu(X3(1,k:a),X3(3,k:a));
+                    xf(xf < 0) = 0;
+                    yf(yf < 0) = 0;
+                    annotation('line', xf,yf)
+                elseif k > vLimit
+                    [xf, yf]=ds2nfu(X4(1,k-vLimit:a-vLimit),X4(3,k-vLimit:a-vLimit));
+                    xf(xf < 0) = 0;
+                    yf(yf < 0) = 0;
+                    annotation('line', xf,yf)
+                end
+            end
+            
+            if checker == 10
+                pause(0.750)
+            end
+            
+            %checker
+            if  checker ~= 10
+                checker = mydialog;
+                if checker ~= 10
+                    k = k + checker;
+                end
+            else
+                k = k +1;
+            end
+            
+        end
+        
+        if h1.isvalid
+            button = questdlg('Replay Sequence?','MHT Player', 'Yes','No','Yes');
+            if strcmp(button,'Yes')
+                clf;
+                k = 1;
+                checker = 0;
+            else
+                close(h1);
+            end
         end
     end
 end
-    
+
 
 
 
 
 %% Old plot
+st = 1;
+sp = N;
+h1 = figure('Position',[50 50 1920*0.8 1080*0.8]);
+    hold on
+    plot(x1_state(1,st:sp),x1_state(3,st:sp),'ob')
+    plot(x1_init(1),x1_init(3),'ob','MarkerFaceColor','blue')
+    plot(x1_m(1,st:sp),x1_m(2,st:sp),'xb')
 
-% h1 = figure('Position',[50 50 1920*0.8 1080*0.8]);
-%     hold on
-%     plot(x1_state(1,:),x1_state(3,:),'ob')
-%     plot(x1_init(1),x1_init(3),'ob','MarkerFaceColor','blue')
-%     plot(x1_m(1,:),x1_m(2,:),'xb')
-% 
-%     plot(x2_state(1,:),x2_state(3,:),'or')
-%     plot(x2_init(1),x2_init(3),'or','MarkerFaceColor','red')
-%     plot(x2_m(1,:),x2_m(2,:),'xr')
-% 
-%     xlabel('X')
-%     ylabel('Y')
-% 
-%     X1 = [x1_init x1_state];
-%     X2 = [x2_init x2_state];
+    plot(x2_state(1,st:sp),x2_state(3,st:sp),'or')
+    plot(x2_init(1),x2_init(3),'or','MarkerFaceColor','red')
+    plot(x2_m(1,st:sp),x2_m(2,st:sp),'xr')
+
+    xlabel('X')
+    ylabel('Y')
+
+    X1 = [x1_init x1_state];
+    X2 = [x2_init x2_state];
 %     for k = 1:length(X1)-1
 %         a = 1+k;
 %         [xf, yf]=ds2nfu(X1(1,k:a),X1(3,k:a));

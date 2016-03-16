@@ -42,7 +42,7 @@ R_sigma = 0.125.*[1 0;
 Z = ones(2,2,N);
 
 for k = 1:N
-    Z(:,:,k) = [x1_m(:,k) x2_m(:,k)];
+    Z(:,:,k) = [x1_m(1:2,k) x2_m(1:2,k)];
 end
 %% Set up init state vector for predictions
 
@@ -54,6 +54,7 @@ storage = cell(1,N); % storage for generated hypotheses
 %% Run loop
 
 for k = 1:N
+    k
     if k == 1
         % Predict moments (mu & P)
         s_mu(:,1) = A*x1_init;

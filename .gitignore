@@ -4,6 +4,9 @@ static/*.txt
 static/*.mat
 gps/*.txt
 test.m
+MHTexample/playingAroundWithMerge.m
+MHTexample/playingAroundWithGateing.m
+MHTexample/playingAroundWithplotingGates.m
 .DS_Store
 stateMeasurementData.m
 *~*
