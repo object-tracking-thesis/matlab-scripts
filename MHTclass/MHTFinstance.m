@@ -2,7 +2,7 @@
 % Unlike the other classes, only one instance of MHTFinstance is ment to be
 % used. This class is responsible for storing hypotheses, generating new
 % ones, calling upon hypotheses to perform prediction, merging and pruning
-% hypotheses, as well as generating new ones based on LP programming
+% hypotheses, as well as generating new ones based on assignment problem
 % techniques (Murty's Method).
 %
 % MHTFinstance(nrHypos, scanDepth, Scan) 
@@ -22,14 +22,13 @@ classdef MHTFinstance < handle
     % =====================================================================
     methods(Access = public)
         % Constructor 
-        function this = MHTFinstance(nrHypos, scanDepth, Scan)
+        function this = MHTFinstance(nrHypos, scanDepth, scan)
             % Setup for the MHTF at k = 1
             this.hypoLimit = nrHypos;
             this.scanDepth = scanDepth;
             this.hypoStorage(1,nrHypos) = Hypothesis; % Preallocate hypoStorage space 
             
-            % Setup initial hypothesis
-            
+            % Setup initial hypothesis            
             initHypo = Hypothesis;
             initHypo.alpha = 1;
             initHypo.hypoHistory = zeros(1,scanDepth+1);
@@ -37,16 +36,16 @@ classdef MHTFinstance < handle
             initHypo.hypoNr = 1; % Since only one initHypo, hypoNr = 1; 
             
             % Create first assignment matrix (for k > 1 this will loop for each hypothesis instead)
-            betaFA = Model.rho;
-            betaNT = Model.spwn;
-            x = -1e10; % -inf approximation
+%             betaFA = Model.rho;
+%             betaNT = Model.spwn;
+%             x = -1e10; % -inf approximation
+%             
+%             FAm = diag(betaFA.*ones(length(Scan.measId)));
+%             FAm(FAm == 0) = x;
+%             NTm = diag(betaNT.*ones(length(Scan.measId)));
+%             NTm(NTm == 0) = x;
             
-            FAm = diag(betaFA.*ones(length(Scan.measId)));
-            FAm(FAm == 0) = x;
-            NTm = diag(betaNT.*ones(length(Scan.measId)));
-            NTm(NTm == 0) = x;
-            
-            assignmentMatrix = [FAm NTm];
+%            assignmentMatrix = [FAm NTm];
             
             % Get a matrix of (at max) nrHypos-best associations (e.g. 10), that we
             % use to create new hypotheses with. Each column an association
@@ -58,7 +57,12 @@ classdef MHTFinstance < handle
             % associationMatrix = assigmentAlgorithm(assignmentMatrix, nrHypos);
             
             % DEBUG! ONLY FOR 2 measurements AND 3 hypos
-            associationMatrix = [[0 1]' [2 1]' [1 2]'];
+            %associationMatrix = [[0 1]' [2 1]' [1 2]'];
+            
+            gatingMatrix = [];
+            hypoGen = OptimalHypos;
+            associationMatrix = hypoGen.generateHypos(scan, gatingMatrix, initHypo.tracks, this.hypoLimit);
+            
             
             [~, c] = size(associationMatrix);
 
@@ -70,31 +74,27 @@ classdef MHTFinstance < handle
             % Start generating hypotheses
             for j = 1:c 
                 association = associationMatrix(:,j);
-
-                this.hypoStorage(j) = Hypothesis(initHypo, association, Scan, j);
+                this.hypoStorage(j) = Hypothesis(initHypo, association, scan, j);
             end
             
-            this.setAlphas();
-            
+            this.setAlphas();            
             % Since first set of hypotheses, we do no N-scan pruning. But
-            % hypotheses merging should occur, 
-            
+            % hypotheses merging should occur,             
             %--------------------------------------------------------------
             % TODO - hypotheses merging
-            %--------------------------------------------------------------
-            
+            %--------------------------------------------------------------            
             this.setBestHypo();
         end
         
         
-        function iterate(this, Scan)
+        function iterate(this, scan)
             % Used for new measurements when k > 1. Works similarly to the
             % constructor, expcept it generates hypoLimit^2 hypos and then
             % filters this down to hypoLimit number of hypos. 
             
             % Make room for hypos to be generated 
             this.tempStorage(1, this.hypoLimit^2) = Hypothesis;            
-            
+            %this.tempStorage;
             % Generate indexmatrix to be used when generating new hypos
             % i.e. [1 2 3;4 5 6;7 8 9] where each rownr corresponds to 
             % parenthypo, and column entries to children 
@@ -105,28 +105,28 @@ classdef MHTFinstance < handle
                 
                 this.hypoStorage(h).predictTracks; % make predictiosn
                 
-                confInt = 0.999936; % Confidence interval for gate. 
-                gatingMatrix = this.getGatingMatrix(this.hypoStorage(h).tracks, Scan, confInt);
-                
-                associationMatrix = [[0 1]' [2 1]' [1 2]'];
+                confInt = 0.9999999999999999999999936; % Confidence interval for gate. 
+                gatingMatrix = this.getGatingMatrix(this.hypoStorage(h).tracks, scan, confInt);                
+                hypoGen = OptimalHypos;
+                associationMatrix = hypoGen.generateHypos(scan, gatingMatrix, this.hypoStorage(h).tracks, this.hypoLimit);
+                %associationMatrix = [[0 1]' [2 1]' [1 2]'];
+                                
                 [~, c] = size(associationMatrix);
                 % Start generating hypotheses
                 for j = 1:c
                     association = associationMatrix(:,j);
-                    this.tempStorage(hypoIdx(h,j)) = Hypothesis(this.hypoStorage(h), association, Scan, j);
+                    this.tempStorage(hypoIdx(h,j)) = Hypothesis(this.hypoStorage(h), association, scan, j);
                 end
-            end
-            
+            end 
+                %this.tempStorage;
                 % keep the nrHypos best, based on beta. Then, set alpha.
                 % (Somwhere here is where N-scan pruning & merging should come in.)
                 % Sorting is based on beta values
-                        %[~, sortId] = sort([this.tempStorage(:).beta], 'descend');
-                        %this.tempStorage = this.tempStorage(:,sortId);
                 this.sortHypos();
                 this.mergeHypos(); % Uses the sortHypos() function as well 
                 try 
                     this.hypoStorage = this.tempStorage(1:this.hypoLimit); % Now we have final hypos
-                catch e
+                catch e %#ok<NASGU>
                     this.hypoStorage = this.tempStorage;
                 end
                 this.setAlphas(); % Set the alpha values; 
@@ -155,17 +155,19 @@ classdef MHTFinstance < handle
             %   tracks - Tracks object containing tracks. 
             %   scan   - Scaan object containing measurements 
             %   Pg     - Confidence interval bound.
-            
-            nrTg = length(tracks.trackId);
-            nrMe = length(scan.measId);
-            gatingMat = zeros(nrMe, nrTg);
-            
-            for tg = 1:nrTg
-                target = tracks.track(tg);
-                gatedMeasId = this.gating(scan, target, Pg);
-                gatingMat(:,tg) = gatedMeasId';
+            if isempty(tracks.trackId)
+                gatingMat = [];
+            else
+                nrTg = length(tracks.trackId);
+                nrMe = length(scan.measId);
+                gatingMat = zeros(nrMe, nrTg);
+                
+                for tg = 1:nrTg
+                    target = tracks.track(tg);
+                    gatedMeasId = this.gating(scan, target, Pg);
+                    gatingMat(:,tg) = gatedMeasId';
+                end
             end
-            
         end
         
         function gatedMeasId = gating(~, scan, target, Pg)
@@ -192,8 +194,6 @@ classdef MHTFinstance < handle
             gatedMeasId(gatedMeasId == inf) = [];
             
         end
-
-        
         
         function setAlphas(this)
             % Calculate alpha for each generated hypo stored in
@@ -214,7 +214,6 @@ classdef MHTFinstance < handle
             allAlphas = [this.hypoStorage(:).alpha];
             a = max(allAlphas);
             bestNr = find(allAlphas == a(1));
-            
             this.bestHypo = this.hypoStorage(bestNr(1));
         end
         
@@ -251,8 +250,7 @@ classdef MHTFinstance < handle
                         % which target in Y is similar to target in X
                         [D, I] = pdist2(X(1:2:3,:)',Y(1:2:3,:)','euclidean','Smallest',1); 
                         
-                        if sum(D) < Model.mergeThreshold % This is our threshold for merging hypos 
-                            
+                        if sum(D) < Model.mergeThreshold % This is our threshold for merging hypos                             
                             c = Tracks; % Empty tracks object 
                             totB = this.tempStorage(i).beta + this.tempStorage(i+1).beta;
                             if totB == 0 % To avoid numerical instability
@@ -277,8 +275,7 @@ classdef MHTFinstance < handle
                             mergedStorage = [mergedStorage, h]; %#ok<AGROW>
                         else % If they are not similar enough we keep them as they are
                             mergedStorage = [mergedStorage, this.tempStorage(i), this.tempStorage(i+1)]; %#ok<AGROW>                            
-                        end
-                        
+                        end                        
                     else % If they don't have the same amount of targets we keep them as they are
                         mergedStorage = [mergedStorage, this.tempStorage(i), this.tempStorage(i+1)]; %#ok<AGROW>
                     end                    
@@ -288,26 +285,9 @@ classdef MHTFinstance < handle
                 this.sortHypos(); % Sort them to enable next round of pairwise comparisons 
                 newSize = length(this.tempStorage); % Check the new size, i.e. have we managed to merge any hypos? 
                 mergedStorage = [];
-            end
-            
-        end
-        
-    end
-    
-    
+            end            
+        end        
+    end        
     
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
 

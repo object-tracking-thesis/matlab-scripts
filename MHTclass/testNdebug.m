@@ -11,7 +11,7 @@ T2m = x2_m(1:2,:);
 rawscan = cell(1,N);
 
 for j = 1:N
-    rawscan{j} = [T1m(:,j) T2m(:,j)]; % clutterMeas{j}(:,1:randi(5))
+    rawscan{j} = [T1m(:,j) T2m(:,j) clutterMeas{j}]; % clutterMeas{j}(:,1:randi(5))
     rawscan{j} = rawscan{j}(:, randperm(length(rawscan{j}))); % Shuffle measurement order (columns)
 end
 
@@ -25,11 +25,14 @@ end
 
 
 %% Create MHTF instance
-nrHypos = 3;
+clear bestHypos
+clear bestTracks
+nrHypos = 20;
 bestHypos(1,N) = Hypothesis;
 bestTracks(1,N) = Tracks;
 tic
 for k = 1:N
+    disp(k)    
     if k == 1
         % We have 2 hypos that have 2 targets, and one hypo with 1 target
         MHTF = MHTFinstance(nrHypos,N,Scans(k));
@@ -54,25 +57,27 @@ toc
 
 
 %% Look at best hypo history 
-T1 = ones(4,N);
-T2 = ones(4,N);
-
+if 1
+Targets = cell(1,N);
 
 for k = 1:N
-    T1(:,k) = bestTracks(k).track(1).expectedValue;
-    T2(:,k) = bestTracks(k).track(2).expectedValue;
+    Targets{k} = [bestTracks(k).track.expectedValue];
 
 end
 
+figure(h1)
 for k = 1:N
-    figure(h1)
     hold on
-    plot(T1(1,k),T1(3,k),'sk','MarkerFaceColor','k')
-    plot(T2(1,k),T2(3,k),'sk','MarkerFaceColor','k')
-    hold off
-    txt = sprintf('k = %d',k);
-    title(txt)
-    pause(0.1)
+    %p3 = plot(T1(1,k),T1(3,k),'sk','MarkerFaceColor','k');
+    plot(Targets{k}(1,:),Targets{k}(3,:),'sk');%,'MarkerFaceColor','k')
+    %lg = legend([p1 p11 p2 p21 p3],'Target 1','Target 1 measurement', 'Target 2', 'Target 2 measurement','MHTF state estimates');
+    %lg.FontSize = 14;
+    hold off    
+    txt = sprintf('t = %d (1:%d)',[k N]);
+    title(txt,'FontSize',14,'FontWeight','Bold')
+    pause(1)
+    
+end
 end
 
 %% DEBUG FUNCTIONS

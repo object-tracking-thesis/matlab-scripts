@@ -45,8 +45,7 @@ classdef Hypothesis < handle
         % Make a copy of a handle object.
         function new = copy(this)
             % Instantiate new object of the same class.
-            new = feval(class(this));
-            
+            new = feval(class(this));            
             % Copy all non-hidden properties.
             p = properties(this);
             for i = 1:length(p)
@@ -82,28 +81,30 @@ classdef Hypothesis < handle
             gN = 1;
             % Copy over all tracks
             this.tracks = parentTracks.copy(); 
-            for k = 1:length(association)                
-                if ismember(association(k),parentTracks.trackId)
+            for meas = 1:length(association)                
+                if ismember(association(meas),parentTracks.trackId)
                     % The measurement is associated with an existing track
-                    idx = association(k); % The index of the track that the measurement is associated with
-                    
+                    idx = association(meas); % The index of the track that the measurement is associated with                    
                     tr = parentTracks.track(idx); % Take out the track
-                    m = Scan.measurements(:,k); 
+                    m = Scan.measurements(:,meas); 
                     % this is new: 
                     this.tracks.track(idx) = this.calcPosterior(m,tr); % Calculate posterior and insert it into current object 
                     gN = gN * this.calcGn(tr, m);
                     
-                elseif association(k) == 0
+                elseif association(meas) == 0
                     %disp('FA')
                     % The measurement is designated as False Alarm
                 else
                     % The measurement is designated as a New Track
-                    tr = this.initiateTrack(Scan.measurements(:, association(k)));
+%                     meas
+%                     Scan.measurements
+%                     association
+                    tr = this.initiateTrack(Scan.measurements(:, meas));
                     this.tracks.addTrack(tr);
                     
                     % Likelihood for new track, Not 100% sure that this is
                     % how it should be.                    
-                    gN = gN * mvnpdf(Scan.measurements(:,association(k)),Scan.measurements(:,association(k)), Model.R); 
+                    gN = gN * mvnpdf(Scan.measurements(:,meas),Scan.measurements(:,meas), Model.R); 
                 end
             end
             
@@ -130,8 +131,7 @@ classdef Hypothesis < handle
             % Initiates a new track from the given measurement using single
             % point initation techniques. These necessitate the use of the
             % Model class and its variables. 
-            post = Posterior; % Empty Posterior object.
-            
+            post = Posterior; % Empty Posterior object.            
             mu = [meas(1) 0 meas(2) 0]';
             P = diag([Model.Rm, (Model.vmax/Model.kappa)^2, Model.Rm, (Model.vmax/Model.kappa)^2]);
             post.expectedValue = mu;
@@ -140,8 +140,7 @@ classdef Hypothesis < handle
         
         function beta = calcBeta(parentHypo, association, Scan)
             gZero = calcGzero(parentHypo.tracks, association);
-            gN = calcGn(parentHypo.tracks, association, Scan);
-            
+            gN = calcGn(parentHypo.tracks, association, Scan);            
             beta = parentHypo.alpha*gZero*gN;
         end
         
@@ -151,9 +150,20 @@ classdef Hypothesis < handle
             % Note that Pr{association} is omitted             
             tgD = sum(association > 0); % The number of targets detected (both new and old), i.e. targets associateed to measurements 
             tgE = length(this.tracks.trackId); % Number of existing targets in current hypothesis
-            nrFA = sum(association == 0); % The number of false alarms
+            nrFA = sum(association == 0); % The number of false alarms            
+            gZero = (Model.rho^(nrFA))*exp(-Model.rho*Model.V)*((1-Model.Pd)^(tgE-tgD))*(Model.Pd^(tgD));
             
-            gZero = Model.rho^(nrFA)*exp(-Model.rho*Model.V)*(1-Model.Pd)^(tgE-tgD)*Model.Pd^(tgD);
+            %
+            % THIS NEEDS WORK! 
+            %
+            %
+            nrNT = association;
+            for k = 1:length(this.tracks.trackId)
+               nrNT = nrNT(nrNT > this.tracks.trackId(k)); 
+            end
+            nrNT = sum(nrNT);
+            %nrNT = tgD - tgE
+            gZero = (Model.rho^(nrFA))*(Model.spwn^(nrNT))*((1-Model.Pd)^(tgE-tgD))*(Model.Pd^(tgD));
         end
         
         function gN = calcGn(~, predictedTrack, measurement)
@@ -182,13 +192,5 @@ classdef Hypothesis < handle
             this.hypoHistory(2:end) = parentHypothesis.hypoHistory(1:end-1);
         end
     end
-    
-    
-    
-    
-    
-    
-
-    
     
 end

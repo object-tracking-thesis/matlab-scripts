@@ -25,11 +25,11 @@ classdef Model
         kappa = 2; % scaling factor
         
         % Contains detection probability and clutter specification
-        rho = 0.0001; % False Measurement Density
-        V = 1;     % Volume/Area of Measurement Space
-        Pd = 1;    % Detection Probability
+        rho = 0.00001; % False Measurement Density
+        V = 150*300;     % Volume/Area of Measurement Space
+        Pd = 0.9999999999;    % Detection Probability
         
-        spwn = 0.0001; % New target spawning density
+        spwn = 0.000001; % New target spawning density
         
         mergeThreshold = 0.1; % The threshold for merging two hypos
     end
