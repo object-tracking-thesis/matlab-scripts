@@ -104,7 +104,8 @@ classdef Hypothesis < handle
                     
                     % Likelihood for new track, Not 100% sure that this is
                     % how it should be.                    
-                    gN = gN * mvnpdf(Scan.measurements(:,meas),Scan.measurements(:,meas), Model.R); 
+                    % disp('New track')
+                    % gN = gN * mvnpdf(Scan.measurements(:,meas),Scan.measurements(:,meas), Model.R);
                 end
             end
             
@@ -174,6 +175,7 @@ classdef Hypothesis < handle
             %predictedTrack.expectedValue
             %predCov
             %Model.H*predCov*Model.H' + Model.R
+            %disp('Existing Track')
             gN = mvnpdf(measurement, Model.H*predMu, Model.H*predCov*Model.H' + Model.R);
         end
         
