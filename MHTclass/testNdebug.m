@@ -27,9 +27,10 @@ end
 %% Create MHTF instance
 clear bestHypos
 clear bestTracks
-nrHypos = 20;
+nrHypos = 30;
 bestHypos(1,N) = Hypothesis;
 bestTracks(1,N) = Tracks;
+
 tic
 for k = 1:N
     disp(k)    
@@ -39,16 +40,26 @@ for k = 1:N
         bestHypos(k) = MHTF.bestHypo.copy();
         bestTracks(k) = bestHypos(k).tracks.copy();
         
-        for j = 1:bestTracks(k).trackId(end)
-           bestTracks(k).track(j) = bestTracks(k).track(j).copy();
+        if isempty(bestTracks(k).trackId)
+            bestTracks(k) = Tracks;
+        else
+            for j = 1:length(bestTracks(k).trackId)
+                bestTracks(k).track(j) = bestTracks(k).track(j).copy();
+            end
         end
+
     else
         % Now we iterate through each hypothesis and investigate
         MHTF.iterate(Scans(k));
         bestHypos(k) = MHTF.bestHypo.copy();
         bestTracks(k) = bestHypos(k).tracks.copy();
-        for j = 1:bestTracks(k).trackId(end)
-            bestTracks(k).track(j) = bestTracks(k).track(j).copy();
+        
+        if isempty(bestTracks(k).trackId)
+            bestTracks(k) = Tracks;
+        else
+            for j = 1:length(bestTracks(k).trackId)
+                bestTracks(k).track(j) = bestTracks(k).track(j).copy();
+            end
         end
         
     end
@@ -61,21 +72,39 @@ if 1
 Targets = cell(1,N);
 
 for k = 1:N
+    try
     Targets{k} = [bestTracks(k).track.expectedValue];
+    catch e
+       Targets{k} = [bestTracks(k).track]; 
+    end
 
 end
 
 figure(h1)
+filename = 'testnew51.gif';
 for k = 1:N
     hold on
     %p3 = plot(T1(1,k),T1(3,k),'sk','MarkerFaceColor','k');
-    plot(Targets{k}(1,:),Targets{k}(3,:),'sk');%,'MarkerFaceColor','k')
+    try
+    plot(Targets{k}(1,:),Targets{k}(3,:),'sk','MarkerFaceColor','k')
+    catch e
+    end
     %lg = legend([p1 p11 p2 p21 p3],'Target 1','Target 1 measurement', 'Target 2', 'Target 2 measurement','MHTF state estimates');
     %lg.FontSize = 14;
     hold off    
     txt = sprintf('t = %d (1:%d)',[k N]);
     title(txt,'FontSize',14,'FontWeight','Bold')
-    pause(1)
+    
+%               drawnow
+%       frame = getframe(1);
+%       im = frame2im(frame);
+%       [imind,cm] = rgb2ind(im,256);
+%       if k == 1;
+%           imwrite(imind,cm,filename,'gif', 'Loopcount',inf)
+%       else
+%           imwrite(imind,cm,filename,'gif','WriteMode','append')
+%       end
+    pause(0.1)
     
 end
 end
