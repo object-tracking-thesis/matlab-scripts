@@ -15,6 +15,7 @@ classdef MHTFinstance < handle
         scanDepth; % The scan depth that will be used for purging later on
         hypoLimit; % The amount of hypotheses that will be stored for each k
         bestHypo; % The best (i.e. most probable) hypothesis in hypothesisStorage
+        fileID;
     end
     
     %% ====================================================================
@@ -23,6 +24,7 @@ classdef MHTFinstance < handle
     methods(Access = public)
         % Constructor 
         function this = MHTFinstance(nrHypos, scanDepth, scan)
+            this.fileID = fopen('exp.txt','w');
             % Setup for the MHTF at k = 1
             this.hypoLimit = nrHypos;
             this.scanDepth = scanDepth;
@@ -131,6 +133,12 @@ classdef MHTFinstance < handle
                 end
                 this.setAlphas(); % Set the alpha values; 
                 this.setBestHypo();
+                
+                        
+                format longg
+                plt =[this.hypoStorage.alpha]';
+                fprintf(this.fileID, evalc('disp(plt)'));              
+                fprintf(this.fileID, '\n');                                              
 
         end
     end
@@ -250,15 +258,18 @@ classdef MHTFinstance < handle
                         % which target in Y is similar to target in X
                         [D, I] = pdist2(X(1:2:3,:)',Y(1:2:3,:)','euclidean','Smallest',1); 
                         
-                        if sum(D) < Model.mergeThreshold % This is our threshold for merging hypos                             
+                        totB = this.tempStorage(i).beta + this.tempStorage(i+1).beta;
+                        if (mean(D) < Model.mergeThreshold) && (totB > 0)% This is our threshold for merging hypos                             
                             c = Tracks; % Empty tracks object 
-                            totB = this.tempStorage(i).beta + this.tempStorage(i+1).beta;
+                            %totB = this.tempStorage(i).beta + this.tempStorage(i+1).beta;
                             if totB == 0 % To avoid numerical instability
                                 totB = 1;
+                                disp('Zero beta')
                             end
                             leftB = this.tempStorage(i).beta;
                             rightB = this.tempStorage(i+1).beta;
                             % Merge the tracks according to I
+                            %disp('Merging!')
                             for k = 1:length(I)
                                 expVal = (leftB/totB)*X(:,k) + (rightB/totB)*Y(:,I(k));
                                 
