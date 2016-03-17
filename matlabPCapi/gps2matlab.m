@@ -10,8 +10,11 @@ end
 
 fileID = fopen(file);
 
-% Read as 12 64-bit double precision floats (3x3 rot matrix, lat,lon,alt)
-C = textscan(fileID,'%f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64'); 
+% Read as 12 64-bit double precision floats
+%  (3x3 rot matrix, lat,lon,alt)
+%  (3x3 rot matrix, lat,lon,alt)
+%  (offsetx, offsety, offsetz)
+C = textscan(fileID,'%f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64 %f64'); 
 fclose(fileID);
 
 pcCoord = cell2mat(C);
