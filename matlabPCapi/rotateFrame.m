@@ -1,4 +1,4 @@
-function rotatedFrame = rotateFrame(lidarFrame, angle, varargin)
+function rotatedFrame = rotateFrame(lidarFrame, angleZ, angleY, angleX, varargin)
 % Takes a lidarFrame and rotates all coordinates around Z-axis 
 % in the frame with 'angle' (input in radians). An additional argument may
 % be passed, specifying any angle offset to be used when rotating.
@@ -16,7 +16,19 @@ end
 rotMatZ = @(theta) [cos(theta) -sin(theta) 0;
                     sin(theta)  cos(theta) 0;
                     0           0          1];
+                
+rotMatY = @(theta) [cos(theta) 0 sin(theta)  ;
+                    0          1            0;
+                    -sin(theta) 0 cos(theta)];
 
-rotatedFrame = (rotMatZ((angle+angleOffset))*lidarFrame')';                
+rotMatX = @(theta) [1          0            0;
+                    0  cos(theta) -sin(theta);
+                    0  sin(theta) cos(theta)];                
+
+%first around Z, then around Y, then around X
+%http://www.oxts.com/Downloads/Products/Inertial2/inertialPlusman.pdf
+rotatedFrame = (rotMatZ((angleZ+angleOffset))*lidarFrame')';
+rotatedFrame = (rotMatY((angleY+angleOffset))*rotatedFrame')';
+rotatedFrame = (rotMatX((angleX+angleOffset))*rotatedFrame')'; 
 
 end
