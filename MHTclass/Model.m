@@ -22,15 +22,15 @@ classdef Model
         % Used for track initiation
         % THESE ARE ALSO VERY IMPORTANT FOR GATING TO WORK FOR NEW TARGETS
         vmax = 6;  % Maximal (assumed) velocity
-        kappa = 2; % scaling factor
+        kappa = 4; % scaling factor
         
         % Contains detection probability and clutter specification
-        rho = 0.00001; % False Measurement Density
+        rho = 0.0001; % False Measurement Density
         V = 150*300;     % Volume/Area of Measurement Space
         Pd = 0.9999999999;    % Detection Probability
         
-        spwn = 0.000001; % New target spawning density
+        spwn = 0.0000000001; % New target spawning density
         
-        mergeThreshold = 0.1; % The threshold for merging two hypos
+        mergeThreshold = 0.25; % The threshold for merging two hypos
     end
 end
