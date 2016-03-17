@@ -27,15 +27,14 @@ end
 %% Create MHTF instance
 clear bestHypos
 clear bestTracks
-nrHypos = 30;
+nrHypos = 15;
 bestHypos(1,N) = Hypothesis;
 bestTracks(1,N) = Tracks;
 
 tic
 for k = 1:N
     disp(k)    
-    if k == 1
-        % We have 2 hypos that have 2 targets, and one hypo with 1 target
+    if k == 1        
         MHTF = MHTFinstance(nrHypos,N,Scans(k));
         bestHypos(k) = MHTF.bestHypo.copy();
         bestTracks(k) = bestHypos(k).tracks.copy();

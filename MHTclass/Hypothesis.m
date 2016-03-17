@@ -149,22 +149,18 @@ classdef Hypothesis < handle
             % Calculates the likelihood of detecting new targets and not
             % detecting existing targets. 
             % Note that Pr{association} is omitted             
-            tgD = sum(association > 0); % The number of targets detected (both new and old), i.e. targets associateed to measurements 
-            tgE = length(this.tracks.trackId); % Number of existing targets in current hypothesis
-            nrFA = sum(association == 0); % The number of false alarms            
-            gZero = (Model.rho^(nrFA))*exp(-Model.rho*Model.V)*((1-Model.Pd)^(tgE-tgD))*(Model.Pd^(tgD));
+            tgD = sum(association > 0); % The number of targets detected which exist in parentHypo
             
-            %
-            % THIS NEEDS WORK! 
-            %
-            %
+            tgND = sum(setdiff(this.tracks.trackId, association));
+            nrFA = sum(association == 0); % The number of false alarms            
+
             nrNT = association;
             for k = 1:length(this.tracks.trackId)
                nrNT = nrNT(nrNT > this.tracks.trackId(k)); 
             end
             nrNT = sum(nrNT);
-            %nrNT = tgD - tgE
-            gZero = (Model.rho^(nrFA))*(Model.spwn^(nrNT))*((1-Model.Pd)^(tgE-tgD))*(Model.Pd^(tgD));
+
+            gZero = (Model.rho^(nrFA))*(Model.spwn^(nrNT))*((1-Model.Pd)^(tgND))*(Model.Pd^(tgD));
         end
         
         function gN = calcGn(~, predictedTrack, measurement)

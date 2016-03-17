@@ -124,6 +124,7 @@ classdef MHTFinstance < handle
                 % keep the nrHypos best, based on beta. Then, set alpha.
                 % (Somwhere here is where N-scan pruning & merging should come in.)
                 % Sorting is based on beta values
+                               
                 this.sortHypos();
                 this.mergeHypos(); % Uses the sortHypos() function as well 
                 try 
@@ -131,10 +132,10 @@ classdef MHTFinstance < handle
                 catch e %#ok<NASGU>
                     this.hypoStorage = this.tempStorage;
                 end
-                this.setAlphas(); % Set the alpha values; 
-                this.setBestHypo();
-                
-                        
+                this.setAlphas(); % Set the alpha values;
+                this.removePoorAlphas();
+                this.setBestHypo();                
+
                 format longg
                 plt =[this.hypoStorage.alpha]';
                 fprintf(this.fileID, evalc('disp(plt)'));              
@@ -232,6 +233,17 @@ classdef MHTFinstance < handle
             this.tempStorage = this.tempStorage(:,sortId);            
         end
         
+        function sortHyposH(this)
+            % Will sort hypotheses according to their beta, descending
+            % order.
+            [~, sortId] = sort([this.hypoStorage(:).beta], 'descend');
+            this.hypoStorage = this.hypoStorage(:,sortId);            
+        end
+        
+        function removePoorAlphas(this)
+            this.hypoStorage = this.hypoStorage([this.hypoStorage.alpha] > 1e-20);        
+        end
+        
         function mergeHypos(this)
             % Function for merging hypotheses that are similar to
             % eachother. To merge two hypotheses, they need to have: i. The
@@ -269,7 +281,7 @@ classdef MHTFinstance < handle
                             leftB = this.tempStorage(i).beta;
                             rightB = this.tempStorage(i+1).beta;
                             % Merge the tracks according to I
-                            %disp('Merging!')
+                            disp('Merging!')
                             for k = 1:length(I)
                                 expVal = (leftB/totB)*X(:,k) + (rightB/totB)*Y(:,I(k));
                                 

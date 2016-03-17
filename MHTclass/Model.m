@@ -27,7 +27,7 @@ classdef Model
         % Contains detection probability and clutter specification
         rho = 0.0001; % False Measurement Density
         V = 150*300;     % Volume/Area of Measurement Space
-        Pd = 0.9999999999;    % Detection Probability
+        Pd = 1-(1e-10);    % Detection Probability
         
         spwn = 0.0000000001; % New target spawning density
         
