@@ -27,7 +27,7 @@ x3_init = [5 1 -10 1]';
 x4_init = [14 0 -18 2]';
 % Generate State & Measurement Sequence for two targets
 
-N = 40;
+N = 100;
 vLimit = round(N/2);
 % x1 & x2 always present. x3 is birthed halfway through, x4 dies halfway through 
 x1_state = ones(4,N);
@@ -234,16 +234,18 @@ if 1
 st = 1;
 sp = N;
 h1 = figure('Position',[50 50 1920*0.8 1080*0.8]);
+%filename = 'testnew51.gif';
+for k = 1:N
     hold on
-    p1 = plot(x1_state(1,st:sp),x1_state(3,st:sp),'ob');
-    plot(x1_init(1),x1_init(3),'ob','MarkerFaceColor','blue')
-    p11 = plot(x1_m(1,st:sp),x1_m(2,st:sp),'xb');
+    %p1 = plot(x1_state(1,st:sp),x1_state(3,st:sp),'ob');
+    %plot(x1_init(1),x1_init(3),'ob','MarkerFaceColor','blue')
+    p11 = plot(x1_m(1,k),x1_m(2,k),'xb','Color',[0.3 0.3 0.3]);
 
-    p2 = plot(x2_state(1,st:sp),x2_state(3,st:sp),'or');
-    plot(x2_init(1),x2_init(3),'or','MarkerFaceColor','red')
-    p21 = plot(x2_m(1,st:sp),x2_m(2,st:sp),'xr');
+    %p2 = plot(x2_state(1,st:sp),x2_state(3,st:sp),'or');
+    %plot(x2_init(1),x2_init(3),'or','MarkerFaceColor','red')
+    p21 = plot(x2_m(1,k),x2_m(2,k),'xr','Color',[0.3 0.3 0.3]);
     
-    allClutter = [clutterMeas{1:end}];
+    allClutter = [clutterMeas{k}];
     plot(allClutter(1,:),allClutter(2,:),'x','Color',[0.3 0.3 0.3])
     
     xlabel('X [m]','FontSize',14)
@@ -253,6 +255,16 @@ h1 = figure('Position',[50 50 1920*0.8 1080*0.8]);
     X1 = [x1_init x1_state];
     X2 = [x2_init x2_state];
     axis equal
+    
+%           drawnow
+%       frame = getframe(1);
+%       im = frame2im(frame);
+%       [imind,cm] = rgb2ind(im,256);
+%       if k == 1;
+%           imwrite(imind,cm,filename,'gif', 'Loopcount',inf)
+%       else
+%           imwrite(imind,cm,filename,'gif','WriteMode','append')
+%       end
     %     for k = 1:length(X1)-1
     %         a = 1+k;
     %         [xf, yf]=ds2nfu(X1(1,k:a),X1(3,k:a));
@@ -260,7 +272,7 @@ h1 = figure('Position',[50 50 1920*0.8 1080*0.8]);
     %         [xf, yf]=ds2nfu(X2(1,k:a),X2(3,k:a));
     %         annotation('arrow', xf,yf)
     %     end
-
+    %pause(0.25)
 end
-
+end
 
