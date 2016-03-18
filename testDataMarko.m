@@ -1,7 +1,9 @@
-%% what clusters do we want to look at?
+%% test case name
+testCaseName = 'filterTestClustersXY2';
 
-startFrame = 80;
-endFrame = 100;
+%% what clusters do we want to look at?
+startFrame = 50;
+endFrame = 90;
 filterTestClusters = cell(1,endFrame-startFrame);
 for i=startFrame:endFrame
     j = i-startFrame+1;
@@ -24,11 +26,12 @@ for i=startFrame:endFrame
     end
 end
 
-%% set ego position to zero and all clusters relative to that zero pos
+%% set initial ego position to zero and all clusters relative to that zero pos
+off = offset{startFrame}(1:2)';
 for i=startFrame:endFrame
     j = i-startFrame+1;
     for k=1:length(filterTestClusters{j})
-        filterTestClusters{j}{k} = (filterTestClusters{j}{k} - offset{i}(1:2)');
+        filterTestClusters{j}{k} = (filterTestClusters{j}{k} - off);
     end
 end
 
@@ -48,3 +51,4 @@ end
 hold off
 
 %% save relevant variables to a .mat file for marko
+save(strcat('filterTestClusters/',testCaseName), 'filterTestClusters')
