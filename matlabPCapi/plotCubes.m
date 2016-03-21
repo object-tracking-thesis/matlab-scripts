@@ -1,4 +1,4 @@
-function [origin, rot_angle] = plotCubes(origin, length, width, height, rot_angle, tuneCubeSize, groundPlaneZ)
+function [] = plotCubes(origin, length, width, height, rot_angle, tuneCubeSize, groundPlaneZ)
 %plot the static map cubes (mainly walls)
 %in:
 %origin - 1x3 vector, center point of the cube
