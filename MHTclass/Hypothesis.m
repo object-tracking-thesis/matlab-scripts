@@ -135,37 +135,7 @@ classdef Hypothesis < handle
             nrND = sum(length(setdiff(this.parentHypothesis.tracks.trackId, this.association))); % Existing targets not detected
             g0 = ((1-Model.Pd*Model.Pg)^(nrD))*((1-Model.Pd*Model.Pg)^(nrND));            
             this.beta = gN * g0 * this.parentHypothesis.alpha;
-        end
-        
-%         function gZero = calcGzero(this, association)
-%             % Calculates the likelihood of detecting new targets and not
-%             % detecting existing targets. 
-%             % Note that Pr{association} is omitted             
-%             tgD = sum(association > 0); % The number of targets detected which exist in parentHypo
-%             
-%             tgND = sum(setdiff(this.tracks.trackId, association));
-%             nrFA = sum(association == 0); % The number of false alarms            
-% 
-%             nrNT = association;
-%             for k = 1:length(this.tracks.trackId)
-%                nrNT = nrNT(nrNT > this.tracks.trackId(k)); 
-%             end
-%             nrNT = sum(nrNT);
-% 
-%             gZero = (Model.rho^(nrFA))*(Model.spwn^(nrNT))*((1-Model.Pd)^(tgND))*(Model.Pd^(tgD));
-%         end
-        
-%         function gN = calcGn(~, predictedTrack, measurement)
-%             % Calculates the likelihood for the measurement given the
-%             % (predicted) track. 
-%             predMu = predictedTrack.expectedValue;
-%             predCov = predictedTrack.covariance; 
-%             %predictedTrack.expectedValue
-%             %predCov
-%             %Model.H*predCov*Model.H' + Model.R
-%             %disp('Existing Track')
-%             gN = mvnpdf(measurement, Model.H*predMu, Model.H*predCov*Model.H' + Model.R);
-%         end
+        end        
         
         function setHypoHistory(this, parentHypothesis)
             % Updates and sets the hypothesis history current hypothesis.

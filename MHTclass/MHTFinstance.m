@@ -73,8 +73,7 @@ classdef MHTFinstance < handle
             j = 1;
             while sum([this.hypoStorage(1:j).alpha]) < Model.sumProbLimit
                 j = j+1;
-            end
-            j
+            end            
             this.bestHypo = this.hypoStorage(1);
         end
         
@@ -129,8 +128,7 @@ classdef MHTFinstance < handle
              j = 1;
              while sum([this.hypoStorage(1:j).alpha]) < Model.sumProbLimit
                  j = j+1;
-             end
-             j
+             end             
              
              this.bestHypo = this.hypoStorage(1);                                         
         end

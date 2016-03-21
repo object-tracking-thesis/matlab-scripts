@@ -22,12 +22,9 @@ classdef OptimalHypos < handle
             matrixFA(matrixFA == 0) = x;
             matrixNT = diag(betaNT.*ones(size(scan.measId)));
             matrixNT(matrixNT == 0) = x;
-            % gatingMat
+            
             a = this.getTargetAssignmentMat(gatingMat, scan, tracks); 
             a(a == 0) = x;
-            % matrixFA
-            % matrixNT
-            % a
             
             assignmentMat = [a, matrixNT, matrixFA];
             
