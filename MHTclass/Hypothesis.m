@@ -1,11 +1,13 @@
 % Class for storing Hypotheses. Not done yet
 classdef Hypothesis < handle
     properties
-        beta
+        beta = -1;
         alpha = 0;
         hypoHistory
         hypoNr;
         tracks
+        association; 
+        parentHypothesis;
     end
     
     %% ====================================================================
@@ -17,13 +19,16 @@ classdef Hypothesis < handle
     % =====================================================================
     methods (Access = public)
         
-        function this = Hypothesis(parentHypothesis, association, Scan, hypoNr)
+        function this = Hypothesis(parentHypothesis, association, hypoNr, gN)
             % Create active hypothesis from parentHypothesis
             if nargin == 4
                 this.hypoNr = hypoNr; % Set current hypoNr
                 this.tracks = Tracks; % Empty Tracks object
+                this.association = association;
+                this.parentHypothesis = parentHypothesis;
                 this.setHypoHistory(parentHypothesis); % Update trace for this hypothesis
-                this.updateTracks(parentHypothesis.tracks, association, Scan);
+                this.calcBeta(gN);
+                %this.updateTracks(parentHypothesis.tracks, association, Scan);
             end
         end
         
@@ -63,7 +68,7 @@ classdef Hypothesis < handle
     % =====================================================================
     methods (Access = public)
         
-        function updateTracks(this,parentTracks, association, Scan)
+        function updateTracks(this, scan)
             % Updates all tracks based on the association of measurements.
             % These include assigning each measurement to either an
             % existing track, as a FA or as a new target. If a measurement
@@ -77,39 +82,25 @@ classdef Hypothesis < handle
             % instead. 
             % Function also calculates and sets beta for current hypo. 
             
-            % Initiate one of the likelihood parameters to be used 
-            gN = 1;
             % Copy over all tracks
-            this.tracks = parentTracks.copy(); 
-            for meas = 1:length(association)                
-                if ismember(association(meas),parentTracks.trackId)
+            this.tracks = this.parentHypothesis.tracks.copy(); 
+            for meas = 1:length(this.association)                
+                if ismember(this.association(meas),this.parentHypothesis.tracks.trackId)
                     % The measurement is associated with an existing track
-                    idx = association(meas); % The index of the track that the measurement is associated with                    
-                    tr = parentTracks.track(idx); % Take out the track
-                    m = Scan.measurements(:,meas); 
+                    idx = this.association(meas); % The index of the track that the measurement is associated with                    
+                    tr = this.parentHypothesis.tracks.track(idx); % Take out the track
+                    m = scan.measurements(:,meas); 
                     % this is new: 
                     this.tracks.track(idx) = this.calcPosterior(m,tr); % Calculate posterior and insert it into current object 
-                    gN = gN * this.calcGn(tr, m);
                     
-                elseif association(meas) == 0
-                    %disp('FA')
-                    % The measurement is designated as False Alarm
+                elseif this.association(meas) == 0
+
                 else
                     % The measurement is designated as a New Track
-%                     meas
-%                     Scan.measurements
-%                     association
-                    tr = this.initiateTrack(Scan.measurements(:, meas));
+                    tr = this.initiateTrack(scan.measurements(:, meas));
                     this.tracks.addTrack(tr);
-                    
-                    % Likelihood for new track, Not 100% sure that this is
-                    % how it should be.                    
-                    % disp('New track')
-                    % gN = gN * mvnpdf(Scan.measurements(:,meas),Scan.measurements(:,meas), Model.R);
                 end
-            end
-            
-            this.beta = this.calcGzero(association)*gN; 
+            end            
         end
         
         function post = calcPosterior(~, measurement, prediction)
@@ -139,41 +130,42 @@ classdef Hypothesis < handle
             post.covariance = P;
         end
         
-        function beta = calcBeta(parentHypo, association, Scan)
-            gZero = calcGzero(parentHypo.tracks, association);
-            gN = calcGn(parentHypo.tracks, association, Scan);            
-            beta = parentHypo.alpha*gZero*gN;
+        function calcBeta(this, gN)
+            nrD = sum(length(intersect(this.parentHypothesis.tracks.trackId, this.association))); % Existing targets detected
+            nrND = sum(length(setdiff(this.parentHypothesis.tracks.trackId, this.association))); % Existing targets not detected
+            g0 = ((1-Model.Pd*Model.Pg)^(nrD))*((1-Model.Pd*Model.Pg)^(nrND));            
+            this.beta = gN * g0 * this.parentHypothesis.alpha;
         end
         
-        function gZero = calcGzero(this, association)
-            % Calculates the likelihood of detecting new targets and not
-            % detecting existing targets. 
-            % Note that Pr{association} is omitted             
-            tgD = sum(association > 0); % The number of targets detected which exist in parentHypo
-            
-            tgND = sum(setdiff(this.tracks.trackId, association));
-            nrFA = sum(association == 0); % The number of false alarms            
-
-            nrNT = association;
-            for k = 1:length(this.tracks.trackId)
-               nrNT = nrNT(nrNT > this.tracks.trackId(k)); 
-            end
-            nrNT = sum(nrNT);
-
-            gZero = (Model.rho^(nrFA))*(Model.spwn^(nrNT))*((1-Model.Pd)^(tgND))*(Model.Pd^(tgD));
-        end
+%         function gZero = calcGzero(this, association)
+%             % Calculates the likelihood of detecting new targets and not
+%             % detecting existing targets. 
+%             % Note that Pr{association} is omitted             
+%             tgD = sum(association > 0); % The number of targets detected which exist in parentHypo
+%             
+%             tgND = sum(setdiff(this.tracks.trackId, association));
+%             nrFA = sum(association == 0); % The number of false alarms            
+% 
+%             nrNT = association;
+%             for k = 1:length(this.tracks.trackId)
+%                nrNT = nrNT(nrNT > this.tracks.trackId(k)); 
+%             end
+%             nrNT = sum(nrNT);
+% 
+%             gZero = (Model.rho^(nrFA))*(Model.spwn^(nrNT))*((1-Model.Pd)^(tgND))*(Model.Pd^(tgD));
+%         end
         
-        function gN = calcGn(~, predictedTrack, measurement)
-            % Calculates the likelihood for the measurement given the
-            % (predicted) track. 
-            predMu = predictedTrack.expectedValue;
-            predCov = predictedTrack.covariance; 
-            %predictedTrack.expectedValue
-            %predCov
-            %Model.H*predCov*Model.H' + Model.R
-            %disp('Existing Track')
-            gN = mvnpdf(measurement, Model.H*predMu, Model.H*predCov*Model.H' + Model.R);
-        end
+%         function gN = calcGn(~, predictedTrack, measurement)
+%             % Calculates the likelihood for the measurement given the
+%             % (predicted) track. 
+%             predMu = predictedTrack.expectedValue;
+%             predCov = predictedTrack.covariance; 
+%             %predictedTrack.expectedValue
+%             %predCov
+%             %Model.H*predCov*Model.H' + Model.R
+%             %disp('Existing Track')
+%             gN = mvnpdf(measurement, Model.H*predMu, Model.H*predCov*Model.H' + Model.R);
+%         end
         
         function setHypoHistory(this, parentHypothesis)
             % Updates and sets the hypothesis history current hypothesis.

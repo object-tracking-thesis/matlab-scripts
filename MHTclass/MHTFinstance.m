@@ -24,7 +24,7 @@ classdef MHTFinstance < handle
     methods(Access = public)
         % Constructor 
         function this = MHTFinstance(nrHypos, scanDepth, scan)
-            this.fileID = fopen('exp.txt','w');
+            % this.fileID = fopen('exp.txt','w');
             % Setup for the MHTF at k = 1
             this.hypoLimit = nrHypos;
             this.scanDepth = scanDepth;
@@ -36,35 +36,10 @@ classdef MHTFinstance < handle
             initHypo.hypoHistory = zeros(1,scanDepth+1);
             initHypo.tracks = Tracks; % Zero tracks to being with
             initHypo.hypoNr = 1; % Since only one initHypo, hypoNr = 1; 
-            
-            % Create first assignment matrix (for k > 1 this will loop for each hypothesis instead)
-%             betaFA = Model.rho;
-%             betaNT = Model.spwn;
-%             x = -1e10; % -inf approximation
-%             
-%             FAm = diag(betaFA.*ones(length(Scan.measId)));
-%             FAm(FAm == 0) = x;
-%             NTm = diag(betaNT.*ones(length(Scan.measId)));
-%             NTm(NTm == 0) = x;
-            
-%            assignmentMatrix = [FAm NTm];
-            
-            % Get a matrix of (at max) nrHypos-best associations (e.g. 10), that we
-            % use to create new hypotheses with. Each column an association
-            % for the measurements (rows in the association- & assignmentMatrix)
-            
-            %--------------------------------------------------------------
-            % TODO - Implement assignmentAlgorithm
-            %--------------------------------------------------------------
-            % associationMatrix = assigmentAlgorithm(assignmentMatrix, nrHypos);
-            
-            % DEBUG! ONLY FOR 2 measurements AND 3 hypos
-            %associationMatrix = [[0 1]' [2 1]' [1 2]'];
-            
+
             gatingMatrix = [];
             hypoGen = OptimalHypos;
-            associationMatrix = hypoGen.generateHypos(scan, gatingMatrix, initHypo.tracks, this.hypoLimit);
-            
+            [associationMatrix, gNmat] = hypoGen.generateHypos(scan, gatingMatrix, initHypo.tracks, this.hypoLimit);            
             
             [~, c] = size(associationMatrix);
 
@@ -76,8 +51,16 @@ classdef MHTFinstance < handle
             % Start generating hypotheses
             for j = 1:c 
                 association = associationMatrix(:,j);
-                this.hypoStorage(j) = Hypothesis(initHypo, association, scan, j);
+                gN = gNmat(:,j); % Take out gN calculation
+                this.hypoStorage(j) = Hypothesis(initHypo, association, j, gN);
             end
+            
+            % Now we have N hypotheses in hypoStorage, now let's update
+            % them with the Scan             
+            for j = 1:c
+               this.hypoStorage(j).updateTracks(scan);
+            end
+            
             
             this.setAlphas();            
             % Since first set of hypotheses, we do no N-scan pruning. But
@@ -85,7 +68,14 @@ classdef MHTFinstance < handle
             %--------------------------------------------------------------
             % TODO - hypotheses merging
             %--------------------------------------------------------------            
-            this.setBestHypo();
+            this.sortHyposH();            
+            
+            j = 1;
+            while sum([this.hypoStorage(1:j).alpha]) < Model.sumProbLimit
+                j = j+1;
+            end
+            j
+            this.bestHypo = this.hypoStorage(1);
         end
         
         
@@ -96,51 +86,53 @@ classdef MHTFinstance < handle
             
             % Make room for hypos to be generated 
             this.tempStorage(1, this.hypoLimit^2) = Hypothesis;            
-            %this.tempStorage;
+            
             % Generate indexmatrix to be used when generating new hypos
             % i.e. [1 2 3;4 5 6;7 8 9] where each rownr corresponds to 
             % parenthypo, and column entries to children 
             hypoIdx = reshape(1:this.hypoLimit^2, this.hypoLimit, [])';
             
             % run through each hypothesis 
-            for h = 1:length(this.hypoStorage)
-                
-                this.hypoStorage(h).predictTracks; % make predictiosn
-                
-                confInt = 0.9999999999999999999999936; % Confidence interval for gate. 
-                gatingMatrix = this.getGatingMatrix(this.hypoStorage(h).tracks, scan, confInt);                
-                hypoGen = OptimalHypos;
-                associationMatrix = hypoGen.generateHypos(scan, gatingMatrix, this.hypoStorage(h).tracks, this.hypoLimit);
-                %associationMatrix = [[0 1]' [2 1]' [1 2]'];
+            for h = 1:length(this.hypoStorage)               
+                this.hypoStorage(h).predictTracks; % make predictions
                                 
+                gatingMatrix = this.getGatingMatrix(this.hypoStorage(h).tracks, scan, Model.Pg); % Gate existing targets                                 
+                hypoGen = OptimalHypos;
+                [associationMatrix, gNmat] = hypoGen.generateHypos(scan, gatingMatrix, this.hypoStorage(h).tracks, this.hypoLimit);
+                
                 [~, c] = size(associationMatrix);
                 % Start generating hypotheses
-                for j = 1:c
+                for j = 1:c                    
                     association = associationMatrix(:,j);
-                    this.tempStorage(hypoIdx(h,j)) = Hypothesis(this.hypoStorage(h), association, scan, j);
+                    gN = gNmat(:,j);
+                    this.tempStorage(hypoIdx(h,j)) = Hypothesis(this.hypoStorage(h), association, j, gN);
                 end
-            end 
-                %this.tempStorage;
-                % keep the nrHypos best, based on beta. Then, set alpha.
-                % (Somwhere here is where N-scan pruning & merging should come in.)
-                % Sorting is based on beta values
-                               
-                this.sortHypos();
-                this.mergeHypos(); % Uses the sortHypos() function as well 
-                try 
-                    this.hypoStorage = this.tempStorage(1:this.hypoLimit); % Now we have final hypos
-                catch e %#ok<NASGU>
-                    this.hypoStorage = this.tempStorage;
-                end
-                this.setAlphas(); % Set the alpha values;
-                this.removePoorAlphas();
-                this.setBestHypo();                
-
-                format longg
-                plt =[this.hypoStorage.alpha]';
-                fprintf(this.fileID, evalc('disp(plt)'));              
-                fprintf(this.fileID, '\n');                                              
-
+            end            
+            
+            % Remove empty hypos in tempStorage            
+            this.sortHypos(); % We have sorted tempStorage in descending order
+            try
+                this.hypoStorage = this.tempStorage(1:this.hypoLimit); % Keep the N best hypos
+            catch e
+                this.hypoStorage = this.tempStorage;
+            end
+            
+            
+             
+             % Now we have N hypotheses in hypoStorage, now let's update
+             % them with the Scan
+             for j = 1:length(this.hypoStorage)              
+                 this.hypoStorage(j).updateTracks(scan);
+             end
+             this.setAlphas();  
+             
+             j = 1;
+             while sum([this.hypoStorage(1:j).alpha]) < Model.sumProbLimit
+                 j = j+1;
+             end
+             j
+             
+             this.bestHypo = this.hypoStorage(1);                                         
         end
     end
     

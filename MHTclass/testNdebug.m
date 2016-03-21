@@ -11,8 +11,8 @@ T2m = x2_m(1:2,:);
 rawscan = cell(1,N);
 
 for j = 1:N
-    rawscan{j} = [T1m(:,j) T2m(:,j) clutterMeas{j}]; % clutterMeas{j}(:,1:randi(5))
-    rawscan{j} = rawscan{j}(:, randperm(length(rawscan{j}))); % Shuffle measurement order (columns)
+   rawscan{j} = [T1m(:,j) T2m(:,j) clutterMeas{j}]; % clutterMeas{j}(:,1:randi(5))
+   rawscan{j} = rawscan{j}(:, randperm(length(rawscan{j}))); % Shuffle measurement order (columns)
 end
 
 %% Place measurements in scanobject vector
@@ -20,20 +20,26 @@ clear Scans
 Scans(1,N) = Scan;
 
 for j = 1:N
-    Scans(j).addMeasurements(rawscan{j});
+   Scans(j).addMeasurements(rawscan{j});
 end
-
+%%
+% clear Scans 
+% N = length(tempCluster);
+% Scans(1,N) = Scan;
+% for j = 1:N
+%     Scans(j).addMeasurements(tempCluster{j});
+% end
 
 %% Create MHTF instance
 clear bestHypos
 clear bestTracks
-nrHypos = 15;
+nrHypos = 20;
 bestHypos(1,N) = Hypothesis;
 bestTracks(1,N) = Tracks;
 
 tic
 for k = 1:N
-    disp(k)    
+    %disp(k)    
     if k == 1        
         MHTF = MHTFinstance(nrHypos,N,Scans(k));
         bestHypos(k) = MHTF.bestHypo.copy();
@@ -82,15 +88,17 @@ end
 figure(h1)
 filename = 'testnew51.gif';
 for k = 1:N
-    hold on
     %p3 = plot(T1(1,k),T1(3,k),'sk','MarkerFaceColor','k');
+    %plot(A(1,:), A(2,:),'x')
+    hold on
     try
-    plot(Targets{k}(1,:),Targets{k}(3,:),'sk','MarkerFaceColor','k')
+        TG1 = [Targets{k}];        
+    plot(TG1(1,:),TG1(3,:),'sk','MarkerFaceColor','k')
     catch e
     end
+    hold off
     %lg = legend([p1 p11 p2 p21 p3],'Target 1','Target 1 measurement', 'Target 2', 'Target 2 measurement','MHTF state estimates');
     %lg.FontSize = 14;
-    hold off    
     txt = sprintf('t = %d (1:%d)',[k N]);
     title(txt,'FontSize',14,'FontWeight','Bold')
     
@@ -103,7 +111,7 @@ for k = 1:N
 %       else
 %           imwrite(imind,cm,filename,'gif','WriteMode','append')
 %       end
-    pause(0.1)
+    pause(0.5)
     
 end
 end

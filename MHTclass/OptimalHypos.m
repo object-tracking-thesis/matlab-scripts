@@ -5,7 +5,7 @@ classdef OptimalHypos < handle
     
     methods (Access = public)
         
-        function optHypos = generateHypos(this, scan, gatingMat, tracks, N)
+        function [optHypos, rewards] = generateHypos(this, scan, gatingMat, tracks, N)
             % Generates optimal Hypotheses using murty.m and acution.m
             %
             % optHypos = generateHypos(scan, gatingMat, tracks, N)
@@ -14,8 +14,8 @@ classdef OptimalHypos < handle
             %   tracks    - tracks object containing posteriors
             %   N         - Maximal nr of hypotheses wanted to be generated
             %
-            betaFA = Model.rho;
-            betaNT = Model.spwn;
+            betaFA = log(Model.rho);
+            betaNT = log(Model.spwn);
             x = -1e10; % -inf approximation
             
             matrixFA = diag(betaFA.*ones(size(scan.measId)));
@@ -23,19 +23,21 @@ classdef OptimalHypos < handle
             matrixNT = diag(betaNT.*ones(size(scan.measId)));
             matrixNT(matrixNT == 0) = x;
             % gatingMat
-            a = this.getTargetAssignmentMat(gatingMat, scan, tracks);
+            a = this.getTargetAssignmentMat(gatingMat, scan, tracks); 
+            a(a == 0) = x;
             % matrixFA
             % matrixNT
             % a
             
             assignmentMat = [a, matrixNT, matrixFA];
             
-            [tg2m, ~, ~, ~] = Murty(assignmentMat, N);
+            [tg2m, ~, ~, rewards] = Murty(assignmentMat, N);
             
             [~, limitFA] = size([a, matrixNT]);            
-            tg2m = tg2m';
+            tg2m = tg2m';            
             tg2m(tg2m > limitFA) = 0;
             optHypos = tg2m;
+            rewards = exp(rewards');
         end
         
         function tgAssignmentMat =  getTargetAssignmentMat(this, gatingMat, scan, tracks)
@@ -48,7 +50,7 @@ classdef OptimalHypos < handle
                 for m = 1:meas
                     for t = 1:tg
                         if gatingMat(m, t) == 1 % If this measurement m has been gated with target t
-                            tgAssignmentMat(m,t) = this.calcLikelihood(scan.measurements(:,m), tracks.track(t)); % Functioncall to calcLikelihood instead
+                            tgAssignmentMat(m,t) = log(this.calcLikelihood(scan.measurements(:,m), tracks.track(t))); % Functioncall to calcLikelihood instead
                         end
                     end
                 end
@@ -59,7 +61,7 @@ classdef OptimalHypos < handle
             predictedMeasurement = Model.H*track.expectedValue;
             predictedVariance = Model.H*track.covariance*Model.H' + Model.R;
             
-            likelihood = mvnpdf(measurement, predictedMeasurement, predictedVariance);
+            likelihood = mvnpdf(measurement, predictedMeasurement, predictedVariance)*Model.Pd/(1-Model.Pd*Model.Pg);
         end
         
     end
