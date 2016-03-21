@@ -1,10 +1,19 @@
 %% cluster the frames
 %clustering(pcdXYZ,max-distance,min-points-per-cluster)
 clusters = cell(1,Num);
+class = cell(1,Num);
 for i=1:Num
     i
     tic 
-    clusters{i} = clustering(cleanedFrames{i},1,100);
+    [clusters{i} class{i}] = clusterLidar(cleanedFrames{i},1,100);
+    sub = cell(1,length(unique(class{i})));
+    for j = 1:length(unique(class{i}))
+        classes = unique(class{i});
+        c = classes(j);
+        ind = find(class{i} == c);
+        sub{j} = clusters{i}(ind,:);
+    end
+    clusters{i} = sub;
     %clusters{i} = clustering(teeest,1,100);
     toc
 end
@@ -30,11 +39,12 @@ end
 
 %%
 figure
-for i=40:90
+for i=1:Num
     pcshow(clusteredPC{i})
     %set(gca, 'CameraPosition', [-522.5124 -877.9707  756.3152])
     %set(gca, 'CameraViewAngle', 2.7160)
     axis([150 250 50 130 60 80])
+    %axis([-450 850 -200 400 0 100])
     zoom(2)
     pause(0.3)
 end

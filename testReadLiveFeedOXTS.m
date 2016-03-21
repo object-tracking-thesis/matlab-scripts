@@ -95,7 +95,6 @@ end
 cleanedFrames = cell(1,Num);
 scalingz = 1.5;
 scalingxy = 1;
-off = 56;
 staticFrame(:,3) = staticFrame(:,3).*(scalingz);
 staticFrame(:,1:2) = staticFrame(:,1:2).*(scalingxy);
 for i = 1:Num
@@ -115,7 +114,7 @@ staticFrame(:,1:2) = staticFrame(:,1:2).*(1/scalingxy);
 
 %% plot difference between cleaned and original liveframes
 figure
-for i=1:Num
+for i=50:50
     orig = pointCloud(liveFrames{i}(:,1:3));
     clean = pointCloud(cleanedFrames{i}(:,1:3));
     subplot(2,2,1)

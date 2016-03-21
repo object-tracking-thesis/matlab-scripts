@@ -20,14 +20,8 @@ function [points, class, varargout] = clusterLidar(lidarData, cutOff, numP)
     %   Z         - The hierarchical cluster tree, to use with dendrogram
     %   c         - The nominall cluster, to use with histogram(c, length(c))
     
-  
-    
-    tic
     Z = linkage(single(lidarData),'single','euclidean');
-    toc
-    tic
     c = cluster(Z,'Cutoff',cutOff,'Criterion','distance');
-    toc
     % Counts the occurrences of each element in c
     y = zeros(size(c));
     for i = 1:length(c)
