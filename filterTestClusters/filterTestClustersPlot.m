@@ -23,3 +23,15 @@ for i=1:length(filterTestClustersXY1)
 end
 hold off
 
+%% 
+tempCluster = filterTestClustersXY1;
+
+for k = 1:length(tempCluster)
+   tempCluster{k} = filterTestClustersXY1{k}'; 
+end
+
+
+h2 = figure;
+A = [tempCluster{:}];
+plot(A(1,:), A(2,:),'x')
+
