@@ -6,7 +6,8 @@ clc;
 path1 = '~/Downloads/thesis/share/pcap_scenarios/';
 path2 = 'car/';
 path3 = 'oxts/';
-path4 = 'pcd/';
+%path4 = 'pcd/2000to2200/';
+path4 = 'pcd/1550to1650/';
 
 oxts = loadOxtsDir(strcat(path1,path2,path3));
 lidarData = loadLidarDir(strcat(path1,path2,path4));
@@ -36,7 +37,7 @@ gridStep = 0.5;
 staticCloudDownsampled = pcdownsample(staticCloud, 'gridAverage', gridStep);
 
 %% rotate and translate the live frames according to their gps data
-k = 2000; %frame offset to the gps data
+k = 1550; %frame offset to the gps data
 liveFrames = cell(1,Num);
 offset = cell(1,Num);
 for i=1:Num
@@ -51,7 +52,7 @@ end
 
 %% show live frames
 figure
-for frame=1:130
+for frame=1:100
     %plot3(0,0,0,'.','MarkerSize',20);
     %hold on
     live = pointCloud(liveFrames{frame}(:,1:3));
@@ -78,7 +79,7 @@ end
 
 %% plot difference between static and live map
 figure
-for frame=40:80
+for frame=1:Num
     plot3(0,0,0,'.','MarkerSize',20);
     hold on
     liveCloud = pointCloud(liveFrames{frame}(:,1:3));
@@ -97,7 +98,7 @@ scalingxy = 1;
 off = 56;
 staticFrame(:,3) = staticFrame(:,3).*(scalingz);
 staticFrame(:,1:2) = staticFrame(:,1:2).*(scalingxy);
-for i = 1:200
+for i = 1:Num
    i
    tic
    limit = 1;
@@ -114,7 +115,7 @@ staticFrame(:,1:2) = staticFrame(:,1:2).*(1/scalingxy);
 
 %% plot difference between cleaned and original liveframes
 figure
-for i=40:40
+for i=1:Num
     orig = pointCloud(liveFrames{i}(:,1:3));
     clean = pointCloud(cleanedFrames{i}(:,1:3));
     subplot(2,2,1)

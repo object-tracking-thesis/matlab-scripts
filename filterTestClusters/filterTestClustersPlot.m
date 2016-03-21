@@ -12,12 +12,19 @@
 %% load the data
 %the clusters are cells of xy-column matrices, so if there are 4 clusters
 %in a frame, there will be a 4x2 matrix in that cell
-load('filterTestClustersXY1.mat', 'filterTestClustersXY1')
+
+%filterTestClustersXY1 -> following behind another car into the crossing, 
+%the other car then proceeds straight ahead while we wait at the crossing
+load('filterTestClustersXY1.mat', 'filterTestClusters')
+
+%filterTestClustersXY2 -> following behind another car into the crossing,
+%the other car then turns left while we wait at the crossing
+%load('filterTestClustersXY2.mat', 'filterTestClusters')
 
 %% plot to check that everything went alright
 figure
-for i=1:length(filterTestClustersXY1)
-    scatter(filterTestClustersXY1{i}(:,1), filterTestClustersXY1{i}(:,2),'x');
+for i=1:length(filterTestClusters)
+    scatter(filterTestClusters{i}(:,1), filterTestClusters{i}(:,2),'x');
     hold on
     pause(0.5)
 end

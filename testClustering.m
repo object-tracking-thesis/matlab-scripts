@@ -1,7 +1,7 @@
 %% cluster the frames
 %clustering(pcdXYZ,max-distance,min-points-per-cluster)
 clusters = cell(1,Num);
-for i=70:120
+for i=1:Num
     i
     tic 
     clusters{i} = clustering(cleanedFrames{i},1,100);
@@ -11,7 +11,7 @@ end
 
 %% assign different colors to all clusters found in each frame
 clusteredPC = cell(1,Num);
-for i=70:120
+for i=1:Num
     cluster = [];
     color = [];
 
@@ -30,13 +30,13 @@ end
 
 %%
 figure
-for i=70:120
+for i=40:90
     pcshow(clusteredPC{i})
     %set(gca, 'CameraPosition', [-522.5124 -877.9707  756.3152])
     %set(gca, 'CameraViewAngle', 2.7160)
     axis([150 250 50 130 60 80])
     zoom(2)
-    pause(0.5)
+    pause(0.3)
 end
 
 %% samuel demo
