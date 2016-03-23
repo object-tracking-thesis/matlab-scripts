@@ -43,8 +43,8 @@ for i=1:Num
     pcshow(clusteredPC{i})
     %set(gca, 'CameraPosition', [-522.5124 -877.9707  756.3152])
     %set(gca, 'CameraViewAngle', 2.7160)
-    axis([150 250 50 130 60 80])
-    %axis([-450 850 -200 400 0 100])
+    %axis([150 250 50 130 60 80])
+    axis([50 200 -80 0 60 80])
     zoom(2)
     pause(0.3)
 end
