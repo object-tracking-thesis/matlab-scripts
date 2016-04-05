@@ -1,7 +1,7 @@
 % Read all frames into memory 
 path = '/Users/markocotra/Downloads/2011_09_28 2/2011_09_28_drive_0039_extract/velodyne_points/data/';
-f1 = '0000000000.txt';
-ff = pcd2matlab(strcat(path,f1), 0);
+% f1 = '0000000000.txt';
+% ff = pcd2matlab(strcat(path,f1), 0);
 
 d = dir(path);
 files = d(3:end);
