@@ -33,15 +33,16 @@ end
 %% Create MHTF instance
 clear bestHypos
 clear bestTracks
-nrHypos = 20;
+nrHypos = 15;
 bestHypos(1,N) = Hypothesis;
 bestTracks(1,N) = Tracks;
 
+scanDepth = N;
 tic
 for k = 1:N
-    %disp(k)    
+    disp(k)    
     if k == 1        
-        MHTF = MHTFinstance(nrHypos,N,Scans(k));
+        MHTF = MHTFinstance(nrHypos,scanDepth,Scans(k));
         bestHypos(k) = MHTF.bestHypo.copy();
         bestTracks(k) = bestHypos(k).tracks.copy();
         
@@ -93,7 +94,7 @@ for k = 1:N
     hold on
     try
         TG1 = [Targets{k}];        
-    plot(TG1(1,:),TG1(3,:),'sk','MarkerFaceColor','k')
+    plot(TG1(1,:),TG1(3,:),'sk','MarkerFaceColor','b')
     catch e
     end
     hold off
@@ -111,7 +112,7 @@ for k = 1:N
 %       else
 %           imwrite(imind,cm,filename,'gif','WriteMode','append')
 %       end
-    pause(0.5)
+    pause(0.1)
     
 end
 end

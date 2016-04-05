@@ -70,10 +70,14 @@ classdef MHTFinstance < handle
             %--------------------------------------------------------------            
             this.sortHyposH();            
             
-            j = 1;
+            
+            
+            j = 1;            
             while sum([this.hypoStorage(1:j).alpha]) < Model.sumProbLimit
                 j = j+1;
-            end            
+            end
+            this.hypoStorage = this.hypoStorage(1:j); 
+            this.setAlphas();
             this.bestHypo = this.hypoStorage(1);
         end
         
@@ -83,15 +87,16 @@ classdef MHTFinstance < handle
             % constructor, expcept it generates hypoLimit^2 hypos and then
             % filters this down to hypoLimit number of hypos. 
             
-            % Make room for hypos to be generated 
-            this.tempStorage(1, this.hypoLimit^2) = Hypothesis;            
+            % Make room for hypos to be generated             
+            tempAlloc(1, this.hypoLimit^2) = Hypothesis; % Direct assignment loads in garbage from memory or something
+            this.tempStorage = tempAlloc;            
             
             % Generate indexmatrix to be used when generating new hypos
             % i.e. [1 2 3;4 5 6;7 8 9] where each rownr corresponds to 
             % parenthypo, and column entries to children 
             hypoIdx = reshape(1:this.hypoLimit^2, this.hypoLimit, [])';
             
-            % run through each hypothesis 
+            % run through each hypothesis             
             for h = 1:length(this.hypoStorage)               
                 this.hypoStorage(h).predictTracks; % make predictions
                                 
@@ -100,37 +105,41 @@ classdef MHTFinstance < handle
                 [associationMatrix, gNmat] = hypoGen.generateHypos(scan, gatingMatrix, this.hypoStorage(h).tracks, this.hypoLimit);
                 
                 [~, c] = size(associationMatrix);
-                % Start generating hypotheses
+                % Start generating hypotheses              
                 for j = 1:c                    
                     association = associationMatrix(:,j);
                     gN = gNmat(:,j);
-                    this.tempStorage(hypoIdx(h,j)) = Hypothesis(this.hypoStorage(h), association, j, gN);
+                    tempH = Hypothesis(this.hypoStorage(h), association, j, gN);
+                    this.tempStorage(hypoIdx(h,j)) = tempH;
                 end
             end            
             
             % Remove empty hypos in tempStorage            
             this.sortHypos(); % We have sorted tempStorage in descending order
             try
-                this.hypoStorage = this.tempStorage(1:this.hypoLimit); % Keep the N best hypos
+                tempS = this.tempStorage(1:this.hypoLimit);
+                this.hypoStorage = tempS; % Keep the N best hypos
             catch e
-                this.hypoStorage = this.tempStorage;
+                tempS = this.tempStorage;
+                this.hypoStorage = tempS;
             end
             
             
-             
-             % Now we have N hypotheses in hypoStorage, now let's update
-             % them with the Scan
-             for j = 1:length(this.hypoStorage)              
-                 this.hypoStorage(j).updateTracks(scan);
-             end
-             this.setAlphas();  
-             
-             j = 1;
-             while sum([this.hypoStorage(1:j).alpha]) < Model.sumProbLimit
-                 j = j+1;
-             end             
-             
-             this.bestHypo = this.hypoStorage(1);                                         
+            
+            % Now we have N hypotheses in hypoStorage, now let's update
+            % them with the Scan
+            for j = 1:length(this.hypoStorage)
+                this.hypoStorage(j).updateTracks(scan);
+            end
+            this.setAlphas();
+            
+            j = 1;
+            while sum([this.hypoStorage(1:j).alpha]) < Model.sumProbLimit
+                j = j+1;
+            end
+            this.hypoStorage = this.hypoStorage(1:j);            
+            this.setAlphas();
+            this.bestHypo = this.hypoStorage(1);
         end
     end
     

@@ -28,7 +28,7 @@ classdef Model
         rho = 0.0001; % False Measurement Density
         V = 150*300;     % Volume/Area of Measurement Space
         Pd = 0.999;    % Detection Probability
-        Pg = 0.975; % Gate probability 
+        Pg = 0.99975; % Gate probability 
         
         spwn = 0.000001; % New target spawning density
         
