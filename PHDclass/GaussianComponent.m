@@ -23,7 +23,7 @@ classdef GaussianComponent < handle
     
     methods(Access = public)
         function predict(this)
-            % TODO
+            this.m = Model.
         end
         
         function calcPost(this, z)
