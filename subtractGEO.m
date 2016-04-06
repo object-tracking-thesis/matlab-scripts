@@ -26,8 +26,8 @@ end
 path1 = '~/Downloads/thesis/share/pcap_scenarios/';
 path2 = 'car/';
 path3 = 'oxts/';
-%path4 = 'pcd/2000to2200/';
-path4 = 'pcd/1550to1650/';
+path4 = 'pcd/1600to2200/';
+%path4 = 'pcd/1550to1650/';
 
 oxts = loadOxtsDir(strcat(path1,path2,path3));
 lidarData = loadLidarDir(strcat(path1,path2,path4));
@@ -46,13 +46,8 @@ for j=1:Num
     pause(0.3)
 end
 
-%% test to cut away the forest part of the lidarData
-for j=1:1
-    lidarData{j}(lidarData{j}(:,2) < 0,:) = [];
-end
-
 %% rotate and translate the live frames according to their gps data
-k = 1550; %frame offset to the gps data
+k = 1600; %frame offset to the gps data
 liveFrames = cell(1,Num);
 offset = cell(1,Num);
 for i=1:Num
@@ -60,9 +55,35 @@ for i=1:Num
     liveFrames{i} = transformFrameTransMat(lidarData{i}(:,1:3), transmat);
     [easting, northing] = latlonToSweref991330(oxts{i+k}(1),oxts{i+k}(2));
     offset{i} = [easting; northing; oxts{i+k}(3)+0.5] - staticZeroGeo;
+    
+    %cut all points outside of the crossing
+    angle = deg2rad(-15);
+    rotmat = [cos(angle) sin(angle) 0; -sin(angle) cos(angle) 0; 0 0 1];
+    affine = [rotmat offset{i}; zeros(1,3) 1];
+    liveFrames{i} = transformFrameTransMat(liveFrames{i}(:,1:3), affine);
+    liveFrames{i}(liveFrames{i}(:,1) < 25 | liveFrames{i}(:,1) > 140,:) = [];
+    liveFrames{i}(liveFrames{i}(:,2) < -78 | liveFrames{i}(:,2) > -5,:) = [];
+    liveFrames{i} = transformFrameTransMat(liveFrames{i}(:,1:3), inv(affine));
+    
+    %in order to cut off the unnecessary points we had to align x,y with
+    %SWEREF99, now we rotate back a little to align with the static map
     angle = deg2rad(2);
     rotmat = [cos(angle) sin(angle) 0; -sin(angle) cos(angle) 0; 0 0 1];
     liveFrames{i} = transformFrameTransMat(liveFrames{i}(:,1:3), [rotmat offset{i};zeros(1,3) 1]);
+end
+
+%% plot difference between transformed and untransformed liveframe
+figure
+for frame=300:400
+    plot3(0,0,0,'.','MarkerSize',20);
+    hold on
+    %live = pointCloud(lidarData{frame}(:,1:3));
+    liveTrans = pointCloud(liveFrames{frame}(:,1:3));
+    %pcshowpair(live, liveTrans)
+    pcshow(liveTrans)
+    hold off
+    zoom(1)
+    pause(0.2)
 end
 
 %% plot live frames vs. static geo map
@@ -78,14 +99,15 @@ for j=1:Num
         plotCylinder(poles{i}(2:4)',poles{i}(1),poles{i}(5)+poles{i}(4),poles{i}(6))
     end
     hold off
-    pause(0.3)
+    pause(0.2)
 end
 
 %% ground removal
 cleanedFrames = cell(1,Num);
 for j = 1:Num
+    j
     tic
-    cleanedFrames{j} = gridGroundRemoval(liveFrames{j}, 200, 0.3);
+    cleanedFrames{j} = gridGroundRemoval(liveFrames{j}, 150, 0.4);
     toc
     size(cleanedFrames{j},1)
     fprintf('compression: %6.2f\n', size(cleanedFrames{j},1)/size(liveFrames{j},1));
@@ -98,12 +120,12 @@ for i=1:Num
     tic
     % remove points that are within the walls
     % sort walls by closest to current position first
-    currentPos = offset{1};
+    currentPos = offset{i};
     currentPos = repmat(currentPos',16,1);
     [trash idx] = sort([sum(abs(mWalls(:,1:3)-currentPos),2)], 'ascend');
     mWalls = mWalls(idx,:);
     % remove all points that are within walls
-    for j = 1:size(mWalls,1)
+    for j = 1:ceil(size(mWalls,1))
         cleanedFrames{i} = removePointsInsideCube(mWalls(j,:), cleanedFrames{i});
     end
     toc
