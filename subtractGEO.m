@@ -61,8 +61,8 @@ for i=1:Num
     rotmat = [cos(angle) sin(angle) 0; -sin(angle) cos(angle) 0; 0 0 1];
     affine = [rotmat offset{i}; zeros(1,3) 1];
     liveFrames{i} = transformFrameTransMat(liveFrames{i}(:,1:3), affine);
-    liveFrames{i}(liveFrames{i}(:,1) < 25 | liveFrames{i}(:,1) > 140,:) = [];
-    liveFrames{i}(liveFrames{i}(:,2) < -78 | liveFrames{i}(:,2) > -5,:) = [];
+    liveFrames{i}(liveFrames{i}(:,1) < 25 | liveFrames{i}(:,1) > 138,:) = [];
+    liveFrames{i}(liveFrames{i}(:,2) < -77 | liveFrames{i}(:,2) > -5,:) = [];
     liveFrames{i} = transformFrameTransMat(liveFrames{i}(:,1:3), inv(affine));
     
     %in order to cut off the unnecessary points we had to align x,y with
@@ -72,20 +72,6 @@ for i=1:Num
     liveFrames{i} = transformFrameTransMat(liveFrames{i}(:,1:3), [rotmat offset{i};zeros(1,3) 1]);
 end
 
-%% plot difference between transformed and untransformed liveframe
-figure
-for frame=300:400
-    plot3(0,0,0,'.','MarkerSize',20);
-    hold on
-    %live = pointCloud(lidarData{frame}(:,1:3));
-    liveTrans = pointCloud(liveFrames{frame}(:,1:3));
-    %pcshowpair(live, liveTrans)
-    pcshow(liveTrans)
-    hold off
-    zoom(1)
-    pause(0.2)
-end
-
 %% plot live frames vs. static geo map
 figure;
 for j=1:Num
@@ -93,7 +79,7 @@ for j=1:Num
     pcshow(test)
     hold on
     for i = 1:length(walls)
-        plotCubes(walls{i}(1:3)',walls{i}(4),walls{i}(5),walls{i}(6),walls{i}(7:9),-0.5,walls{i}(3)-2)
+        plotCubes(walls{i}(1:3)',walls{i}(4),walls{i}(5),walls{i}(6),walls{i}(7:9),-2,walls{i}(3)-3)
     end
     for i = 1:length(poles)
         plotCylinder(poles{i}(2:4)',poles{i}(1),poles{i}(5)+poles{i}(4),poles{i}(6))
@@ -107,7 +93,7 @@ cleanedFrames = cell(1,Num);
 for j = 1:Num
     j
     tic
-    cleanedFrames{j} = gridGroundRemoval(liveFrames{j}, 150, 0.4);
+    cleanedFrames{j} = gridGroundRemoval(liveFrames{j}, 150, 0.45);
     toc
     size(cleanedFrames{j},1)
     fprintf('compression: %6.2f\n', size(cleanedFrames{j},1)/size(liveFrames{j},1));
