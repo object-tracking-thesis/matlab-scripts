@@ -1,8 +1,3 @@
-%% Initialization
-clear ; close all; clc
-%debug_on_warning(1);
-%debug_on_error(1);
-
 %% Setup some parameters
 input_layer_size  = 5;
 hidden_layer_size = 3;
@@ -12,7 +7,7 @@ num_labels = 2;
 fprintf('Loading Data ...\n')
 % Load Training Data
 %load lisa_data.mat
-load nn_clusters.mat
+load data/nn_clusters_1600_1800.mat
 data = clusterObjects(randperm(size(clusterObjects,1)),:); %shuffling the data
 
 X = data(:,1:input_layer_size);
