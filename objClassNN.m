@@ -15,7 +15,7 @@ y = data(:,input_layer_size+1);
 
 m = size(X, 1);
 
-X = featureNormalize(X);
+[X mu sigma] = featureNormalize(X);
 train = X(1:floor(0.6*m),:);
 cv = X(ceil(0.6*m):floor(0.8*m),:);
 test = X(ceil(0.8*m):m,:);
@@ -34,7 +34,7 @@ initial_nn_params = [initial_Theta1(:) ; initial_Theta2(:)];
 fprintf('\nTraining Neural Network... \n')
 
 %parameters for the gradient descent
-options = optimset('MaxIter', 30);
+options = optimset('MaxIter', 500);
 lambda = 1;
 
 %shorthand function for the cost function
