@@ -15,8 +15,9 @@ for i=1:Num
         cluster = [pointNumber density center distToEgo];
         
         %save the prediction
-        predict(Theta1, Theta2, cluster)
-        %isCarMat(i,j) = predict(Theta1, Theta2, cluster);
+        %predict(Theta1, Theta2, cluster)
+        cluster = (cluster-mu)./sigma;
+        isCarMat(i,j) = predict(Theta1, Theta2, cluster);
     end
 end
 
@@ -26,9 +27,11 @@ figure('WindowKeyPressFcn', @keyPress)
 %fCar = @(src,evt) evalin('base','isCarMat(i,j) = 2;');
 %hButton1 = uicontrol( 'Units', 'normalized', 'Position', [0.1 0.1 0.1 0.1], 'Style', 'pushbutton', 'Tag', 'button1', 'String', 'Clutter', 'callback', fClutter);
 %hButton2 = uicontrol( 'Units', 'normalized', 'Position', [0.3 0.1 0.1 0.1], 'Style', 'pushbutton', 'Tag', 'button2', 'String', 'Car', 'callback', fCar);
-isCarMat = ones(Num,20);
-for i=1:10
-    for j = 1:length(clusters{i})
+%isCarMat = ones(Num,20);
+i = 1;
+while i < Num
+    j = 1;
+    while j <= length(clusters{i})
         cluster = pointCloud(clusters{i}{j});
         pcshow(cluster)
         str = sprintf('Frame: %d; Cluster: %d', [i j]);
@@ -36,7 +39,9 @@ for i=1:10
         %axis([150 250 50 130 60 80])
         axis([20 200 -80 0 60 80])
         waitforbuttonpress;
+        j = j+1;
     end
+    i = i+1;
 end
 
 %% convert a vector of frameXclusterNumber to a class matrix
@@ -73,6 +78,7 @@ for i=1:200
 end
 
 save data/nn_clusters_1600_1800.mat clusterObjects
+save data/isCarMat_1600_1800.mat isCarMat
 
 %% assign different colors to all clusters found in each frame
 clusteredPC = cell(1,Num);
