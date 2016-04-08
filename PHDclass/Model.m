@@ -14,12 +14,13 @@ classdef Model
         H = [1 0 0 0;...
              0 0 1 0];
         
-        R = 0.0001*diag([1 1]);
+        R = 0.00015*diag([1 1]);
         
         % Survival & Detection Prob
         Ps = 1;
         Pd = 1;
         % Clutter density (poisson)
-        betaFA = 0;
+
+        K = 2; % beta * volume, uniformly distributed 
     end
 end
