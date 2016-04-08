@@ -6,8 +6,8 @@ clc;
 path1 = '~/Downloads/thesis/share/pcap_scenarios/';
 path2 = 'car/';
 path3 = 'oxts/';
-%path4 = 'pcd/2000to2200/';
-path4 = 'pcd/1550to1650/';
+path4 = 'pcd/1600to2200/';
+%path4 = 'pcd/1550to1650/';
 
 oxts = loadOxtsDir(strcat(path1,path2,path3));
 lidarData = loadLidarDir(strcat(path1,path2,path4));
@@ -29,7 +29,8 @@ clear staticFrame3;
 clear staticFrame4;
 staticFrame(:,4:7) = [];
 
-staticZero = [106349.981; 6406149.9800000004; 133.126];
+staticZeroCloud = [106349.981; 6406149.9800000004; 133.126];
+staticZeroGeo = [106473.25371600001; 6406253.6631990001; 133.126];
 
 %% downsample the static map
 staticCloud = pointCloud(staticFrame(:,1:3));
@@ -37,14 +38,15 @@ gridStep = 0.5;
 staticCloudDownsampled = pcdownsample(staticCloud, 'gridAverage', gridStep);
 
 %% rotate and translate the live frames according to their gps data
-k = 1550; %frame offset to the gps data
+k = 1600; %frame offset to the gps data
 liveFrames = cell(1,Num);
 offset = cell(1,Num);
+zoff = 0;
 for i=1:Num
     transmat = [rotationMatrixZYX(-oxts{i+k}(4),-oxts{i+k}(5),-oxts{i+k}(6)) zeros(3,1); zeros(1,3) 1];
     liveFrames{i} = transformFrameTransMat(lidarData{i}(:,1:3), transmat);
     [easting, northing] = latlonToSweref991330(oxts{i+k}(1),oxts{i+k}(2));
-    offset{i} = [easting; northing; oxts{i+k}(3)+0.5] - staticZero;
+    offset{i} = [easting; northing; oxts{i+k}(3)+0.5] - staticZeroCloud - [0 0 zoff]';
     angle = deg2rad(2);
     rotmat = [cos(angle) sin(angle) 0; -sin(angle) cos(angle) 0; 0 0 1];
     liveFrames{i} = transformFrameTransMat(liveFrames{i}(:,1:3), [rotmat offset{i};zeros(1,3) 1]);
@@ -52,7 +54,7 @@ end
 
 %% show live frames
 figure
-for frame=1:100
+for frame=1:Num
     %plot3(0,0,0,'.','MarkerSize',20);
     %hold on
     live = pointCloud(liveFrames{frame}(:,1:3));
@@ -79,7 +81,7 @@ end
 
 %% plot difference between static and live map
 figure
-for frame=1:Num
+for frame=100:100
     plot3(0,0,0,'.','MarkerSize',20);
     hold on
     liveCloud = pointCloud(liveFrames{frame}(:,1:3));
@@ -97,10 +99,11 @@ scalingz = 1.5;
 scalingxy = 1;
 staticFrame(:,3) = staticFrame(:,3).*(scalingz);
 staticFrame(:,1:2) = staticFrame(:,1:2).*(scalingxy);
+%staticTest = staticCloudDownsampled.Location;
 for i = 1:Num
    i
    tic
-   limit = 1;
+   limit = 1.5;
    test = liveFrames{i};
    test(:,3) = test(:,3).*(scalingz);
    test(:,1:2) = test(:,1:2).*(scalingxy);
@@ -114,15 +117,15 @@ staticFrame(:,1:2) = staticFrame(:,1:2).*(1/scalingxy);
 
 %% plot difference between cleaned and original liveframes
 figure
-for i=50:50
+for i=1:Num
     orig = pointCloud(liveFrames{i}(:,1:3));
     clean = pointCloud(cleanedFrames{i}(:,1:3));
-    subplot(2,2,1)
+    subplot(1,2,1)
     pcshow(orig)
-    zoom(3)
-    subplot(2,2,2)
+    zoom(2)
+    subplot(1,2,2)
     pcshow(clean)
-    zoom(3)
+    zoom(2)
     %pcshowpair(orig, clean)
     pause(0.5)
 end
