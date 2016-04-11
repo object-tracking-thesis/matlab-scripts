@@ -1,4 +1,4 @@
-function nonGroundPoints = gridGroundRemoval(lidarFrame, nGrid, cutOff)
+function lidarFrame = gridGroundRemoval(lidarFrame, nGrid, cutOff)
 % takes away non ground points by laying an xy-grid over the frame and
 % taking away the lowest points in each grid cell based on the cutOff
 % 
@@ -8,32 +8,35 @@ function nonGroundPoints = gridGroundRemoval(lidarFrame, nGrid, cutOff)
 %   cutOff     -    percentage of a cutoff distance
 %
 % out:
-%   nonGroundPoints - Nx3 matrix, x,y,z
+%   lidarFrame - Nx3 matrix, x,y,z
 
-nonGroundPoints = [];
+%settings
+targetSize = [nGrid nGrid];
 
-p = lidarFrame;
-minx = min(p(:,1));
-miny = min(p(:,2));
-maxx = max(p(:,1));
-maxy = max(p(:,2));
-gridSizeX = (maxx-minx)/nGrid;
-gridSizeY = (maxy-miny)/nGrid;
+%prep
+xx = lidarFrame(:,1);
+yy = lidarFrame(:,2);
+zz = lidarFrame(:,3);
+minX = min(xx);
+maxX = max(xx);
+minY = min(yy);
+maxY = max(yy);
+gridSizeX = (maxX-minX)/nGrid;
+gridSizeY = (maxY-minY)/nGrid;
 zlimit = max([gridSizeX,gridSizeY])*cutOff;
-for gx = 1:nGrid
-    %partition into one x-grid-column
-    xind = p(:,1) > minx+gridSizeX*(gx-1) & p(:,1) < minx+gridSizeX*gx;
-    xp = p(xind,:);
-    p(xind,:) = [];
-    for gy = 1:nGrid
-        %partition into all y-grid rows in that column
-        yind = xp(:,2) > miny+gridSizeY*(gy-1) & xp(:,2) < miny+gridSizeY*gy;
-        points = xp(yind,:);
-        minz = min(points(:,3));
-        zThresh = minz + zlimit;
-        points(points(:,3) < zThresh,:) = [];
-        if(size(points,1) > 0)
-            nonGroundPoints(end+1:end+size(points,1),:) = points;
-        end
-    end
+
+%create the x,y cells
+xxCell = (round((xx-minX)/(maxX-minX)*(targetSize(1)-1)) +1);
+yyCell = (round((yy-minY)/(maxY-minY)*(targetSize(2)-1)) +1);
+
+%create a targetSize matrix containing the min z value for each x,y
+%gridcell
+map = accumarray([xxCell yyCell],zz,targetSize,@(z) min(z),[]);
+
+%build a comparison vector with each point's z coordinate in the first
+%col and the respective zlimit for the point's cell in the second col
+zz = [zz zeros(length(zz),1)];
+for i=1:length(zz)
+    zz(i,2) = map(xxCell(i),yyCell(i)) + zlimit;
 end
+lidarFrame(zz(:,1) < zz(:,2),:) = [];
