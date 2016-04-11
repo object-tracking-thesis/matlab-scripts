@@ -6,13 +6,17 @@ for i=1:Num
         pointNumber = size(clusters{i}{j},1);
         maxX = max(clusters{i}{j}(:,1));
         maxY = max(clusters{i}{j}(:,2));
+        maxZ = max(clusters{i}{j}(:,3));
         minX = min(clusters{i}{j}(:,1));
         minY = min(clusters{i}{j}(:,2));
-        center = [(minX+maxX)/2 (minY+maxY)/2];
-        area = (maxX-minX)*(maxY-minY);
-        density = pointNumber/area;
-        distToEgo = sqrt(sum((center-offset{i}(1:2)').^2));
-        cluster = [pointNumber density center distToEgo];
+        minZ = min(clusters{i}{j}(:,3));
+        center = [(minX+maxX)/2 (minY+maxY)/2 (minZ+maxZ)/2];
+        height = (maxZ-minZ);
+        volume = (maxX-minX)*(maxY-minY)*(maxZ-minZ);
+        density = pointNumber/volume;
+        distToEgo = sqrt(sum((center-offset{i}(1:3)').^2));
+        
+        cluster = [pointNumber density center height distToEgo];
         
         %save the prediction
         %predict(Theta1, Theta2, cluster)
@@ -28,8 +32,8 @@ figure('WindowKeyPressFcn', @keyPress)
 %hButton1 = uicontrol( 'Units', 'normalized', 'Position', [0.1 0.1 0.1 0.1], 'Style', 'pushbutton', 'Tag', 'button1', 'String', 'Clutter', 'callback', fClutter);
 %hButton2 = uicontrol( 'Units', 'normalized', 'Position', [0.3 0.1 0.1 0.1], 'Style', 'pushbutton', 'Tag', 'button2', 'String', 'Car', 'callback', fCar);
 %isCarMat = ones(Num,20);
-i = 1;
-while i < Num
+i = 200;
+while i <= Num
     j = 1;
     while j <= length(clusters{i})
         cluster = pointCloud(clusters{i}{j});
@@ -38,6 +42,7 @@ while i < Num
         title(str);
         %axis([150 250 50 130 60 80])
         axis([20 200 -80 0 60 80])
+        zoom(1.8)
         waitforbuttonpress;
         j = j+1;
     end
@@ -58,27 +63,30 @@ end
 
 %% prepare ground truth cluster data for training the network
 clusterObjects = [];
-for i=1:200
+for i=1:Num
     for j = 1:length(clusters{i})
         pointNumber = size(clusters{i}{j},1);
         maxX = max(clusters{i}{j}(:,1));
         maxY = max(clusters{i}{j}(:,2));
+        maxZ = max(clusters{i}{j}(:,3));
         minX = min(clusters{i}{j}(:,1));
         minY = min(clusters{i}{j}(:,2));
-        center = [(minX+maxX)/2 (minY+maxY)/2];
-        area = (maxX-minX)*(maxY-minY);
-        density = pointNumber/area;
-        distToEgo = sqrt(sum((center-offset{i}(1:2)').^2));
+        minZ = min(clusters{i}{j}(:,3));
+        center = [(minX+maxX)/2 (minY+maxY)/2 (minZ+maxZ)/2];
+        height = (maxZ-minZ);
+        volume = (maxX-minX)*(maxY-minY)*(maxZ-minZ);
+        density = pointNumber/volume;
+        distToEgo = sqrt(sum((center-offset{i}(1:3)').^2));
         isCar = 1;
         if isCarMat(i,j) == 2
             isCar = 2;
         end
-        clusterObjects = [clusterObjects; pointNumber density center distToEgo isCar];
+        clusterObjects = [clusterObjects; pointNumber density center height distToEgo isCar];
     end
 end
 
-save data/nn_clusters_1600_1800.mat clusterObjects
-save data/isCarMat_1600_1800.mat isCarMat
+save data/nn_clusters_1600_2200.mat clusterObjects
+save data/isCarMat_1600_2200.mat isCarMat
 
 %% assign different colors to all clusters found in each frame
 clusteredPC = cell(1,Num);
@@ -111,5 +119,5 @@ for i=1:Num
     pcshow(clusteredPC{i})
     axis([20 200 -80 0 60 80])
     zoom(2)
-    pause(0.3)
+    pause(0.1)
 end
