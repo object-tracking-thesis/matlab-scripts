@@ -13,6 +13,7 @@ for i=1:Num
         sub{j} = clusters{i}(ind,:);
     end
     clusters{i} = sub;
+    fprintf('number of clusters: %6.2d\n', length(clusters{i}));
     toc
 end
 

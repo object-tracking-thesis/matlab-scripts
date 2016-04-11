@@ -47,6 +47,7 @@ for j=1:Num
 end
 
 %% rotate and translate the live frames according to their gps data
+tic
 k = 1600; %frame offset to the gps data
 liveFrames = cell(1,Num);
 offset = cell(1,Num);
@@ -71,6 +72,7 @@ for i=1:Num
     rotmat = [cos(angle) sin(angle) 0; -sin(angle) cos(angle) 0; 0 0 1];
     liveFrames{i} = transformFrameTransMat(liveFrames{i}(:,1:3), [rotmat offset{i};zeros(1,3) 1]);
 end
+toc
 
 %% plot live frames vs. static geo map
 figure;
@@ -90,22 +92,22 @@ end
 
 %% ground removal
 cleanedFrames = cell(1,Num);
-for j = 1:Num
-    j
+for i = 1:Num
     tic
-    cleanedFrames{j} = gridGroundRemoval(liveFrames{j}, 150, 0.45);
+    i
+    cleanedFrames{i} = gridGroundRemoval(liveFrames{i}, 200, 0.45);
+    fprintf('before: %6.2f, after: %6.2f\n', [size(liveFrames{i},1) size(cleanedFrames{i},1)]);
     toc
-    size(cleanedFrames{j},1)
-    fprintf('compression: %6.2f\n', size(cleanedFrames{j},1)/size(liveFrames{j},1));
 end
 
 %% remove static points
 mWalls = cell2mat(walls);
 for i=1:Num
-    i
     tic
+    i
     % remove points that are within the walls
     % sort walls by closest to current position first
+    before = size(cleanedFrames{i},1);
     currentPos = offset{i};
     currentPos = repmat(currentPos',16,1);
     [trash idx] = sort([sum(abs(mWalls(:,1:3)-currentPos),2)], 'ascend');
@@ -114,6 +116,7 @@ for i=1:Num
     for j = 1:ceil(size(mWalls,1))
         cleanedFrames{i} = removePointsInsideCube(mWalls(j,:), cleanedFrames{i});
     end
+    fprintf('before: %6.2f, after: %6.2f\n', [before size(cleanedFrames{i},1)]);
     toc
 end
 
