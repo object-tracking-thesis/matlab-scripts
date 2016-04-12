@@ -1,8 +1,17 @@
 % Class representing a PHD filter (instance). Handles top level logic for
-% the PHD, such as predicting & updating the intensity.
-
-
-
+% the PHD, such as predicting & updating the intensity. The filter is used
+% in the follwing way:
+%
+% Initialize a phd filter with birthRFS
+% weights = {2};
+% means = {mu};
+% covariances = {P};
+% 
+% PHD = PHDinstance(weights, means, covariances) - initalizes the filter
+%                                                  with the specified birth RFS
+%  [] = PHD.predict()                            - performs a prediction on the phd
+%  [] = PHD.update(Z)                            - performs an update, where Z is a list of measurements 
+%  Gc = PHD.getBestComp(w);                      - Returns all components that fulfill the wieght threshold w
 
 classdef PHDinstance < handle
     properties

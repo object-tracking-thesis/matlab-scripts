@@ -8,7 +8,7 @@
 %
 % Methods:
 %      [] = GaussianComponent.predict()    - Performs KF prediction on the mean & cov.
-%      [] = GaussianComponent.update(z)  - Performs KF update on the mean & cov.
+%      [] = GaussianComponent.update(z)    - Performs KF update on the mean & cov.
 %   lhood = GaussianComponent.calcLhood(z) - Returnes the likelhood for measurement
 %                                            z conditioned on the prediction.
 %
