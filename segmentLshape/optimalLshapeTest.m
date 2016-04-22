@@ -4,7 +4,7 @@
 
 rng(1337)
 % Generate som test data 
-m = 100; % nr of total points 
+m = 2000; % nr of total points 
 r = 1:m/2;
 alongX = mvnrnd([1 0], [0.2 0.01;0.01 0.01],m/2); %[r', zeros(m/2,1)];%
 alongY = mvnrnd([0 1.5], [0.01 0.01;0.01 0.4],m/2); %[zeros(m/2,1), r'];%
@@ -115,16 +115,14 @@ while v < (m-1)
     
     M12 = M(1:2,3:4);
     M11 = M(1:2,1:2);
-    M22 = M(3:4,3:4);
-    v
+    M22 = M(3:4,3:4);    
     [n, lambda] = eig(M22 - M12'*inv(M11)*M12); % M22 - M12'*inv(M11)*M12
     % Keep smallest eigenvalue & corresponding vetor 
     [d, i] = min(diag(lambda));
     lambda = d;
     n = n(:,i);
     
-    if lambdaOp > lambda   
-       disp(v)
+    if lambdaOp > lambda          
        c = -1.*inv(M11)*M12*n;
        lambdaOp = lambda; 
        uOp = [c;n];

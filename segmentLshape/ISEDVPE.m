@@ -16,10 +16,11 @@
 %         hypo = [xc yc theta_1 theta_2 theta_3 theta_4]';
 %   prH - 1x(m-1) vector The associated probability of each hypothesis.
 
-function [H, prH] = ISEDVPE(S,tau)
+function [H, prH, varargout] = ISEDVPE(S,tau)
 
 v = 1; % initial index 
 m = size(S,1); % Nr of rows/data
+uOp = zeros(4,m-1); % Line parameters 
 
 % calc M
 p = v;
@@ -71,6 +72,7 @@ K = pr; % Normalization factor
 
 H(:,1) = h;
 prH(1) = pr;
+uOp(:,1) = [c;n];
 
 while v < (m-1)
     % calculate deltaM 
@@ -109,12 +111,15 @@ while v < (m-1)
     
     H(:,v) = h;
     prH(v) = pr;
-    
+    uOp(:,v) = [c;n];
     K = K + pr;
 
 end
 
 prH = prH./K; % Normalize to one
 
+if nargout == 3    
+    varargout{1} = uOp;
+end
 
 end
