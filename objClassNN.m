@@ -1,5 +1,5 @@
 %% Setup some parameters
-input_layer_size  = 7;
+input_layer_size  = 9;
 hidden_layer_size = 10;
 num_labels = 2;
 
@@ -7,7 +7,7 @@ num_labels = 2;
 fprintf('Loading Data ...\n')
 % Load Training Data
 %load lisa_data.mat
-load data/nn_clusters_1600_2200.mat
+%load data/nn_clusters_kitti_static_crossing.mat
 data = clusterObjects(randperm(size(clusterObjects,1)),:); %shuffling the data
 
 X = data(:,1:input_layer_size);

@@ -8,7 +8,6 @@ pathPoles = 'static/poles.txt';
 pathRoadEdges = 'static/roadEdges.txt';
 walls = walls2matlab(pathWalls);
 poles = poles2matlab(pathPoles);
-roadEdges = roadEdges2matlab(pathRoadEdges);
 
 staticZeroGeo = [106473.25371600001; 6406253.6631990001; 133.126];
 
@@ -22,7 +21,7 @@ for i = 1:length(poles)
     plotCylinder(poles{i}(2:4)',poles{i}(1),poles{i}(5),poles{i}(6))
 end
 
-%% load lidar and oxts data for live
+%% load lidar and oxts data for livesys
 path1 = '~/Downloads/thesis/share/pcap_scenarios/';
 path2 = 'car/';
 path3 = 'oxts/';
@@ -51,12 +50,14 @@ tic
 k = 1600; %frame offset to the gps data
 liveFrames = cell(1,Num);
 offset = cell(1,Num);
+egoPosition = cell(1,150);
 for i=1:Num
     transmat = [rotationMatrixZYX(-oxts{i+k}(4),-oxts{i+k}(5),-oxts{i+k}(6)) zeros(3,1); zeros(1,3) 1];
     liveFrames{i} = transformFrameTransMat(lidarData{i}(:,1:3), transmat);
     [easting, northing] = latlonToSweref991330(oxts{i+k}(1),oxts{i+k}(2));
     offset{i} = [easting; northing; oxts{i+k}(3)+0.5] - staticZeroGeo;
-    
+    egoPosition{i} = [easting; northing; oxts{i+k}(3)+0.5] - staticZeroGeo;
+    egoPosition{i} = [egoPosition{i}; -oxts{i+k}(4); -oxts{i+k}(5) ; -oxts{i+k}(6)];
     %cut all points outside of the crossing
     angle = deg2rad(-15);
     rotmat = [cos(angle) sin(angle) 0; -sin(angle) cos(angle) 0; 0 0 1];

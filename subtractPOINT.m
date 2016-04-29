@@ -84,8 +84,9 @@ figure
 for frame=100:100
     plot3(0,0,0,'.','MarkerSize',20);
     hold on
-    liveCloud = pointCloud(liveFrames{frame}(:,1:3));
-    pcshowpair(staticCloudDownsampled, liveCloud)
+    %liveCloud = pointCloud(liveFrames{frame}(:,1:3));
+    %pcshowpair(staticCloudDownsampled, liveCloud)
+    pcshow(staticCloud)
     hold off
     zoom(4)
     %set(gca, 'CameraPosition', [18.5823 -566.5555   63.7898]);

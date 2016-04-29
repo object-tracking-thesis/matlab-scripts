@@ -40,7 +40,10 @@ figure
 for i=1:Num
     i
     pcshow(clusteredPC{i})
-    axis([20 200 -80 0 60 80])
+    hold on
+    %plot3(egoPosition{i}(1),egoPosition{i}(2),egoPosition{i}(3),'x')
+    %axis([20 200 -80 0 60 80])
     zoom(2)
     pause(0.3)
+    hold off
 end
