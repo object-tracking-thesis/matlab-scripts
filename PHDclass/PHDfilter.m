@@ -159,7 +159,7 @@ classdef PHDfilter < handle
                 %check if there are still duplicate indices left and
                 %reassign their index if need be
                 for j=(i+1):length(this.gaussians)
-                    curr_ind = this.gaussians(j).index;
+                    curr_ind = this.gaussians(i).index;
                     if this.gaussians(j).index == curr_ind
                         this.index = this.index+1;
                         this.gaussians(j).index = this.index;
