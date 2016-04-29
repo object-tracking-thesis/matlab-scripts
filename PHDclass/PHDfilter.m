@@ -12,7 +12,7 @@ classdef PHDfilter < handle
         pd = 0.98;
         kk = 2;
         min_survival_weight = 0.00001;
-        min_merge_dist = 0.1;
+        min_merge_dist = 0.5;
         max_gaussians = 50;
         number_of_targets = 0;
         index = 1;
@@ -83,7 +83,7 @@ classdef PHDfilter < handle
             this.gaussians = curr_gaussians;
             this.weight_sort_gaussians;
             this.prune;
-            %this.merge;
+            this.merge;
         end
         
         function weight_sort_gaussians(this)
@@ -122,14 +122,15 @@ classdef PHDfilter < handle
         function merge(this)
             i = 1;
             while i < length(this.gaussians)
-                weightsum = 0;
-                mu_sum = 0;       
+                weightsum = this.gaussians(i).weight;
+                mu_sum = this.gaussians(i).weight.*this.gaussians(i).mu;       
                 ind = [];
                 %check all subsequent gaussians if they are closeby
                 for j=(i+1):length(this.gaussians)
                     proximity = (this.gaussians(i).mu-this.gaussians(j).mu)' ...
                         *inv(this.gaussians(i).P)...
                         *(this.gaussians(i).mu-this.gaussians(j).mu);
+                    
                     if proximity < this.min_merge_dist
                         weightsum = weightsum + this.gaussians(j).weight;
                         mu_sum = mu_sum + this.gaussians(j).weight ...
@@ -141,7 +142,7 @@ classdef PHDfilter < handle
                 %closeby gaussians that can be merged
                 if ~isempty(ind)
                     mu_sum = mu_sum./weightsum;
-                    P_sum = 0;
+                    P_sum = this.gaussians(i).weight.*this.gaussians(i).P; 
                     for j=ind
                         P_sum = P_sum + this.gaussians(j).weight*( ...
                             this.gaussians(j).P + ( ...
@@ -152,16 +153,16 @@ classdef PHDfilter < handle
                     this.gaussians(i).mu = mu_sum;
                     this.gaussians(i).P = P_sum;
                     this.gaussians(i).weight = weightsum;
-                    this.gaussians(ind) = [];
-                    
-                    %check if there are still duplicate indices left and
-                    %reassign their index if need be
-                    for k=(i+1):length(this.gaussians)
-                        curr_ind = this.gaussians(k).index;
-                        if this.gaussians(k).index == curr_ind
-                            this.index = this.index+1;
-                            this.gaussians(k).index = this.index;
-                        end
+                    this.gaussians(ind) = [];                 
+                end
+                
+                %check if there are still duplicate indices left and
+                %reassign their index if need be
+                for j=(i+1):length(this.gaussians)
+                    curr_ind = this.gaussians(j).index;
+                    if this.gaussians(j).index == curr_ind
+                        this.index = this.index+1;
+                        this.gaussians(j).index = this.index;
                     end
                 end
                 i = i+1;
