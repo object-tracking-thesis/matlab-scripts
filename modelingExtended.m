@@ -48,7 +48,7 @@ for j = 1:length(means)
         plot(x(1,:),x(2,:),Col(sig),'LineWidth',1)
     end
 end
-K = 30;
+K = 6;
 lDiff = L/(K+1);
 bDiff = B/(K/2+1);
 
@@ -83,7 +83,7 @@ end
 for k = 1:K
     sl = [0 lDiff*k]'; % L bottom left corner    
     Pl = 0.01*[0.1 0;
-               0   0.1];
+               0   1.5];
     
     Lmeans(:,k) = sl;
     Lcovs(:,:,k) = Pl; 
