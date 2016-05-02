@@ -150,15 +150,29 @@ classdef MGPgenerator < handle
                 
                 [~, idx] = min(D);
                 vehicleCase = idx;
-            else
-                D = zeros(1,4);
-                for j = 1:4
-                    D(j) = sqrt((allSides(j,1) - cPoint(1))^2 +... 
-                                (allSides(j,2) - cPoint(2))^2);
+            else % Lot of ugly code below! Should be changed 
+                D = zeros(1,2);
+                j = [1 3];
+                for h = 1:2
+                    D(h) = sqrt((allSides(j(h),1) - cPoint(1))^2 +... 
+                                (allSides(j(h),2) - cPoint(2))^2);
                 end                
                 [~, idx1] = min(D);                
-                D(idx1) = inf;
+                if idx1 == 2
+                    idx1 = 3;
+                end
+                    
+                j = [2 4];
+                for h = 1:2
+                    D(h) = sqrt((allSides(j(h),1) - cPoint(1))^2 +... 
+                                (allSides(j(h),2) - cPoint(2))^2);
+                end                                                
                 [~, idx2] = min(D);
+                if idx2 == 1
+                    idx2 = 2;
+                else 
+                    idx2 = 4;
+                end
                 vehicleCase = [idx1 idx2];
             end
         end
@@ -194,7 +208,7 @@ classdef MGPgenerator < handle
             end
             
             % Check and see if there are any duplicates (this can happen due to how the functions are defined)
-            [~, idx] = unique(mgps, 'rows'); % Find index of unique rows (i.e. MGPs)
+            [~, idx] = uniquetol(mgps, 'ByRows',true); % Find index of unique rows (i.e. MGPs)
             mgps = mgps(idx,:);
             jacobians = jacobians(:,:,idx);
             

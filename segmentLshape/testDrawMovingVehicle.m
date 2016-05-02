@@ -27,7 +27,7 @@ for N = 1:length(carClusters)
     text(EGO(1)-2,EGO(2)-2, 'EGO')
     
     %tic
-    [m1,m2,uOp, filtNtg] = cornerPoint(Ntg, 0.1, 0); % 0.3 0.5
+    [m1,m2,uOp, filtNtg] = cornerPoint(Ntg, 0.5, 0.4); % 0.3 0.5
     %toc
     c1 = uOp(1); c2 = uOp(2);
     n1 = uOp(3); n2 = uOp(4);
