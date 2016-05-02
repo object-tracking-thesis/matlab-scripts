@@ -181,8 +181,7 @@ classdef MGPgenerator < handle
                 % Get general symbolic functions for MGPs along the car side j
                 [funXsym, funYsym, symJacob] = this.getSymFunAndJacob(j);
                 
-                for h = 0:K
-                    h                    
+                for h = 0:K                                      
                     xh = this.evaluateFunction(funXsym, predictedState, K, h);
                     yh = this.evaluateFunction(funYsym, predictedState, K, h);
                     Jh = this.evaluateJacobian(symJacob, predictedState, K, h);
