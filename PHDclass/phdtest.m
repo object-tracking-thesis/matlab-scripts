@@ -20,26 +20,32 @@ X1(:,1) = X10;
 X2 = zeros(4,n);
 X20 = [1 1 0 0]';
 X2(:,1) = X20;
+X30 = [1 1 0 0]';
+X3(:,1) = X30;
 P_0 = 0.1*diag(ones(1,4));
 
 Z1 = zeros(2,n);
 Z2 = zeros(2,n);
+Z3 = zeros(2,n);
 Z1(:,1) = H*X1(:,1) + mvnrnd([0 0],R)';
 Z2(:,1) = H*X2(:,1) + mvnrnd([0 0],R)';
+Z3(:,1) = H*X3(:,1) + mvnrnd([0 0],R)';
 
 for i = 2:n
     X1(:,i) = F*X1(:,i-1) + mvnrnd([0 0 0 0],Q)';
     X2(:,i) = F*X2(:,i-1) + mvnrnd([0 0 0 0],Q)';
+    X3(:,i) = F*X3(:,i-1) + mvnrnd([0 0 0 0],Q)';
     Z1(:,i) = H*X1(:,i) + mvnrnd([0 0],R)';
     Z2(:,i) = H*X2(:,i) + mvnrnd([0 0],R)';
+    Z3(:,i) = H*X3(:,i) + mvnrnd([0 0],R)';
 end
 
 %create clutter
 clutterMeas = cell(1,n);
-xmin = min([X1(1,:) X2(1,:)]);
-xmax = max([X1(1,:) X2(1,:)]);
-ymin = min([X1(2,:) X2(2,:)]);
-ymax = max([X1(2,:) X2(2,:)]);
+xmin = min([X1(1,:) X2(1,:) X3(1,:)]);
+xmax = max([X1(1,:) X2(1,:) X3(1,:)]);
+ymin = min([X1(2,:) X2(2,:) X3(1,:)]);
+ymax = max([X1(2,:) X2(2,:) X3(1,:)]);
 
 allClutter = [];
 for k = 1:n
@@ -53,12 +59,12 @@ end
 % Gather measurements 
 Z = cell(1,n);
 for k = 1:length(Z)
-   Z{k} = [Z1(:,k) Z2(:,k) clutterMeas{k}]; 
+   Z{k} = [Z1(:,k) Z2(:,k) Z3(:,k) clutterMeas{k}]; 
 end
 
 %plot the samples and clutter
 figure
-plot(X1(1,:),X1(2,:),'x-',X2(1,:),X2(2,:),'x-')
+plot(X1(1,:),X1(2,:),'x-',X2(1,:),X2(2,:),'x-',X3(1,:),X3(2,:),'x-')
 hold on
 plot(allClutter(1,:),allClutter(2,:),'x','Color',[0.3 0.3 0.3])
 
@@ -72,7 +78,7 @@ covariances = cell(1,1);
 weights = cell(1,1);
 means{1} = [1 1 0 0]';
 covariances{1} = 0.1*diag(ones(1,4));
-weights{1} = 2;
+weights{1} = 3;
 
 %% filter recursion
 figure;
@@ -86,13 +92,8 @@ for i=1:50
     est = phd_filter.get_best_estimates;
     if ~isempty(est)
         for j=1:length(est)
-            color =  [0, 0, 0];
-            if est(j).index == 1
-                color = [1,0,0];
-            end
-            if est(j).index == 3
-                color = [0,0,1];
-            end                   
+            rng(est(j).index)
+            color =  [rand, rand, rand];          
             plot(est(j).mu(1), est(j).mu(2),'x','Color',color)
             hold on
             est(j).index
