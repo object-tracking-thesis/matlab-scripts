@@ -10,7 +10,7 @@ classdef PHDfilter < handle
         R
         ps = 0.99;
         pd = 0.98;
-        kk = 2;
+        kk = 0.2;
         min_survival_weight = 0.00001;
         min_merge_dist = 0.5;
         max_gaussians = 50;
@@ -27,7 +27,6 @@ classdef PHDfilter < handle
         function set_birth_rfs(this, means, covariances, weights)
             this.birth_rfs = [];
             for i = 1:length(weights)
-                %TODO dynamic index
                 gaussian_birth = ...
                     gaussianComp(means{i}, covariances{i}, weights{i}, this.index);
                 this.index = this.index+1;
@@ -46,19 +45,31 @@ classdef PHDfilter < handle
         % run predictions, for both birth RFS and existing targets
         function predict(this)
             this.gaussians = [this.gaussians this.birth_rfs];
-            l = length(this.gaussians);
+            l = length(this.gaussians);          
             for i=1:l
                 this.gaussians(i).weight = this.ps*this.gaussians(i).weight;
                 this.gaussians(i).mu = this.F*this.gaussians(i).mu;
                 this.gaussians(i).P = ...
                     this.Q + this.F*this.gaussians(i).P*this.F';
+%                 %test plot 3sigma for the predictions
+%                 [x1,x2,x3] = threeSigmaOverGrid(this.gaussians(i).mu(1:2),this.gaussians(i).P(1:2,1:2));                
+%                 plot(x3(1,:),x3(2,:),' --k')
+%                 pause(1)        
+%                 hold on
             end
         end
         
-        %update with current measurement Z
-        function update(this, Z)
+        %update with current measurement Z and isObject vector that
+        %contains the NN predictions for each of the measurements with 1
+        %being clutter, 2 car, 3 cycle, 4 pedestrian
+        function update(this, Z, isObject)
             curr_gaussians = [];
-            for i=1:length(Z)
+            num_meas = size(Z,2);
+            num_objects = sum(isObject==2 | isObject==3 | isObject==4);
+            if num_objects > 0
+                this.kk = (num_meas-num_objects);
+            end
+            for i=1:size(Z,2)
                 weightsum = 0;
                 new_gaussians = [];
                 for j=1:length(this.gaussians)    
@@ -68,6 +79,9 @@ classdef PHDfilter < handle
                     K = this.gaussians(j).P*this.H'*inv(S);
                     P = (eye(size(K,1))-K*this.H)*this.gaussians(j).P;
                     w = this.pd*this.gaussians(j).weight*mvnpdf(Z(:,i), N, S);
+                    if isObject(i)==2 || isObject(i)==3 || isObject(i)==4
+                        w = w*100;
+                    end
                     mu = this.gaussians(j).mu + K*(Z(:,i)-N);
                     ind = this.gaussians(j).index;
 
@@ -194,6 +208,10 @@ classdef PHDfilter < handle
             if n > 0
                 best_estimates = this.gaussians(1:n);
             end
+        end
+        
+        function gaussians = get_all_gaussians(this)
+            gaussians = this.gaussians;
         end
     end
 end
