@@ -4,7 +4,7 @@ class = cell(1,Num);
 for i=1:Num
     i
     tic 
-    [clusters{i} class{i}] = clusterLidar(cleanedFrames{i},1,100);
+    [clusters{i} class{i}] = clusterLidar(cleanedFrames{i},0.7,70);
     sub = cell(1,length(unique(class{i})));
     for j = 1:length(unique(class{i}))
         classes = unique(class{i});
@@ -43,7 +43,6 @@ for i=1:Num
     hold on
     %plot3(egoPosition{i}(1),egoPosition{i}(2),egoPosition{i}(3),'x')
     %axis([20 200 -80 0 60 80])
-    zoom(2)
     pause(0.3)
     hold off
 end

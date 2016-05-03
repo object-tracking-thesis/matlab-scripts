@@ -33,8 +33,8 @@ figure('WindowKeyPressFcn', @keyPress)
 %fCar = @(src,evt) evalin('base','isCarMat(i,j) = 2;');
 %hButton1 = uicontrol( 'Units', 'normalized', 'Position', [0.1 0.1 0.1 0.1], 'Style', 'pushbutton', 'Tag', 'button1', 'String', 'Clutter', 'callback', fClutter);
 %hButton2 = uicontrol( 'Units', 'normalized', 'Position', [0.3 0.1 0.1 0.1], 'Style', 'pushbutton', 'Tag', 'button2', 'String', 'Car', 'callback', fCar);
-%isCarMat = ones(Num,20);
-i = 89;
+%isCarMat = ones(Num,25);
+i = 37;
 while i <= Num
     j = 1;
     while j <= length(clusters{i})
@@ -43,8 +43,9 @@ while i <= Num
         str = sprintf('Frame: %d; Cluster: %d', [i j]);
         title(str);
         %axis([150 250 50 130 60 80])
-        axis([20 200 -80 0 60 80])
+        %axis([20 200 -80 0 60 80])
         %axis([-50 50 -50 50 -5 10])
+        axis([-30 80 -30 50 -5 10])
         zoom(1.5)
         waitforbuttonpress;
         j = j+1;
@@ -67,7 +68,7 @@ end
 %% prepare ground truth cluster data for training the network
 clusterObjects = [];
 offset = cell(1,Num);
-for i=1:200
+for i=1:50
     offset{i} = [0 0 0]';
     for j = 1:length(clusters{i})
         pointNumber = size(clusters{i}{j},1);
@@ -84,18 +85,15 @@ for i=1:200
         volume = (maxX-minX)*(maxY-minY)*(maxZ-minZ);
         density = pointNumber/volume;
         distToEgo = sqrt(sum((center-offset{i}(1:3)').^2));
-        isCar = 1;
-        if isCarMat(i,j) == 2
-            isCar = 2;
-        end
-        clusterObjects = [clusterObjects; pointNumber density center w l h distToEgo isCar];
+        label = isCarMat(i,j);
+        clusterObjects = [clusterObjects; pointNumber density center w l h distToEgo label];
     end
 end
 
-%save data/nn_clusters_kitti_static_crossing.mat clusterObjects
-%save data/isCarMat_kitti_static_crossing.mat isCarMat
-save data/nn_clusters_1600_1800.mat clusterObjects
-save data/isCarMat_1600_1600_1800.mat isCarMat
+save data/nn_clusters_kitti_static_crossing_cyclist.mat clusterObjects
+save data/isCarMat_kitti_static_crossing_cyclist.mat isCarMat
+%save data/nn_clusters_1600_1800.mat clusterObjects
+%save data/isCarMat_1600_1600_1800.mat isCarMat
 
 %% assign different colors to all clusters found in each frame
 clusteredPC = cell(1,Num);
@@ -109,6 +107,10 @@ for i=1:Num
             pointscolor(:,1)=ceil(255);
             pointscolor(:,2)=ceil(200);
             pointscolor(:,3)=ceil(200);
+        elseif isCarMat(i,j) == 3
+            pointscolor(:,1)=ceil(200);
+            pointscolor(:,2)=ceil(180);
+            pointscolor(:,3)=ceil(180);
         else
             pointscolor(:,1)=ceil(rand(1)*150);
             pointscolor(:,2)=ceil(rand(1)*150);
@@ -123,10 +125,10 @@ end
 
 %% plot the clusters in their respective colors
 figure
-for i=1:150
+for i=1:50
     i
     pcshow(clusteredPC{i})
-    axis([20 200 -80 0 60 80])
+    %axis([20 200 -80 0 60 80])
     zoom(2)
     pause(0.1)
 end
@@ -158,7 +160,7 @@ for i=1:150
 end
 %%
 figure;
-for i=1:150
+for i=1:Num
     i
     pcshow(pointCloud(carClustersCutOff{i}{1}))
     %axis([80 120 -30 -15 60 70])
