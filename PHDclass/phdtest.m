@@ -92,7 +92,7 @@ for i=1:50
     est = phd_filter.get_best_estimates;
     if ~isempty(est)
         for j=1:length(est)
-            rng(est(j).index)
+            rng(est(j).index+5)
             color =  [rand, rand, rand];          
             plot(est(j).mu(1), est(j).mu(2),'x','Color',color)
             hold on

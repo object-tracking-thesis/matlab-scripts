@@ -4,6 +4,10 @@ function keyPress(src, e)
             evalin('base','isCarMat(i,j) = 1;');
         case '2'
             evalin('base','isCarMat(i,j) = 2;');
+        case '3'
+            evalin('base','isCarMat(i,j) = 3;');
+        case '4'
+            evalin('base','isCarMat(i,j) = 4;');
         case 'leftarrow'
             evalin('base','j=j-2;');
         case 'downarrow'

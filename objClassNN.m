@@ -1,7 +1,7 @@
 %% Setup some parameters
 input_layer_size  = 9;
 hidden_layer_size = 10;
-num_labels = 2;
+num_labels = 3;
 
 %% Loading the data
 fprintf('Loading Data ...\n')
