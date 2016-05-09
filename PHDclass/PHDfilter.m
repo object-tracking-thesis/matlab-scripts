@@ -63,17 +63,22 @@ classdef PHDfilter < handle
         %contains the NN predictions for each of the measurements with 1
         %being clutter, 2 car, 3 cycle, 4 pedestrian
         function update(this, Z, isObject)
-            curr_gaussians = [];
-            num_meas = size(Z,2);
-            num_objects = sum(isObject==2 | isObject==3 | isObject==4);
-            if num_objects > 0
-                this.kk = (num_meas-num_objects);
+            %preallocation for all updated gaussians
+            n_meas = size(Z,2);
+            n_pred = length(this.gaussians);
+            curr_gaussians = repmat(gaussianComp(0,0,0,0), 1, n_meas*n_pred);
+            
+            %cardinality of the clutter set
+            n_objects = sum(isObject==2 | isObject==3 | isObject==4);
+            if n_objects > 0
+                this.kk = (n_meas-n_objects);
             end
+            
+            counter = 0;
             for i=1:size(Z,2)
                 weightsum = 0;
-                new_gaussians = [];
                 for j=1:length(this.gaussians)    
-
+                    counter = counter+1;
                     N = this.H*this.gaussians(j).mu;
                     S = this.R + this.H*this.gaussians(j).P*this.H';
                     K = this.gaussians(j).P*this.H'*inv(S);
@@ -86,14 +91,15 @@ classdef PHDfilter < handle
                     ind = this.gaussians(j).index;
 
                     weightsum = weightsum + w;
-                    new_gaussians = [new_gaussians gaussianComp(mu,P,w,ind)];
-                end
-                for k=1:length(new_gaussians)
-                    new_gaussians(k).weight = ...
-                        new_gaussians(k).weight/(this.kk+weightsum);
-                end
-                curr_gaussians = [curr_gaussians new_gaussians];           
+                    curr_gaussians(counter) = gaussianComp(mu,P,w,ind);
+                end     
+                %adjust the weights of the current batch of updates
+                for k=0:length(this.gaussians)-1
+                    curr_gaussians(counter-k).weight = ...
+                        curr_gaussians(counter-k).weight/(this.kk+weightsum);
+                end          
             end
+            
             this.gaussians = curr_gaussians;
             this.weight_sort_gaussians;
             this.prune;
