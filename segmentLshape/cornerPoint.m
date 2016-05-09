@@ -129,7 +129,8 @@ projPointsR2(i2) = [];
 projPointsR1 = projPointsR1 - min(projPointsR1); % Set measure from zero 
 projPointsR2 = projPointsR2 - min(projPointsR2);
 
-m1 = max(projPointsR1);
-m2 = max(projPointsR2);
+[m1, idx1] = max(projPointsR1);
+[m2, idx2] = max(projPointsR2);
+
 
 end
