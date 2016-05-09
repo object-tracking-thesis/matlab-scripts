@@ -80,18 +80,14 @@ N = 1; % Test assumption
 wViewed = 1.6016;
 lViewed = 4.2166;
 
-storageCP = zeros(1,2); % Storage for the cornerPoint 
-storageCPmeas = zeros(1,2); % Storage for the assiociated measurementPoint to cornerPoint
 storageCP = [xc, yc];
 
 storageW = [];
-storageWmeas = [];
 storageL = [];
-storageLmeas = [];
+
 
 if wViewed > 0.5         
-    storageW = zeros(N+1,2); % Storage for the practical Width MGPs
-    storageWmeas = zeros(N+1,2);
+    storageW = zeros(N+1,2); % Storage for the practical Width MGPs    
     
     for j = 1:N+1
         storageW(j,:) = [xc, yc] + wViewed/(N+1)*j*vWidth;
@@ -99,8 +95,7 @@ if wViewed > 0.5
 end
 
 if lViewed > 0.5
-    storageL = zeros(N+1,2); % Storage for the practical Length MGPs
-    storageLmeas = zeros(N+1,2);    
+    storageL = zeros(N+1,2); % Storage for the practical Length MGPs    
     
     for j = 1:N+1
         storageL(j,:) = [xc, yc] + lViewed/(N+1)*j*vLength;

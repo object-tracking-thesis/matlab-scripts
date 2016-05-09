@@ -153,8 +153,13 @@ classdef MGPgenerator2 < handle
             jac_w = zeros(2,7,2+this.mgpNum)*nan; % Just so that we can keep track of shit
             jac_l = zeros(2,7,2+this.mgpNum)*nan;
             
+            N = this.mgpNum;
+            K = N+1;
+            
             if w_viewed > 0.5
                 [symFun_w, symJac_w] = this.getSymFunAndJacob(corner, 'w');
+                mgp_corner = this.evaluateFunction(symFun_w, predictedState, K, 0, 0);
+                jac_corner = this.evaluateJacobian(symJac_w, predictedState, K, 0, 0);
             else
                 symFun_w = @(x) [];
                 symJac_w = @(x) [];
@@ -162,14 +167,15 @@ classdef MGPgenerator2 < handle
             
             if l_viewed > 0.5
                 [symFun_l, symJac_l] = this.getSymFunAndJacob(corner, 'l');
+                mgp_corner = this.evaluateFunction(symFun_w, predictedState, K, 0, 0);
+                jac_corner = this.evaluateJacobian(symJac_w, predictedState, K, 0, 0);
             else
                 symFun_l = @(x) [];
                 symJac_l = @(x) [];
             end
                         
-            N = this.mgpNum;
-            K = N+1;
-            h = 0:K;
+
+            h = 1:K;
             
             for j = h;
                 p = w_viewed/predictedState(6);
@@ -186,21 +192,11 @@ classdef MGPgenerator2 < handle
                 mgps_l(j+1,:)  = this.evaluateFunction(symFun_l, predictedState, K, j, p);
                 jac_w(:,:,j+1) = this.evaluateJacobian(symJac_l, predictedState, K, j, p);                
             end
-            
-            if (corner == 2) || (corner == 4) % This means we need to flip w 
-                mgps_w = flip(mgps_w); % Flip rowwise                
-                jac_w = flip(jac_w, 3);
-                
-                orderedMgps = [mgps_w; mgps_l];
-                orderedJacobs = cat(3, jac_w, jac_l);
-                
-            else % Then this.shouldWeFlip(corner, 'l') is true                
-                mgps_l = flip(mgps_l);               
-                jac_l = flip(jac_l, 3);
-                
-                orderedMgps = [mgps_l; mgps_W];
-                orderedJacobs = cat(3, jac_l, jac_w);                                                            
-            end
+
+            orderedMgps = [mgps_l;
+                           mgp_corner; 
+                           mgps_w];
+            orderedJacobs = cat(3, jac_l, jac_corner, jac_w);
             
             % Find unique MGPS
             [~, idx] = uniquetol(orderedMgps, 'ByRows',true); % Find index of unique rows (i.e. MGPs)
@@ -209,8 +205,105 @@ classdef MGPgenerator2 < handle
             
         end
         
-        function [assignedMgps, assignedJacobians, assignedZ] = assignMgps(~, mgps, jacobians, clusterZ)
-            % TODO
+        function assignedZ = assignMgps(this, clusterZ, predictedState)
+            
+            [~, ~, uOp] = cornerPoint(clusterZ);
+            
+            c1 = uOp(1); c2 = uOp(2);
+            n1 = uOp(3); n2 = uOp(4);
+            
+            xc = (-n1*c1 + n2*c2);
+            yc = (-n2*c1 -n1*c2);            
+            
+            M = mean(clusterZ(:,1:2));
+            
+            % Formulate all 4 possible L-vectors, to find the ones that are along the data
+            
+            v1 = [1, -n1/n2]; v1 = v1./norm(v1,2);
+            v2 = [1,  n2/n1]; v2 = v2./norm(v2,2);
+            v3 = -1.*v1;
+            v4 = -1.*v2;
+            
+            p1 = [xc yc] + v1;
+            p2 = [xc yc] + v2;
+            p3 = [xc yc] + v3;
+            p4 = [xc yc] + v4;
+            
+            d1 = (p1(1) - M(1))^2 + (p1(2) - M(2))^2;
+            d2 = (p2(1) - M(1))^2 + (p2(2) - M(2))^2;
+            d3 = (p3(1) - M(1))^2 + (p3(2) - M(2))^2;
+            d4 = (p4(1) - M(1))^2 + (p4(2) - M(2))^2;
+            
+            % The massVec* are vectors which are in the direction of the point cloud points, from [xc yc]
+            
+            if d1 < d3
+                massVec1 = v1;
+            else
+                massVec1 = v3;
+            end
+            
+            if d2 < d4
+                massVec2 = v2;
+            else
+                massVec2 = v4;
+            end
+            
+            
+            % Define the heading vector
+            vHeading = [cos(predictedState(4)), sin(predictedState(4))];
+            
+            % Find the vectors aligned with length & width of L-shape
+            % Orthogonal vectors have dot product ~ 0, i.e. min dot product must be the
+            % width vector, since it is orthogonal to the heading vector.
+            if abs(dot(massVec1, vHeading)) < abs(dot(massVec2,vHeading))
+                vLength =  massVec2;
+                vWidth  =  massVec1;
+            else
+                vLength =  massVec1;
+                vWidth  =  massVec2;
+            end
+            
+            % N = 1; % Test assumption
+            N = this.mgpNum;
+            % Get the viewed lengths of each side
+            
+            [wViewed, lViewed] = this.getViewedLengths(clusterZ, predictedState);
+            
+            %wViewed = 1.6016;
+            %lViewed = 4.2166;
+            
+            storageCP = [xc, yc];
+            
+            storageW = [];
+            storageL = [];
+            
+            
+            if wViewed > 0.5
+                storageW = zeros(N+1,2); % Storage for the practical Width MGPs
+                
+                for j = 1:N+1
+                    storageW(j,:) = [xc, yc] + wViewed/(N+1)*j*vWidth;
+                end
+            end
+            
+            if lViewed > 0.5
+                storageL = zeros(N+1,2); % Storage for the practical Length MGPs                
+                
+                for j = 1:N+1
+                    storageL(j,:) = [xc, yc] + lViewed/(N+1)*j*vLength;
+                end
+            end
+            
+            allStorage = [storageL;
+                storageCP;
+                storageW];
+            
+            IDX = knnsearch(clusterZ(:,1:2), allStorage);
+            
+            chosenMeasurements = clusterZ(IDX,1:2);
+            
+            assignedZ = chosenMeasurements;
+            
         end
         
         function [wViewed, lViewed] = getViewedLengths(~, clusterZ, predictedState)
