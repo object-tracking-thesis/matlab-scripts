@@ -1,4 +1,17 @@
-
+% Class API functions, and order in which they should be called. 
+%
+%
+%                         this = MGPgenerator2(N)
+%                       corner = getCarCorner(clusterZ, predictedState)
+%           [wViewed, lViewed] = getViewedLengths(clusterZ, predictedState)
+% [orderedMgps, orderedJacobs] = constructMGPs(corner, predictedState, w_viewed, l_viewed)
+%                    assignedZ = assignMgps(clusterZ, predictedState)
+%
+% ============= TODO ============
+% The way that the class has changed from v1 has made it so that N cant be
+% equal to 0. This should be fixed, since as of now the lowest possible nr
+% of MGPS is 3+2*1 = 5.
+%
 classdef MGPgenerator2 < handle
     properties%(Access = private)
         mgpFunCorner1_w;
@@ -181,8 +194,8 @@ classdef MGPgenerator2 < handle
                 p = w_viewed/predictedState(6);
                 if p > 1
                     p = 1;
-                end
-                mgps_w(j,:)  = this.evaluateFunction(symFun_w, predictedState, K, j, p);
+                end                
+                mgps_w(j,:)  = this.evaluateFunction(symFun_w, predictedState, K, j, p);                
                 jac_w(:,:,j) = this.evaluateJacobian(symJac_w, predictedState, K, j, p);
                 
                 p = l_viewed/predictedState(7);
@@ -368,7 +381,7 @@ classdef MGPgenerator2 < handle
 
             
         end
-        %% ====== API FUNCTIONS ======
+        %% ====== INTERNAL (hidden) FUNCTIONS ======
         
         function numericJacob = evaluateJacobian(~, symbolicJacobian, state, K, h, p) %#ok<INUSD>
             % Evaluates symbolic jacobian with the values found in state
