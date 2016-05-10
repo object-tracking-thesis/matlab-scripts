@@ -1,4 +1,19 @@
 function [m1, m2, uOp, varargout] = cornerPoint(pointCloud, varargin)
+% 
+% 
+%  function [m1, m2, uOp, filtNtg] = cornerPoint(pointCloud)
+%           function [m1, m2, uOp] = cornerPoint(pointCloud, lb, up)
+%           function [m1, m2, uOp] = cornerPoint(pointCloud)
+%
+%
+%     c1 = uOp(1); c2 = uOp(2);
+%     n1 = uOp(3); n2 = uOp(4);
+%    
+%     xc = (-n1*c1 + n2*c2);
+%     yc = (-n2*c1 -n1*c2);
+%         
+%     angle(N,:) = ones(1,4)*atan2(n2,n1) + [0 1 2 3]*pi/2;
+%
 
 Ntg = sortrows(pointCloud,3);
 
