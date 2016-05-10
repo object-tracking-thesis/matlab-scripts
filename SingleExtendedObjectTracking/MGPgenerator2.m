@@ -198,8 +198,12 @@ classdef MGPgenerator2 < handle
                            mgps_w];
             orderedJacobs = cat(3, jac_l, jac_corner, jac_w);
             
+            % -----
+            % DO WE EVEN NEED THIS ANYMORE?????
+            % -----
             % Find unique MGPS
             [~, idx] = uniquetol(orderedMgps, 'ByRows',true); % Find index of unique rows (i.e. MGPs)
+            idx = sort(idx);
             orderedMgps = orderedMgps(idx,:);
             orderedJacobs = orderedJacobs(:,:,idx);
             

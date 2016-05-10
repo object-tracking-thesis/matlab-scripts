@@ -58,8 +58,13 @@ assignedZ = mgpGen.assignMgps(clusterZ, predictedState); % Seems to work as well
 %% Lets plot the orderedMgps and see how they stack up
 
 figure(f)
-    plot(orderedMgps(:,1), orderedMgps(:,2), 'cs')%,'MarkerFaceColor','c')
+    plot(orderedMgps(:,1), orderedMgps(:,2), 'cs','MarkerFaceColor','c')
     plot(assignedZ(:,1), assignedZ(:,2), 'co')
+       
+       for k = 1:5
+        plot([orderedMgps(k,1) assignedZ(k,1)], [orderedMgps(k,2) assignedZ(k,2)],'--') 
+       end
+
 
     
     
