@@ -96,7 +96,7 @@ classdef MGPgenerator2 < handle
                 
         end
         
-        function corner = getCarCorner(clusterZ, predictedState) % clusterZ needs Z-axis as well
+        function corner = getCarCorner(~,clusterZ, predictedState) % clusterZ needs Z-axis as well
             % Car corner definition
             % 
             % ii                   iii
@@ -145,13 +145,13 @@ classdef MGPgenerator2 < handle
         end
         
         function [orderedMgps, orderedJacobs] = constructMGPs(this, corner, predictedState, w_viewed, l_viewed)
-            N = 2+this.mgpNum;
+            nrStore = 1+this.mgpNum;
             
-            mgps_w = nan*zeros(N,2);
-            mgps_l = nan*zeros(N,2);
+            mgps_w = nan*zeros(nrStore,2);
+            mgps_l = nan*zeros(nrStore,2);
             
-            jac_w = zeros(2,7,2+this.mgpNum)*nan; % Just so that we can keep track of shit
-            jac_l = zeros(2,7,2+this.mgpNum)*nan;
+            jac_w = zeros(2,7,nrStore)*nan; % Just so that we can keep track of shit
+            jac_l = zeros(2,7,nrStore)*nan;
             
             N = this.mgpNum;
             K = N+1;
@@ -167,8 +167,8 @@ classdef MGPgenerator2 < handle
             
             if l_viewed > 0.5
                 [symFun_l, symJac_l] = this.getSymFunAndJacob(corner, 'l');
-                mgp_corner = this.evaluateFunction(symFun_w, predictedState, K, 0, 0);
-                jac_corner = this.evaluateJacobian(symJac_w, predictedState, K, 0, 0);
+                mgp_corner = this.evaluateFunction(symFun_l, predictedState, K, 0, 0);
+                jac_corner = this.evaluateJacobian(symJac_l, predictedState, K, 0, 0);
             else
                 symFun_l = @(x) [];
                 symJac_l = @(x) [];
@@ -182,15 +182,15 @@ classdef MGPgenerator2 < handle
                 if p > 1
                     p = 1;
                 end
-                mgps_w(j+1,:)  = this.evaluateFunction(symFun_w, predictedState, K, j, p);
-                jac_w(:,:,j+1) = this.evaluateJacobian(symJac_w, predictedState, K, j, p);
+                mgps_w(j,:)  = this.evaluateFunction(symFun_w, predictedState, K, j, p);
+                jac_w(:,:,j) = this.evaluateJacobian(symJac_w, predictedState, K, j, p);
                 
                 p = l_viewed/predictedState(7);
                 if p > 1
                     p = 1;
                 end
-                mgps_l(j+1,:)  = this.evaluateFunction(symFun_l, predictedState, K, j, p);
-                jac_w(:,:,j+1) = this.evaluateJacobian(symJac_l, predictedState, K, j, p);                
+                mgps_l(j,:)  = this.evaluateFunction(symFun_l, predictedState, K, j, p);
+                jac_l(:,:,j) = this.evaluateJacobian(symJac_l, predictedState, K, j, p);                
             end
 
             orderedMgps = [mgps_l;
@@ -310,7 +310,7 @@ classdef MGPgenerator2 < handle
             % Returns the length of the viewed length and width of the car 
             
             [~, ~, uOp] = cornerPoint(clusterZ);                        
-            
+            clusterZ = clusterZ(:,1:2);
             c1 = uOp(1); c2 = uOp(2);
             n1 = uOp(3); n2 = uOp(4);
             
@@ -433,29 +433,6 @@ classdef MGPgenerator2 < handle
  
     end
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
