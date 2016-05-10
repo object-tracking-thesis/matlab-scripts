@@ -28,14 +28,15 @@ state31 = [-17.25, -2.57, 4.39, 4.07, 0.3, 1.75, 4.47]';
 % 
 % xk = xc + 2.40*cos(4.04 - 0.37)
 % yk = yc + 2.40*sin(4.04 - 0.37)
-
+%
+% angle = ones(1,4)*atan2(n2,n1) + [0 1 2 3]*pi/2
 
 %
 
-f = figure; f.Position = [100 100 1400 1000];
+f = figure; f.Position = [100 100 1200 800];
 hold on;
 p1 = plot(twoFrames{1}(:,1), twoFrames{1}(:,2),'rx');
-p2 = plot([], [])%plot(twoFrames{2}(:,1), twoFrames{2}(:,2),'bx');
+p2 = plot(twoFrames{2}(:,1), twoFrames{2}(:,2),'bx');
 legend([p1 p2], 'Frame N = 30', 'Frame N = 31')
 axis equal; grid on
 %plot(xk, yk,'cx')
@@ -45,7 +46,7 @@ mgpGen = MGPgenerator2(nrMgps);
 
 clusterZ = twoFrames{1};
 
-predictedState = state30;
+predictedState = cptF(state30);
 
 corner = mgpGen.getCarCorner(clusterZ, predictedState); % This seems to be working 
 
@@ -62,7 +63,7 @@ figure(f)
     plot(assignedZ(:,1), assignedZ(:,2), 'co')
        
        for k = 1:5
-        plot([orderedMgps(k,1) assignedZ(k,1)], [orderedMgps(k,2) assignedZ(k,2)],'--') 
+           plot([orderedMgps(k,1) assignedZ(k,1)], [orderedMgps(k,2) assignedZ(k,2)],'--')
        end
 
 
