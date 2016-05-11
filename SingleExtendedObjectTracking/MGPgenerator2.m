@@ -67,32 +67,32 @@ classdef MGPgenerator2 < handle
             syms K h p 
             
             % Corner i, width and length MGPs definitions
-            this.mgpFunCorner1_w = [ (x - 0.5*sqrt(W^2 + L^2)*cos(atan(W/L) + phi) + N/K*h*p*W * cos(phi + pi/2)),...
-                                     (y - 0.5*sqrt(W^2 + L^2)*sin(atan(W/L) + phi) + N/K*h*p*W * sin(phi + pi/2))];
+            this.mgpFunCorner1_w = [ (x - 0.5*sqrt(W^2 + L^2)*cos(atan(W/L) + phi) + 1/K*h*p*W * cos(phi + pi/2)),...
+                                     (y - 0.5*sqrt(W^2 + L^2)*sin(atan(W/L) + phi) + 1/K*h*p*W * sin(phi + pi/2))];
             
-            this.mgpFunCorner1_l = [ (x - 0.5*sqrt(W^2 + L^2)*cos(atan(W/L) + phi) + N/K*h*p*L * cos(phi)),...
-                                     (y - 0.5*sqrt(W^2 + L^2)*sin(atan(W/L) + phi) + N/K*h*p*L * sin(phi))];
+            this.mgpFunCorner1_l = [ (x - 0.5*sqrt(W^2 + L^2)*cos(atan(W/L) + phi) + 1/K*h*p*L * cos(phi)),...
+                                     (y - 0.5*sqrt(W^2 + L^2)*sin(atan(W/L) + phi) + 1/K*h*p*L * sin(phi))];
             
             % Corner ii, width and length MGPs definitions
-            this.mgpFunCorner2_w = [(x - 0.5*sqrt(W^2 + L^2)*cos(atan(W/L) + phi) + W*cos(phi + pi/2) + N/K*h*p*W * cos(phi + pi/2 + pi)),...
-                                    (y - 0.5*sqrt(W^2 + L^2)*sin(atan(W/L) + phi) + W*sin(phi + pi/2) + N/K*h*p*W * sin(phi + pi/2 + pi))];
+            this.mgpFunCorner2_w = [(x - 0.5*sqrt(W^2 + L^2)*cos(atan(W/L) + phi) + W*cos(phi + pi/2) + 1/K*h*p*W * cos(phi + pi/2 + pi)),...
+                                    (y - 0.5*sqrt(W^2 + L^2)*sin(atan(W/L) + phi) + W*sin(phi + pi/2) + 1/K*h*p*W * sin(phi + pi/2 + pi))];
 
-            this.mgpFunCorner2_l = [(x - 0.5*sqrt(W^2 + L^2)*cos(atan(W/L) + phi) + W*cos(phi + pi/2) + N/K*h*p*L * cos(phi)),...
-                                    (y - 0.5*sqrt(W^2 + L^2)*sin(atan(W/L) + phi) + W*sin(phi + pi/2) + N/K*h*p*L * sin(phi))];
+            this.mgpFunCorner2_l = [(x - 0.5*sqrt(W^2 + L^2)*cos(atan(W/L) + phi) + W*cos(phi + pi/2) + 1/K*h*p*L * cos(phi)),...
+                                    (y - 0.5*sqrt(W^2 + L^2)*sin(atan(W/L) + phi) + W*sin(phi + pi/2) + 1/K*h*p*L * sin(phi))];
                         
             % Corner iii, width and length MGPs definitions
-            this.mgpFunCorner3_w = [(x - 0.5*sqrt(W^2 + L^2)*cos(atan(W/L) + phi) + W*cos(phi + pi/2) + L*cos(phi) + N/K*h*p*W * cos(phi + pi/2 + pi)),...
-                                    (y - 0.5*sqrt(W^2 + L^2)*sin(atan(W/L) + phi) + W*sin(phi + pi/2) + L*sin(phi) + N/K*h*p*W * sin(phi + pi/2 + pi))];
+            this.mgpFunCorner3_w = [(x - 0.5*sqrt(W^2 + L^2)*cos(atan(W/L) + phi) + W*cos(phi + pi/2) + L*cos(phi) + 1/K*h*p*W * cos(phi + pi/2 + pi)),...
+                                    (y - 0.5*sqrt(W^2 + L^2)*sin(atan(W/L) + phi) + W*sin(phi + pi/2) + L*sin(phi) + 1/K*h*p*W * sin(phi + pi/2 + pi))];
 
-            this.mgpFunCorner3_l = [(x - 0.5*sqrt(W^2 + L^2)*cos(atan(W/L) + phi) + W*cos(phi + pi/2) + L*cos(phi) + N/K*h*p*L * cos(phi + pi)),...
-                                    (y - 0.5*sqrt(W^2 + L^2)*sin(atan(W/L) + phi) + W*sin(phi + pi/2) + L*sin(phi) + N/K*h*p*L * sin(phi + pi))];
+            this.mgpFunCorner3_l = [(x - 0.5*sqrt(W^2 + L^2)*cos(atan(W/L) + phi) + W*cos(phi + pi/2) + L*cos(phi) + 1/K*h*p*L * cos(phi + pi)),...
+                                    (y - 0.5*sqrt(W^2 + L^2)*sin(atan(W/L) + phi) + W*sin(phi + pi/2) + L*sin(phi) + 1/K*h*p*L * sin(phi + pi))];
 
             % Corner iv, width and length MGPs definitions
-            this.mgpFunCorner4_w = [(x - 0.5*sqrt(W^2 + L^2)*cos(atan(W/L) + phi) + L*cos(phi) + N/K*h*p*W * cos(phi + pi/2)),...
-                                    (y - 0.5*sqrt(W^2 + L^2)*sin(atan(W/L) + phi) + L*sin(phi) + N/K*h*p*W * sin(phi + pi/2))];
+            this.mgpFunCorner4_w = [(x - 0.5*sqrt(W^2 + L^2)*cos(atan(W/L) + phi) + L*cos(phi) + 1/K*h*p*W * cos(phi + pi/2)),...
+                                    (y - 0.5*sqrt(W^2 + L^2)*sin(atan(W/L) + phi) + L*sin(phi) + 1/K*h*p*W * sin(phi + pi/2))];
 
-            this.mgpFunCorner4_l = [(x - 0.5*sqrt(W^2 + L^2)*cos(atan(W/L) + phi) + L*cos(phi) + N/K*h*p*L * cos(phi + pi)),...
-                                    (y - 0.5*sqrt(W^2 + L^2)*sin(atan(W/L) + phi) + L*sin(phi) + N/K*h*p*L * sin(phi + pi))];
+            this.mgpFunCorner4_l = [(x - 0.5*sqrt(W^2 + L^2)*cos(atan(W/L) + phi) + L*cos(phi) + 1/K*h*p*L * cos(phi + pi)),...
+                                    (y - 0.5*sqrt(W^2 + L^2)*sin(atan(W/L) + phi) + L*sin(phi) + 1/K*h*p*L * sin(phi + pi))];
             
             % Get symbolic jacobians for each case
             this.mgpJac1_w = jacobian(this.mgpFunCorner1_w, [x y v phi phiDot W L]);
@@ -129,7 +129,7 @@ classdef MGPgenerator2 < handle
             
             
             rot = @(phi) [cos(phi) -sin(phi);
-                sin(phi)  cos(phi)];
+                          sin(phi)  cos(phi)];
             
             trans = @(deltaP) repmat(deltaP, 4,1);
             
@@ -141,9 +141,9 @@ classdef MGPgenerator2 < handle
             
             % cC is the modified rectangle, cP is the cornerPoint
             distCorner = @(cC, cP) [(sqrt((cC(1,1) - cP(1))^2 + (cC(1,2) - cP(2))^2));...
-                (sqrt((cC(2,1) - cP(1))^2 + (cC(2,2) - cP(2))^2));...
-                (sqrt((cC(3,1) - cP(1))^2 + (cC(3,2) - cP(2))^2));...
-                (sqrt((cC(4,1) - cP(1))^2 + (cC(4,2) - cP(2))^2))];
+                                    (sqrt((cC(2,1) - cP(1))^2 + (cC(2,2) - cP(2))^2));...
+                                    (sqrt((cC(3,1) - cP(1))^2 + (cC(3,2) - cP(2))^2));...
+                                    (sqrt((cC(4,1) - cP(1))^2 + (cC(4,2) - cP(2))^2))];
             
             [~,~,uOp] = cornerPoint(clusterZ);
             
@@ -187,14 +187,13 @@ classdef MGPgenerator2 < handle
                 symJac_l = @(x) [];
             end
                         
-
             h = 1:K;
             
             for j = h;
                 p = w_viewed/predictedState(6);
                 if p > 1
                     p = 1;
-                end                
+                end
                 mgps_w(j,:)  = this.evaluateFunction(symFun_w, predictedState, K, j, p);                
                 jac_w(:,:,j) = this.evaluateJacobian(symJac_w, predictedState, K, j, p);
                 
