@@ -12,36 +12,27 @@ H = [1 0 0 0;...
      0 1 0 0];
 R = 0.0001*diag([1 1]);
  
-%create 2d measurements
+%create 2d measurements and prepare the isObject cell array
 n = 40;
 Z = cell(1,n);
 ZCar = cell(1,n);
-isCar = cell(1,n);
+isObject = cell(1,n);
 allMeas = [];
 for i = 1:n
     meas = [];
-    measIsCar = [];
+    measIsObject = [];
     for j = 1:length(clusters{i})
         center = mean(clusters{i}{j},1);
         meas = [meas center(1:2)'];
-        if isCarMat(i,j) == 2
-            measIsCar = [measIsCar center(1:2)'];
-        end
     end
     Z{i} = meas;
-    ZCar{i} = measIsCar;
-    isCar{i} = isCarMat(i,:);
+    isObject{i} = isCarMat(i,:);
     allMeas = [allMeas meas];
 end
 
-%plot the meas
+%plot the measurements
 figure
 plot(allMeas(1,:),allMeas(2,:),'x','Color',[0.3 0.3 0.3])
-% for i=1:20
-%     plot(ZCar{i}(1,:),ZCar{i}(2,:),'x','Color',[0.3 0.3 0.3])
-%     hold on
-%     pause(0.3)
-% end
 
 %% init
 ps = 0.99;
@@ -79,7 +70,7 @@ for i=1:n
     %plot(ZCar{i}(1,:),ZCar{i}(2,:),'x','Color',[0.3 0.3 0.3])
     hold on
     phd_filter.predict;
-    phd_filter.update(Z{i},isCar{i})
+    phd_filter.update(Z{i},isObject{i})
     phd_filter.get_number_of_targets
     est = phd_filter.get_best_estimates;
     

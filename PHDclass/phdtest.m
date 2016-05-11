@@ -1,5 +1,5 @@
 %% motion model
-rng(3000)
+rng(1337)
 T = 0.1;
 F = [1 0 T 0; 0 1 0 T; 0 0 1 0; 0 0 0 1];
 q = 1;
@@ -13,13 +13,14 @@ H = [1 0 0 0;...
 R = 0.00015*diag([1 1]);
  
 %create 2d true states, X=[x y dotx doty]'
-n = 50;
+n = 20;
 X1 = zeros(4,n);
 X10 = [1 1 0 0]';
 X1(:,1) = X10;
 X2 = zeros(4,n);
 X20 = [1 1 0 0]';
 X2(:,1) = X20;
+X3 = zeros(4,n);
 X30 = [1 1 0 0]';
 X3(:,1) = X30;
 P_0 = 0.1*diag(ones(1,4));
@@ -82,12 +83,13 @@ weights{1} = 3;
 
 %% filter recursion
 figure;
+gaussians = [];
 phd_filter = PHDfilter;
 phd_filter.set_birth_rfs(means, covariances, weights);
 phd_filter.set_model_parameters(F,Q,H,R);
-for i=1:50
+for i=1:20
     phd_filter.predict;
-    phd_filter.update(Z{i})
+    phd_filter.update(Z{i},zeros(1,size(Z{i},2)))
     phd_filter.get_number_of_targets
     est = phd_filter.get_best_estimates;
     if ~isempty(est)
@@ -99,18 +101,21 @@ for i=1:50
             est(j).index
         end
     end
+    gaussians = [gaussians est];
     pause(0.2)
 end
 
 %% plot the gaussians
-gaussians = prev_gaussians;
-weightsum = 0;
-[X,Y] = meshgrid(min([xmin ymin])-5:1:max([xmax ymax])+5);
+%[X,Y] = meshgrid(min([xmin ymin])-1:0.05:max([xmax ymax])+1);
+[X,Y] = meshgrid(-2:0.05:3);
 pdf = zeros(size(X));
-for i=1:length(gaussians)
-    weightsum = weightsum + gaussians(i).weight;
-    pdf = pdf+gaussians(i).weight.*normpdfOverGrid(gaussians(i).mu(1:2),gaussians(i).P(1:2,1:2),X,Y);    
-end
-weightsum
 figure
+for i=1:length(gaussians)
+    %pdf = pdf+gaussians(i).weight.*normpdfOverGrid(gaussians(i).mu(1:2),gaussians(i).P(1:2,1:2),X,Y);    
+    pdf = pdf+normpdfOverGrid(gaussians(i).mu(1:2),gaussians(i).P(1:2,1:2),X,Y);
+end
+pdf(find(pdf == 0)) = NaN;
 surf(X,Y,pdf)
+xlabel('x')
+ylabel('y')
+zlabel('PHD')
