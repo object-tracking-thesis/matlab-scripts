@@ -1,44 +1,82 @@
 close all
 % Load carClusters
-load carClusters.mat
+load carClustersCutOff.mat
+load egoPosition.mat
 % Get a frame,
-N  = 39;
+N  = 10;
+carClusters = carClustersCutOff;
 %%
 close all
 f = figure;
-while 1
-for N = 1:30%length(carClusters)
+f.Position = [100 100 1000 800];
+angle = ones(N,4);
+%while 1
+for N = 1:length(carClusters)
     clf
     Ntg = carClusters{N}(:,1:3);
     
-    % take out ego position
-    load egoPosition.mat
-    Xo = egoPosition{N}(1);
-    Yo = egoPosition{N}(2);
-    % Compensate for ego position (i.e. put ego in origin)
-    Ntg = Ntg(:,1:3) - repmat([Xo, Yo, 0],length(Ntg),1);
-        
-    grid on
-    hold on
-    plot(0,0,'sk','MarkerFace','k','MarkerSize',12)
-    plot(Ntg(:,1), Ntg(:,2),'bx')
-    tic
-    [m1,m2,uOp, filtNtg] = cornerPoint(Ntg, 0.4, 0.4);
-    toc
-    c1 = uOp(1);
-    c2 = uOp(2);
-    n1 = uOp(3);
-    n2 = uOp(4);
+    Ntg(:,1:2) = Ntg(:,1:2) - repmat([egoPosition{1}(1), egoPosition{1}(2)],length(Ntg),1);
+    
+    figure(f)
+    hold on; grid on
+    op = 0.8;
+    plot(Ntg(:,1), Ntg(:,2),'x','Color',op.*[1 1 1]);
+    EGO = [egoPosition{N}(1)-egoPosition{1}(1), egoPosition{N}(2)-egoPosition{1}(2)];
+    plot(EGO(1), EGO(2),'ko');
+    
+    text(EGO(1)-2,EGO(2)-2, 'EGO')
+    
+    %tic
+    [m1,m2,uOp, filtNtg] = cornerPoint(Ntg, 0.5, 0.4); % 0.3 0.5
+    %toc
+    c1 = uOp(1); c2 = uOp(2);
+    n1 = uOp(3); n2 = uOp(4);
     xc = (-n1*c1 + n2*c2);
     yc = (-n2*c1 -n1*c2);
-    angle = ones(1,4)*atan2(n2,n1) + [0 1 2 3]*pi/2;
-    figure(f)
-    plot(filtNtg(:,1), filtNtg(:,2),'rx')
-    for i = 1:4
-        plot([0 cos(angle(i))]+[xc, xc], [0 sin(angle(i))]+[yc, yc], '-g','LineWidth',2)
-    end            
+    angle(N,:) = ones(1,4)*atan2(n2,n1) + [0 1 2 3]*pi/2;
     
-    axis([-15 5 -15 5])
-    pause(0.1)
+    p1=plot(filtNtg(:,1), filtNtg(:,2),'kx');
+    for i = 1:4 % i = 2 is correct one for N = 1             
+        plot(4.*[0 cos(angle(N,i))]+[xc, xc], 4.*[0 sin(angle(N,i))]+[yc, yc], '-g','LineWidth',2)
+        plot(0+xc, 0+yc, 'og','LineWidth',2)
+    end
+    
+    % Test to draw correct angle         
+    
+    if N == 1
+        bestChoice = 4;
+        plot(4.*[0 cos(angle(N,bestChoice))]+[xc, xc], 4.*[0 sin(angle(N,bestChoice))]+[yc, yc], '-m','LineWidth',2)
+        plot(0+xc, 0+yc, 'om','LineWidth',2)
+    else
+        diffAngle = mod(angle(N,:),2*pi) - mod(angle(N-1,bestChoice),2*pi);
+        [~, bestChoice] = min(abs(diffAngle));        
+        plot(4.*[0 cos(angle(N,bestChoice))]+[xc, xc], 4.*[0 sin(angle(N,bestChoice))]+[yc, yc], '-m','LineWidth',2)
+        plot(0+xc, 0+yc, 'om','LineWidth',2)
+        
+    end
+    
+    title(sprintf('PRESS SPACE TO TIMESTEP\n K = %i / %i Nr of points: %i', [N, length(carClusters), length(filtNtg)]))
+    
+    text(double(xc-12), double(yc), sprintf('m1: %.2f\nm2: %.2f', [m1 m2]))
+    leg = legend(p1, sprintf('m1: %.2f\nm2: %.2f', [m1 m2])); leg.FontSize = 20;
+    
+    %axis([-30 5 -50 5])
+    axis equal
+    now = 1;
+    while now
+        keydown = waitforbuttonpress;
+        if keydown == 1
+            now = 0;
+        end
+    end
+    %pause(2)
 end
-end
+%end
+
+
+   
+   
+   
+   
+   
+   

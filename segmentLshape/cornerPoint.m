@@ -1,21 +1,37 @@
 function [m1, m2, uOp, varargout] = cornerPoint(pointCloud, varargin)
-
-if length(varargin) == 2
-    lb = varargin{1};
-    ub = varargin{2};    
-else
-    lb = 0.15;
-    ub = 0.4;
-end
+% 
+% 
+%  function [m1, m2, uOp, filtNtg] = cornerPoint(pointCloud)
+%           function [m1, m2, uOp] = cornerPoint(pointCloud, lb, up)
+%           function [m1, m2, uOp] = cornerPoint(pointCloud)
+%
+%
+%     c1 = uOp(1); c2 = uOp(2);
+%     n1 = uOp(3); n2 = uOp(4);
+%    
+%     xc = (-n1*c1 + n2*c2);
+%     yc = (-n2*c1 -n1*c2);
+%         
+%     angle(N,:) = ones(1,4)*atan2(n2,n1) + [0 1 2 3]*pi/2;
+%
 
 Ntg = sortrows(pointCloud,3);
+
+if length(varargin) == 2 && varargin{1} > 0 && varargin{2} > 0    
+    % Remove tailing points
+    lb = varargin{1};
+    ub = varargin{2};    
+    
+    N1 = round(length(Ntg)*lb); % 0.15
+    N2 = round(length(Ntg)*ub); % 0.4
+
+    sortNtg = Ntg(N1:end-N2,1:2);
+else
+    sortNtg = Ntg(:,1:2);
+end
+
+
 % Remove tailing points
-
-N1 = round(length(Ntg)*lb); % 0.15
-N2 = round(length(Ntg)*ub); % 0.4
-
-sortNtg = Ntg(N1:end-N2,1:2);
-
 if nargout == 4    
     varargout(1) = {sortNtg};
 end
@@ -73,7 +89,7 @@ V2 = [1 n2/n1];
 V1 = V1/norm(V1,2);
 V2 = V2/norm(V2,2);
 
-% project points onto perp line, using the formula proj_s-on-v =
+% project points onto line, using the formula proj_s-on-v =
 % s*dot(v,s)/dot(s,s)
 V = {V1 V2};
 projPoints = cell(1,2);
@@ -104,13 +120,32 @@ R2 = [cos(phi2) -sin(phi2); sin(phi2) cos(phi2)];
 projPointsR1 = projPoints{1}*R1'; % Apply rotation 
 projPointsR2 = projPoints{2}*R2';
 
-projPointsR1 = projPointsR1(abs(projPointsR1) < 1e-5 == 0); % Remove rounding errors 
-projPointsR2 = projPointsR2(abs(projPointsR2) < 1e-5 == 0);
+projPointsR1 = projPointsR1(:,2);% Keep second column
+projPointsR2 = projPointsR2(:,2); 
+
+% Remove outliers
+% TODO - Make this better, only works for one point, and not an enitre
+% cluster. 
+
+projPointsR1 = sort(projPointsR1);
+diffR1 = [0; diff(projPointsR1)];
+i1 = abs(diffR1) > 1; % A point separated more than 1 meter from its nearest neighbor is excluded 
+projPointsR1(i1) = [];
+
+projPointsR2 = sort(projPointsR2);
+diffR2 = [0; diff(projPointsR2)];
+i2 = abs(diffR2) > 1;
+projPointsR2(i2) = [];
+
+% These are used for diagnostics 
+% [i2 diffR2 projPointsR2]  
+% plot(ones(1,length(projPointsR2)), projPointsR2, 'x') 
 
 projPointsR1 = projPointsR1 - min(projPointsR1); % Set measure from zero 
 projPointsR2 = projPointsR2 - min(projPointsR2);
 
-m1 = max(projPointsR1);
-m2 = max(projPointsR2);
+[m1, idx1] = max(projPointsR1);
+[m2, idx2] = max(projPointsR2);
+
 
 end
