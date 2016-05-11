@@ -76,7 +76,7 @@ nrIter = 1;
  
     % Prediction
     predictedState = f(st30); 
-    predictedCov = J(st30)*P0*J(st30)';        
+    predictedCov = J(st30)*P0*J(st30)' + Q;        
    
     % Update
     corner = mgpGen2.getCarCorner(twoFrames{2}, predictedState(:,1));
