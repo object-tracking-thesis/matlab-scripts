@@ -5,8 +5,8 @@ set(0,'defaulttextinterpreter','latex')
 r = .5;
 phi = 0:0.01:2*pi;
 
-xc = r*cos(phi);
-yc = r*sin(phi);
+xc = 0.6.*r*cos(phi);
+yc = 1.*r*sin(phi);
 
 n = 2;
 P = [n,n]; 
@@ -15,23 +15,27 @@ P = [n,n];
 fig = figure; fig.Position = [250 250 800 800];
 fig.Name = 'spatialExample';
     hold on
-    
+
     plot(xc,yc,'-k')
     plot(P(1), P(2),'ko','MarkerSize',10,'MarkerFaceColor','k')
     axis([-1 2.5 -1 2.5]); axis square
     op = 0.3;
     K = 210;
-    plot([xc(K) P(1)], [yc(K) P(2)],'--k','Color',op*ones(1,3))
+    plot([xc(K) P(1)], [yc(K) P(2)],'--','Color',op*ones(1,3))
     K = 580;
-    plot([xc(K) P(1)], [yc(K) P(2)],'--k','Color',op*ones(1,3))
-    plot(0,0,'k.')        
+    plot([xc(K) P(1)], [yc(K) P(2)],'--','Color',op*ones(1,3))
+    plot(0,0,'k*')        
     
+    Xsto = [];
     for j = 600:10:(580+240)
        h = mod(j, length(phi)); 
-       
-       plot(xc(h)+mvnrnd(0.1,0.05)/20, yc(h)+mvnrnd(0.1,0.05)/20, 'rx')
+       X = [xc(h)+mvnrnd(0.1,0.05)/20, yc(h)+mvnrnd(0.1,0.05)/20];
+       Xsto = [Xsto;X];
+       plot(X(1), X(2), 'rx')
     end
        
+    Mid = mean(Xsto);
+    plot(Mid(1), Mid(2), '*r')
     
     xlabel('$X$')
     ylabel('$Y$')
