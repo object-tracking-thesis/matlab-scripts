@@ -5,6 +5,8 @@ load egoPosition.mat
 % Get a frame,
 N  = 10;
 carClusters = carClustersCutOff;
+
+Msave = zeros(length(carClusters), 2);
 %%
 close all
 f = figure;
@@ -27,7 +29,7 @@ for N = 1:length(carClusters)
     text(EGO(1)-2,EGO(2)-2, 'EGO')
     
     %tic
-    [m1,m2,uOp, filtNtg] = cornerPoint(Ntg, 0.5, 0.4); % 0.3 0.5
+    [m1,m2,uOp, filtNtg] = cornerPoint(Ntg);%, 0.5, 0.4); % 0.3 0.5
     %toc
     c1 = uOp(1); c2 = uOp(2);
     n1 = uOp(3); n2 = uOp(4);
@@ -60,18 +62,61 @@ for N = 1:length(carClusters)
     text(double(xc-12), double(yc), sprintf('m1: %.2f\nm2: %.2f', [m1 m2]))
     leg = legend(p1, sprintf('m1: %.2f\nm2: %.2f', [m1 m2])); leg.FontSize = 20;
     
-    %axis([-30 5 -50 5])
+    axis([-30 5 -50 5])
     axis equal
-    now = 1;
-    while now
-        keydown = waitforbuttonpress;
-        if keydown == 1
-            now = 0;
-        end
-    end
-    %pause(2)
+    
+    Mid = mean(filtNtg);
+    Msave(N, 1) = Mid(1);
+    Msave(N, 2) = Mid(2);
+    
+%     now = 1;
+%     while now
+%         keydown = waitforbuttonpress;
+%         if keydown == 1
+%             now = 0;
+%         end
+%     end
+    pause(0.1)
 end
 %end
+
+%% 
+
+pl = Msave; 
+
+pl_v = [diff(pl(:,1)) diff(pl(:,2))]./0.1;
+
+t = 0.1:0.1:(15-0.1);
+
+fig = figure;
+    subplot(2,1,1)
+        plot(t,pl_v(:,1),'bx')
+        ylabel('Xv')
+    subplot(2,1,2)
+        plot(t,pl_v(:,2),'bx')
+        ylabel('Yv')
+        
+%% Calc abs.v 
+
+v = sqrt(pl_v(:,1).^2 + pl_v(:,2).^2);
+
+fig = figure;
+    plot(t,v)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
    
