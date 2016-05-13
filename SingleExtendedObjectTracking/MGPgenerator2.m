@@ -124,7 +124,7 @@ classdef MGPgenerator2 < handle
             p1 = [0 0];
             p2 = [0 0.4];
             p3 = [1 0.4];
-            p4 = [0 1];
+            p4 = [1 0];
             rect = [p1; p2; p3; p4];
             
             
