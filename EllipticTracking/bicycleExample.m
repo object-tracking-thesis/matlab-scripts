@@ -64,6 +64,9 @@ for i = 1:length(giw_components)
     giw_components(i).V = ((giw_components(i).v - d-1)/(temp_v - d-1)) .* giw_components(i).V;
 end
 
+%% update components
+meas = giwMeasComp(bicycleClusters_xy{start_seq+1})
+
 %% plot the target with it's ellipse around
 figure;
 mu = giw_components(1).mu;
