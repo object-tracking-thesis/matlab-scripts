@@ -33,8 +33,7 @@ F = [1      T       (1/2)*T^2;
 q = 1;
 Q = sigma^2*(1-exp(-(2*T)/theta))*diag([0 0 1]);
 
-H = [1 0 0 0;...
-     0 1 0 0];
+H = [1 0 0];
 R = 0.00015*diag(ones(1,d));
 
 %% birth component
@@ -51,6 +50,9 @@ birth_comp = giwComp(mu, P, v, V, weight, index);
 %% init
 ps = 1.0;
 pd = 1.0;
+%TODO gamma and beta should be dynamic for each measurement cell
+p_gamma = 100;
+p_beta = 0;
 %TODO the birth components should not be run through the prediction
 giw_components = [birth_comp];
 
@@ -65,7 +67,35 @@ for i = 1:length(giw_components)
 end
 
 %% update components
-meas = giwMeasComp(bicycleClusters_xy{start_seq+1})
+meas = giwMeasComp(bicycleClusters_xy{start_seq+1});
+measurements = [meas];
+for i = 1:length(giw_components)
+    giw_components(i).K = giw_components(i).P*H';
+    giw_components(i).S = H*giw_components(i).K;
+    giw_components(i).z = kron(H,eye(d))*giw_components(i).mu;
+    giw_components(i).weight = (1-(1-exp(-p_gamma))*pd)*giw_components(i).weight;
+end
+
+%% update
+for i = 1:length(measurements)
+    for j = 1:length(giw_components)
+        meas_n = measurements(i).n;
+        S = giw_components(j).S + 1/meas_n;
+        inv_S = inv(S);
+        K = giw_components(j).K * inv_S;
+        epsilon = measurements(i).center - giw_components(j).z;
+        N = inv_S*epsilon*epsilon';
+        mu = giw_components(j).mu + kron(K,eye(d))*epsilon;
+        P = giw_components(j).P - K*S*K';
+        v = giw_components(j).v + meas_n;
+        V = giw_components(j).V + N + measurements(i).scatter;
+        w = ((exp(-p_gamma)*(p_gamma)^(meas_n)*pd)/((p_beta^meas_n)*((pi^meas_n)*meas_n*S)^(n/2)))...
+            * ((det(giw_components(j).V)^(giw_components(j).v/2))/(det(V)^(v/2)))...
+            * gamma_2d(v/2)/gamma_2d(giw_components(j).v/2)...
+            * giw_components(j).weight;
+        
+    end
+end
 
 %% plot the target with it's ellipse around
 figure;

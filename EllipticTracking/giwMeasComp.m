@@ -6,8 +6,10 @@ function giw_meas_comp = giwMeasComp(points)
 % scatter   - the scatter matrix of the points
 
     n = size(points,1);
-    center = mean(points);
-    points_sub_center = points - repmat(center,n,1);
-    s_matrix = sum(points_sub_center'*points_sub_center);
-    giw_meas_comp = struct('points',points,'center',center,'scatter',s_matrix);
+    points = points';
+    center = mean(points,2);
+    points_sub_center = points - repmat(center,1,n);
+    s_matrix = points_sub_center*points_sub_center';
+    size(s_matrix)
+    giw_meas_comp = struct('points',points,'center',center,'scatter',s_matrix,'n',n);
 end

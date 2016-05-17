@@ -8,5 +8,5 @@ function giw_comp = giwComp(mu,P,v,V,weight,index)
 % weight- weight of the component
 % index - index of the component
 
-    giw_comp = struct('mu',mu,'P',P,'v',v,'V',V,'weight',weight,'index',index);
+    giw_comp = struct('mu',mu,'P',P,'v',v,'V',V,'K',0,'S',0,'z',0,'weight',weight,'index',index);
 end
