@@ -36,25 +36,23 @@ Q = sigma^2*(1-exp(-(2*T)/theta))*diag([0 0 1]);
 H = [1 0 0];
 R = 0.00015*diag(ones(1,d));
 
-%% birth component
-%TODO: state order [x dotx dotdotx y doty dotdoty]' ?
+%% birth components
+means = cell(1,1);
+covariances = cell(1,1);
+dofs = cell(1,1);
+scales = cell(1,1);
+weights = cell(1,1);
 mean_birth = mean(bicycleClusters_xy{start_seq});
-mu = [mean_birth(1) 4 0 mean_birth(2) -6 0]';
-P = 0.1*diag(ones(1,3));
-v = 7;
-V = diag([1 1]);
-weight = 1;
-index = 1;
-birth_comp = giwComp(mu, P, v, V, weight, index);
+means{1} = [mean_birth(1) 4 0 mean_birth(2) -6 0]';
+covariances{1} = 0.1*diag(ones(1,3));
+dofs{1} = 7;
+scales{1} = diag([1 1]);
+weights{1} = 1;
 
 %% init
-ps = 1.0;
-pd = 1.0;
-%TODO gamma and beta should be dynamic for each measurement cell
-p_gamma = 100;
-p_beta = 0;
-%TODO the birth components should not be run through the prediction
-giw_components = [birth_comp];
+giwphd_filter = GIWPHDfilter;
+giwphd_filter.set_birth_rfs(means, covariances, dofs, scales, weights);
+giwphd_filter.set_model_parameters(F,Q,H,R);
 
 %% prediction
 for i = 1:length(giw_components)
@@ -67,7 +65,7 @@ for i = 1:length(giw_components)
 end
 
 %% update components
-meas = giwMeasComp(bicycleClusters_xy{start_seq+1});
+meas = giwMeasComp(bicycleClusters_xy{start_seq+2});
 measurements = [meas];
 for i = 1:length(giw_components)
     giw_components(i).K = giw_components(i).P*H';
@@ -93,7 +91,7 @@ for i = 1:length(measurements)
             * ((det(giw_components(j).V)^(giw_components(j).v/2))/(det(V)^(v/2)))...
             * gamma_2d(v/2)/gamma_2d(giw_components(j).v/2)...
             * giw_components(j).weight;
-        
+        giw_components(1) = giwComp(mu,P,v,V,w,giw_components(j).index);
     end
 end
 
