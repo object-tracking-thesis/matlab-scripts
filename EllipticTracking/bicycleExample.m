@@ -64,3 +64,11 @@ for i = 1:length(giw_components)
     giw_components(i).V = ((giw_components(i).v - d-1)/(temp_v - d-1)) .* giw_components(i).V;
 end
 
+%% plot the target with it's ellipse around
+figure;
+mu = giw_components(1).mu;
+cov = iwishrnd(giw_components(1).V, giw_components(1).v);
+[x1,x2,x3] = threeSigmaOverGrid(mu(1:2),cov);                
+plot(x3(1,:),x3(2,:),' --k')
+hold on
+plot(bicycleClusters_xy{start_seq+1}(:,1),bicycleClusters_xy{start_seq+1}(:,2),'x')
