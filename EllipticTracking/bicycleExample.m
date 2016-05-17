@@ -21,11 +21,6 @@ end
 
 %% motion and measurement model
 %constant velocity
-theta = 1;
-tau = 5;
-sigma = 2;
-d = 2;
-
 T = 0.1;
 F = [1      T       (1/2)*T^2;
      0      1       T;
@@ -52,7 +47,28 @@ weights{1} = 1;
 %% init
 giwphd_filter = GIWPHDfilter;
 giwphd_filter.set_birth_rfs(means, covariances, dofs, scales, weights);
-giwphd_filter.set_model_parameters(F,Q,H,R);
+giwphd_filter.set_model_parameters(F,Q,H,R,T);
+
+%% run filter recursion
+giw_comps = [];
+for i=start_seq:end_seq
+    giwphd_filter.predict;
+    meas = [giwMeasComp(bicycleClusters_xy{start_seq+2})];
+    giwphd_filter.update(meas);
+%     phd_filter.get_number_of_targets
+%     est = phd_filter.get_best_estimates;
+%     if ~isempty(est)
+%         for j=1:length(est)
+%             rng(est(j).index+5)
+%             color =  [rand, rand, rand];          
+%             plot(est(j).mu(1), est(j).mu(2),'x','Color',color)
+%             hold on
+%             est(j).index
+%         end
+%     end
+%     gaussians = [gaussians est];
+    pause(0.2)
+end
 
 %% prediction
 for i = 1:length(giw_components)
@@ -87,7 +103,7 @@ for i = 1:length(measurements)
         P = giw_components(j).P - K*S*K';
         v = giw_components(j).v + meas_n;
         V = giw_components(j).V + N + measurements(i).scatter;
-        w = ((exp(-p_gamma)*(p_gamma)^(meas_n)*pd)/((p_beta^meas_n)*((pi^meas_n)*meas_n*S)^(n/2)))...
+        w = ((exp(-p_gamma)*(p_gamma)^(meas_n)*pd)/((p_beta^meas_n)*((pi^meas_n)*meas_n*S)^(d/2)))...
             * ((det(giw_components(j).V)^(giw_components(j).v/2))/(det(V)^(v/2)))...
             * gamma_2d(v/2)/gamma_2d(giw_components(j).v/2)...
             * giw_components(j).weight;
