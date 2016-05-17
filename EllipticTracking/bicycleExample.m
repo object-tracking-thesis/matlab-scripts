@@ -44,19 +44,17 @@ dofs{1} = 7;
 scales{1} = diag([1 1]);
 weights{1} = 1;
 
-%% init
+%% run filter recursion
 giwphd_filter = GIWPHDfilter;
 giwphd_filter.set_birth_rfs(means, covariances, dofs, scales, weights);
 giwphd_filter.set_model_parameters(F,Q,H,R,T);
-
-%% run filter recursion
 giw_comps = [];
 for i=start_seq:end_seq
     giwphd_filter.predict;
-    meas = [giwMeasComp(bicycleClusters_xy{start_seq+2})];
+    meas = [giwMeasComp(bicycleClusters_xy{i})];
     giwphd_filter.update(meas);
-%     phd_filter.get_number_of_targets
-%     est = phd_filter.get_best_estimates;
+    giwphd_filter.get_number_of_targets;
+    est = giwphd_filter.get_best_estimates
 %     if ~isempty(est)
 %         for j=1:length(est)
 %             rng(est(j).index+5)
@@ -66,56 +64,20 @@ for i=start_seq:end_seq
 %             est(j).index
 %         end
 %     end
-%     gaussians = [gaussians est];
-    pause(0.2)
-end
-
-%% prediction
-for i = 1:length(giw_components)
-    giw_components(i).weight = ps*giw_components(i).weight;
-    giw_components(i).mu = kron(F,eye(d))*giw_components(i).mu;
-    giw_components(i).P = F*giw_components(i).P*F' + Q;
-    temp_v = giw_components(i).v;
-    giw_components(i).v = exp(-T/tau)*giw_components(i).v;
-    giw_components(i).V = ((giw_components(i).v - d-1)/(temp_v - d-1)) .* giw_components(i).V;
-end
-
-%% update components
-meas = giwMeasComp(bicycleClusters_xy{start_seq+2});
-measurements = [meas];
-for i = 1:length(giw_components)
-    giw_components(i).K = giw_components(i).P*H';
-    giw_components(i).S = H*giw_components(i).K;
-    giw_components(i).z = kron(H,eye(d))*giw_components(i).mu;
-    giw_components(i).weight = (1-(1-exp(-p_gamma))*pd)*giw_components(i).weight;
-end
-
-%% update
-for i = 1:length(measurements)
-    for j = 1:length(giw_components)
-        meas_n = measurements(i).n;
-        S = giw_components(j).S + 1/meas_n;
-        inv_S = inv(S);
-        K = giw_components(j).K * inv_S;
-        epsilon = measurements(i).center - giw_components(j).z;
-        N = inv_S*epsilon*epsilon';
-        mu = giw_components(j).mu + kron(K,eye(d))*epsilon;
-        P = giw_components(j).P - K*S*K';
-        v = giw_components(j).v + meas_n;
-        V = giw_components(j).V + N + measurements(i).scatter;
-        w = ((exp(-p_gamma)*(p_gamma)^(meas_n)*pd)/((p_beta^meas_n)*((pi^meas_n)*meas_n*S)^(d/2)))...
-            * ((det(giw_components(j).V)^(giw_components(j).v/2))/(det(V)^(v/2)))...
-            * gamma_2d(v/2)/gamma_2d(giw_components(j).v/2)...
-            * giw_components(j).weight;
-        giw_components(1) = giwComp(mu,P,v,V,w,giw_components(j).index);
-    end
+    giw_comps = [giw_comps est];
 end
 
 %% plot the target with it's ellipse around
 figure;
-mu = giw_components(1).mu;
-cov = iwishrnd(giw_components(1).V, giw_components(1).v);
-[x1,x2,x3] = threeSigmaOverGrid(mu(1:2),cov);                
-plot(x3(1,:),x3(2,:),' --k')
-hold on
-plot(bicycleClusters_xy{start_seq+1}(:,1),bicycleClusters_xy{start_seq+1}(:,2),'x')
+for i = 1:length(giw_comps)
+    mu = giw_comps(i).mu;
+    cov = iwishrnd(giw_comps(i).V, giw_comps(i).v);
+    [x1,x2,x3] = threeSigmaOverGrid(mu(1:2),cov);                
+    plot(x3(1,:),x3(2,:),' --k')
+    axis([0 30 -10 10])
+    zoom(2)
+    hold on
+    plot(bicycleClusters_xy{start_seq+i-1}(:,1),bicycleClusters_xy{start_seq+i-1}(:,2),'x')
+    hold off
+    pause(0.5)
+end

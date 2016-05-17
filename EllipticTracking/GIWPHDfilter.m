@@ -9,8 +9,8 @@ classdef GIWPHDfilter < handle
         T
         ps = 1.0;
         pd = 1.0;
-        p_gamma = 100;
-        p_beta = 0;
+        p_gamma = 10;
+        p_beta = 1;
         theta = 1;
         tau = 5;
         sigma = 2;
@@ -49,6 +49,7 @@ classdef GIWPHDfilter < handle
         
         % run predictions, for both birth RFS and existing targets
         function predict(this)
+            length(this.giw_comps)
             for i = 1:length(this.giw_comps)
                 this.giw_comps(i).weight = this.ps*this.giw_comps(i).weight;
                 this.giw_comps(i).mu = kron(this.F,eye(this.d))*this.giw_comps(i).mu;
@@ -67,7 +68,7 @@ classdef GIWPHDfilter < handle
             %preallocation for all updated gaussians
             n_meas = length(meas);
             n_pred = length(this.giw_comps);
-            curr_gaussians = repmat(giwComp(0,0,0,0,0,0), 1, n_meas*n_pred);
+            curr_giw_comps = repmat(giwComp(0,0,0,0,0,0), 1, n_meas*n_pred);
             
             %update components
             for i = 1:length(this.giw_comps)
@@ -78,8 +79,10 @@ classdef GIWPHDfilter < handle
             end
             
             %update
+            counter = 0;
             for i = 1:n_meas
                 for j = 1:n_pred
+                    counter = counter+1;
                     n_points = meas(i).n;
                     S = this.giw_comps(j).S + 1/n_points;
                     inv_S = inv(S);
@@ -90,17 +93,23 @@ classdef GIWPHDfilter < handle
                     P = this.giw_comps(j).P - K*S*K';
                     v = this.giw_comps(j).v + n_points;
                     V = this.giw_comps(j).V + N + meas(i).scatter;
-                    w = ((exp(-this.p_gamma)*(this.p_gamma)^(n_points)*this.pd)/((this.p_beta^n_points)*((pi^n_points)*n_points*S)^(this.d/2)))...
-                        * ((det(this.giw_comps(j).V)^(this.giw_comps(j).v/2))/(det(V)^(v/2)))...
-                        * gamma_2d(v/2)/gamma_2d(this.giw_comps(j).v/2)...
-                        * this.giw_comps(j).weight;
+                    %TODO log likelihood
+                    w = (log(exp(-this.p_gamma)*(this.p_gamma)^(n_points)*this.pd)/log((this.p_beta^n_points)*((pi^n_points)*n_points*S)^(this.d/2)))...
+                        * ((det(this.giw_comps(j).V)^(this.giw_comps(j).v/2))/log(det(V)^(v/2)))...
+                        * (log(gamma_2d(v/2))/log(gamma_2d(this.giw_comps(j).v/2)));
+                    w = 1.1* this.giw_comps(j).weight;
+                    
+                    ind = this.giw_comps(j).index;                    
+                    curr_giw_comps(counter) = giwComp(mu,P,v,V,w,ind);
                 end
             end
             
-            this.giw_comps = curr_gaussians;
-            this.weight_sort_gaussians;
-            this.prune;
-            this.merge;
+            %TODO prune/merge
+            this.giw_comps = curr_giw_comps;
+            this.number_of_targets = 1;
+            %this.weight_sort_gaussians;
+            %this.prune;
+            %this.merge;
         end
         
         function weight_sort_gaussians(this)
