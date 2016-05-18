@@ -76,40 +76,44 @@ figure(fig)
 plot(xhat(1,:),'ko')
 
 %%
+nMGPS = 1;
+nObsSt = 1;
+nSt = 2;
+st0 = x0;
+cov0 = P0;
 
-ukf = UKF(Q,R);
-%
-estX = zeros(2,N);
-preX = zeros(2,N);
+ukf = UKF(Q,R, nMGPS, nObsSt, nSt, st0, cov0);
 
-    [SP, W] = ukf.generatePoints(x0, P0);
-    [stPred, covPred] = ukf.predictMoments(f, SP, W);        
-    [SP, W] = ukf.generatePoints(stPred, covPred);    
-    [stUp, covUp] = ukf.updateMoments(h, SP, W, Z(1), stPred, covPred);
-    stUp
-    covUp
-    
-    [SP, W] = ukf.generatePoints(stUp, covUp);
-    [stPred, covPred] = ukf.predictMoments(f, SP, W);
-    [SP, W] = ukf.generatePoints(stPred, covPred);
-    [stUp, covUp] = ukf.updateMoments(h, SP, W, Z(2), stPred, covPred);
-    stUp
-    covUp
-    
-    [SP, W] = ukf.generatePoints(stUp, covUp);
-    [stPred, covPred] = ukf.predictMoments(f, SP, W);
-    [SP, W] = ukf.generatePoints(stPred, covPred);
-    [stUp, covUp] = ukf.updateMoments(h, SP, W, Z(3), stPred, covPred);
-    stUp
-    covUp
-% 
+disp('k = 1')
+ukf.predictMoments(f);
+ukf.predSt
+ukf.predCov
 
-    
+ukf.updateMoments({h}, Z(1))
+ukf.upSt
+ukf.upCov
 
-%%
-figure(fig)
-plot(estX(1,:), 'ko')
-plot(preX(1,:), 'mo')
+disp('k = 2')
+ukf.predictMoments(f);
+ukf.predSt
+ukf.predCov
+
+ukf.updateMoments({h}, Z(2))
+ukf.upSt
+ukf.upCov
+
+
+disp('k = 3')
+ukf.predictMoments(f);
+ukf.predSt
+ukf.predCov
+
+ukf.updateMoments({h}, Z(3))
+ukf.upSt
+ukf.upCov
+
+
+
 
 
 
