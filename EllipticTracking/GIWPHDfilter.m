@@ -91,13 +91,17 @@ classdef GIWPHDfilter < handle
                     N = inv_S*epsilon*epsilon';
                     mu = this.giw_comps(j).mu + kron(K,eye(this.d))*epsilon;
                     P = this.giw_comps(j).P - K*S*K';
+                    %TODO major change
                     v = this.giw_comps(j).v + n_points;
                     V = this.giw_comps(j).V + N + meas(i).scatter;
                     %TODO log likelihood
-                    w = (log(exp(-this.p_gamma)*(this.p_gamma)^(n_points)*this.pd)/log((this.p_beta^n_points)*((pi^n_points)*n_points*S)^(this.d/2)))...
-                        * ((det(this.giw_comps(j).V)^(this.giw_comps(j).v/2))/log(det(V)^(v/2)))...
-                        * (log(gamma_2d(v/2))/log(gamma_2d(this.giw_comps(j).v/2)));
-                    w = 1.1* this.giw_comps(j).weight;
+                    logw = ((exp(-log(this.p_gamma))*(log(this.p_gamma))^(log(n_points))*this.pd)...
+                        /((this.p_beta^log(n_points))*((pi^log(n_points))*log(n_points)*log(S))^(this.d/2)))...
+                        * ((log(det(this.giw_comps(j).V))^(log(this.giw_comps(j).v/2)))...
+                        /(log(det(V))^(log(v/2))))...
+                        * ((gamma_2d(log(v/2)))...
+                        /(gamma_2d(log(this.giw_comps(j).v/2))));
+                    w = exp(logw);
                     
                     ind = this.giw_comps(j).index;                    
                     curr_giw_comps(counter) = giwComp(mu,P,v,V,w,ind);
@@ -219,7 +223,7 @@ classdef GIWPHDfilter < handle
             best_estimates = [];
             if n > 0
                 if n > length(this.giw_comps)
-                    n = length(this.giw_comps)
+                    n = length(this.giw_comps);
                 end
                 best_estimates = this.giw_comps(1:n);
             end
