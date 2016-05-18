@@ -9,14 +9,14 @@ classdef GIWPHDfilter < handle
         T
         ps = 1.0;
         pd = 1.0;
-        p_gamma = 10;
+        p_gamma = 100;
         p_beta = 1;
         theta = 1;
         tau = 5;
         sigma = 2;
         d = 2;
         min_survival_weight = 0.00001;
-        min_merge_dist = 0.5;
+        min_merge_dist = 1;
         max_gaussians = 50;
         number_of_targets = 0;
         index = 1;
@@ -49,7 +49,6 @@ classdef GIWPHDfilter < handle
         
         % run predictions, for both birth RFS and existing targets
         function predict(this)
-            length(this.giw_comps)
             for i = 1:length(this.giw_comps)
                 this.giw_comps(i).weight = this.ps*this.giw_comps(i).weight;
                 this.giw_comps(i).mu = kron(this.F,eye(this.d))*this.giw_comps(i).mu;
@@ -91,10 +90,9 @@ classdef GIWPHDfilter < handle
                     N = inv_S*epsilon*epsilon';
                     mu = this.giw_comps(j).mu + kron(K,eye(this.d))*epsilon;
                     P = this.giw_comps(j).P - K*S*K';
-                    %TODO major change
                     v = this.giw_comps(j).v + n_points;
                     V = this.giw_comps(j).V + N + meas(i).scatter;
-                    %TODO log likelihood
+                    %calculate new weight
                     logw = ((exp(-log(this.p_gamma))*(log(this.p_gamma))^(log(n_points))*this.pd)...
                         /((this.p_beta^log(n_points))*((pi^log(n_points))*log(n_points)*log(S))^(this.d/2)))...
                         * ((log(det(this.giw_comps(j).V))^(log(this.giw_comps(j).v/2)))...
@@ -110,13 +108,12 @@ classdef GIWPHDfilter < handle
             
             %TODO prune/merge
             this.giw_comps = curr_giw_comps;
-            this.number_of_targets = 1;
-            %this.weight_sort_gaussians;
-            %this.prune;
-            %this.merge;
+            this.weight_sort_components;
+            this.prune;
+            this.merge;
         end
         
-        function weight_sort_gaussians(this)
+        function weight_sort_components(this)
             weightvec = zeros(length(this.giw_comps),1);
             for i=1:length(this.giw_comps)
                 weightvec(i) = this.giw_comps(i).weight;
@@ -153,35 +150,42 @@ classdef GIWPHDfilter < handle
             i = 1;
             while i < length(this.giw_comps)
                 weightsum = this.giw_comps(i).weight;
-                mu_sum = this.giw_comps(i).weight.*this.giw_comps(i).mu;       
+                mu_sum = this.giw_comps(i).weight.*this.giw_comps(i).mu; 
+                P_sum = this.giw_comps(i).weight.*this.giw_comps(i).P;
+                v_sum = this.giw_comps(i).weight.*this.giw_comps(i).v;
+                V_sum = this.giw_comps(i).weight.*this.giw_comps(i).V;
                 ind = [];
-                %check all subsequent gaussians if they are closeby
-                for j=(i+1):length(this.giw_comps)
+                
+                %check all subsequent components if they are closeby
+                for j=(i+1):length(this.giw_comps)                    
                     proximity = (this.giw_comps(i).mu-this.giw_comps(j).mu)' ...
-                        *inv(this.giw_comps(i).P)...
+                        *kron(inv(this.giw_comps(i).P),this.giw_comps(i).V)/(this.giw_comps(i).v+3-3*this.d-2)...
                         *(this.giw_comps(i).mu-this.giw_comps(j).mu);
                     
                     if proximity < this.min_merge_dist
                         weightsum = weightsum + this.giw_comps(j).weight;
                         mu_sum = mu_sum + this.giw_comps(j).weight ...
                             *this.giw_comps(j).mu;
+                        P_sum = P_sum + this.giw_comps(j).weight ...
+                            *this.giw_comps(j).P;
+                        v_sum = v_sum + this.giw_comps(j).weight ...
+                            *this.giw_comps(j).v;
+                        V_sum = V_sum + this.giw_comps(j).weight ...
+                            *this.giw_comps(j).V;
                         ind = [ind j];
                     end                        
                 end
-                %update mu, P and weight of gaussians(i) if there were
-                %closeby gaussians that can be merged
-                if ~isempty(ind)
-                    mu_sum = mu_sum./weightsum;
-                    P_sum = this.giw_comps(i).weight.*this.giw_comps(i).P; 
-                    for j=ind
-                        P_sum = P_sum + this.giw_comps(j).weight*( ...
-                            this.giw_comps(j).P + ( ...
-                            mu_sum - this.giw_comps(j).mu) * (...
-                            mu_sum - this.giw_comps(j).mu)');
-                    end       
+                %update mu, P and weight of giw_comps(i) if there were
+                %closeby components that could be merged
+                if ~isempty(ind)                    
+                    mu_sum = mu_sum./weightsum;    
                     P_sum = P_sum./weightsum;
+                    v_sum = v_sum./weightsum;
+                    V_sum = V_sum./weightsum;
                     this.giw_comps(i).mu = mu_sum;
                     this.giw_comps(i).P = P_sum;
+                    this.giw_comps(i).v = v_sum;
+                    this.giw_comps(i).V = V_sum;
                     this.giw_comps(i).weight = weightsum;
                     this.giw_comps(ind) = [];                 
                 end
