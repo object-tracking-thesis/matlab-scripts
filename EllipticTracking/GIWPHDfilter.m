@@ -32,7 +32,7 @@ classdef GIWPHDfilter < handle
             this.birth_rfs = [];
             for i = 1:length(weights)
                 gaussian_birth = ...
-                    giwComp(means{i}, covariances{i}, dofs{i}, scale_matrices{i}, weights{i}, 0, this.index);
+                    giwComp(means{i}, covariances{i}, dofs{i}, scale_matrices{i}, weights{i}, this.index);
                 this.index = this.index+1;
                 this.birth_rfs = [this.birth_rfs gaussian_birth];
             end 
@@ -67,7 +67,7 @@ classdef GIWPHDfilter < handle
             %preallocation for all updated gaussians
             n_meas = length(meas);
             n_pred = length(this.giw_comps);
-            curr_giw_comps = repmat(giwComp(0,0,0,0,0,0,0), 1, n_meas*n_pred);
+            curr_giw_comps = repmat(giwComp(0,0,0,0,0,0), 1, n_meas*n_pred);
             
             %update components
             for i = 1:n_pred
@@ -82,6 +82,8 @@ classdef GIWPHDfilter < handle
             counter = 0;
             for i = 1:n_meas
                 weightsum = 0;
+                mantissas = [];
+                exponents = [];
                 for j = 1:n_pred                                        
                     counter = counter+1;
                     n_points = meas(i).n;
@@ -103,17 +105,25 @@ classdef GIWPHDfilter < handle
                     f3 = (gamma_2d_log(v/2))...
                         -(gamma_2d_log(this.giw_comps(j).v/2));
                     logw_scale = f1+f2+f3;
-                    scale = vpa(exp(sym(logw_scale)),5);
-                    w = scale*this.giw_comps(j).weight;
-                    %w = exp(logw) 
+                    [mantissa, base10_exponent] = base10_mantissa_exponent(exp(1),logw_scale);
                     
-                    weightsum = weightsum+w;
+                    mantissas = [mantissas mantissa];
+                    exponents = [exponents base10_exponent];
                     ind = this.giw_comps(j).index;                    
-                    curr_giw_comps(counter) = giwComp(mu,P,v,V,w,logw_scale,ind);
+                    curr_giw_comps(counter) = giwComp(mu,P,v,V,0,ind);
                 end
-                %normalizing the weights with the weightsum for the entire partition              
+                %normalizing the weights with the weightsum for the entire partition  
+                exponents
+                mantissas
+                exponents_norm = exponents-repmat(min(exponents),1,length(exponents)) 
+                exponents_norm = exponents_norm./2
+                expe = exp(exponents_norm)
+                weights = mantissas.*expe
+                weights = weights./sum(weights)
                 for j = counter-n_pred+1:counter                    
-                    curr_giw_comps(j).weight = curr_giw_comps(j).weight/weightsum;
+                    %curr_giw_comps(j).weight = curr_giw_comps(j).weight/weightsum;
+                    i = (counter-n_pred)+j;
+                    curr_giw_comps(j).weight = weights(i);
                 end
             end
             

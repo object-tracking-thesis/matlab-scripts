@@ -1,4 +1,4 @@
-function giw_comp = giwComp(mu,P,v,V,weight,logweight,index)
+function giw_comp = giwComp(mu,P,v,V,weight,index)
 %a gaussian inverse-wishart component
 %parametrized by:
 % mu    - mean of the gaussian
@@ -8,5 +8,5 @@ function giw_comp = giwComp(mu,P,v,V,weight,logweight,index)
 % weight- weight of the component
 % index - index of the component
 
-    giw_comp = struct('mu',mu,'P',P,'v',v,'V',V,'K',0,'S',0,'z',0,'weight',weight,'logw',logweight,'index',index);
+    giw_comp = struct('mu',mu,'P',P,'v',v,'V',V,'K',0,'S',0,'z',0,'weight',weight,'index',index);
 end
