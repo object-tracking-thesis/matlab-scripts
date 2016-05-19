@@ -113,24 +113,25 @@ classdef GIWPHDfilter < handle
                     curr_giw_comps(counter) = giwComp(mu,P,v,V,0,ind);
                 end
                 %normalizing the weights with the weightsum for the entire partition  
-                exponents
-                mantissas
-                exponents_norm = exponents-repmat(min(exponents),1,length(exponents)) 
-                exponents_norm = exponents_norm./2
-                expe = exp(exponents_norm)
-                weights = mantissas.*expe
-                weights = weights./sum(weights)
-                for j = counter-n_pred+1:counter                    
-                    %curr_giw_comps(j).weight = curr_giw_comps(j).weight/weightsum;
-                    i = (counter-n_pred)+j;
-                    curr_giw_comps(j).weight = weights(i);
-                end
+                curr_giw_comps(counter-n_pred+1:counter) = ...
+                    this.normalize_weights(curr_giw_comps(counter-n_pred+1:counter), exponents, mantissas);
             end
             
             this.giw_comps = curr_giw_comps;
             this.weight_sort_components;
             this.prune;
             this.merge;
+        end
+        
+        function giws = normalize_weights(this, giws, exponents, mantissas)
+            exponents_norm = exponents-repmat(min(exponents),1,length(exponents));             
+            exponents_norm = exponents_norm.*(50/(max(exponents_norm)+1));
+            expe = exp(exponents_norm);
+            weights = mantissas.*expe;
+            weights = weights./sum(weights);
+            for i = 1:length(giws)                    
+                giws(i).weight = weights(i);
+            end
         end
         
         function weight_sort_components(this)
