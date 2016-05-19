@@ -9,14 +9,14 @@ classdef GIWPHDfilter < handle
         T
         ps = 1.0;
         pd = 1.0;
-        p_gamma = 100;
+        p_gamma = 262;
         p_beta = 1;
         theta = 1;
         tau = 5;
         sigma = 2;
         d = 2;
         min_survival_weight = 0.00001;
-        min_merge_dist = 1;
+        min_merge_dist = 0.1;
         max_gaussians = 50;
         number_of_targets = 0;
         index = 1;
@@ -32,7 +32,7 @@ classdef GIWPHDfilter < handle
             this.birth_rfs = [];
             for i = 1:length(weights)
                 gaussian_birth = ...
-                    giwComp(means{i}, covariances{i}, dofs{i}, scale_matrices{i}, weights{i}, this.index);
+                    giwComp(means{i}, covariances{i}, dofs{i}, scale_matrices{i}, weights{i}, 0, this.index);
                 this.index = this.index+1;
                 this.birth_rfs = [this.birth_rfs gaussian_birth];
             end 
@@ -67,46 +67,58 @@ classdef GIWPHDfilter < handle
             %preallocation for all updated gaussians
             n_meas = length(meas);
             n_pred = length(this.giw_comps);
-            curr_giw_comps = repmat(giwComp(0,0,0,0,0,0), 1, n_meas*n_pred);
+            curr_giw_comps = repmat(giwComp(0,0,0,0,0,0,0), 1, n_meas*n_pred);
             
             %update components
-            for i = 1:length(this.giw_comps)
+            for i = 1:n_pred
                 this.giw_comps(i).K = this.giw_comps(i).P*this.H';
-                this.giw_comps(i).S = this.H*this.giw_comps(i).K;
+                this.giw_comps(i).S = this.H*this.giw_comps(i).K;                
                 this.giw_comps(i).z = kron(this.H,eye(this.d))*this.giw_comps(i).mu;
-                this.giw_comps(i).weight = (1-(1-exp(-this.p_gamma))*this.pd)*this.giw_comps(i).weight;
+                %TODO handle no detection case
+                %this.giw_comps(i).weight = (1-(1-exp(-this.p_gamma)*this.pd))*this.giw_comps(i).weight;
             end
             
             %update
             counter = 0;
             for i = 1:n_meas
-                for j = 1:n_pred
+                weightsum = 0;
+                for j = 1:n_pred                                        
                     counter = counter+1;
                     n_points = meas(i).n;
-                    S = this.giw_comps(j).S + 1/n_points;
+                    S = this.giw_comps(j).S + 1/n_points;                    
                     inv_S = inv(S);
-                    K = this.giw_comps(j).K * inv_S;
+                    K = this.giw_comps(j).K * inv_S;                    
                     epsilon = meas(i).center - this.giw_comps(j).z;
-                    N = inv_S*epsilon*epsilon';
+                    N = inv_S*(epsilon*epsilon');                    
                     mu = this.giw_comps(j).mu + kron(K,eye(this.d))*epsilon;
                     P = this.giw_comps(j).P - K*S*K';
                     v = this.giw_comps(j).v + n_points;
-                    V = this.giw_comps(j).V + N + meas(i).scatter;
+                    V = this.giw_comps(j).V + N + meas(i).scatter;             
                     %calculate new weight
-                    logw = ((exp(-log(this.p_gamma))*(log(this.p_gamma))^(log(n_points))*this.pd)...
-                        /((this.p_beta^log(n_points))*((pi^log(n_points))*log(n_points)*log(S))^(this.d/2)))...
-                        * ((log(det(this.giw_comps(j).V))^(log(this.giw_comps(j).v/2)))...
-                        /(log(det(V))^(log(v/2))))...
-                        * ((gamma_2d(log(v/2)))...
-                        /(gamma_2d(log(this.giw_comps(j).v/2))));
-                    w = exp(logw);
+                    %TODO fix weighting
+                    f1 = (-this.p_gamma*log(exp(1)) + n_points*log(this.p_gamma) + log(this.pd))...
+                        -(n_points*log(this.p_beta) + (this.d/2)*(n_points*log(pi) + log(n_points) + log(S)));
+                    f2 = ((this.giw_comps(j).v/2)*log(det(this.giw_comps(j).V)))...
+                        -((v/2)*log(det(V)));
+                    f3 = (gamma_2d_log(v/2))...
+                        -(gamma_2d_log(this.giw_comps(j).v/2));
+                    logw = f1+f2+f3;                                       
+                    %w = exp(logw) 
                     
+                    weightsum = weightsum+logw;
                     ind = this.giw_comps(j).index;                    
-                    curr_giw_comps(counter) = giwComp(mu,P,v,V,w,ind);
+                    curr_giw_comps(counter) = giwComp(mu,P,v,V,this.giw_comps(j).weight,logw,ind);
+                end
+                %normalizing the weights and updating with the actual
+                %exp-weight
+                weightsum
+                for j = counter-n_pred+1:counter
+                    (curr_giw_comps(j).logw/weightsum)
+                    curr_giw_comps(j).weight = exp((curr_giw_comps(j).logw/weightsum))*curr_giw_comps(j).weight;
+                    curr_giw_comps(j).weight
                 end
             end
             
-            %TODO prune/merge
             this.giw_comps = curr_giw_comps;
             this.weight_sort_components;
             this.prune;
@@ -223,6 +235,8 @@ classdef GIWPHDfilter < handle
         end
         
         function best_estimates = get_best_estimates(this)
+            this.number_of_targets
+            this.weight_sort_components;
             n = round(this.number_of_targets);
             best_estimates = [];
             if n > 0

@@ -38,7 +38,8 @@ dofs = cell(1,1);
 scales = cell(1,1);
 weights = cell(1,1);
 mean_birth = mean(bicycleClusters_xy{start_seq});
-means{1} = [mean_birth(1) 4 0 mean_birth(2) -6 0]';
+%TODO state order?
+means{1} = [mean_birth(1) mean_birth(2) 4 -6 0 0]';
 covariances{1} = 0.1*diag(ones(1,3));
 dofs{1} = 7;
 scales{1} = diag([1 1]);
@@ -64,7 +65,7 @@ for i=start_seq:end_seq
 %             est(j).index
 %         end
 %     end
-    giw_comps = [giw_comps est];
+    giw_comps = [giw_comps est(1)];
 end
 
 %% plot the target with it's ellipse around
