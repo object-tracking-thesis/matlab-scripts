@@ -7,8 +7,8 @@ classdef GIWPHDfilter < handle
         H
         R
         T
-        ps = 1.0;
-        pd = 1.0;
+        ps = 0.98;
+        pd = 0.98;
         p_gamma = 262;
         p_beta = 1;
         theta = 1;
@@ -63,7 +63,7 @@ classdef GIWPHDfilter < handle
         %update with current measurement Z and isObject vector that
         %contains the NN predictions for each of the measurements with 1
         %being clutter, 2 car, 3 cycle, 4 pedestrian
-        function update(this, meas)
+        function update(this, meas)            
             %preallocation for all updated gaussians
             n_meas = length(meas);
             n_pred = length(this.giw_comps);
@@ -81,6 +81,10 @@ classdef GIWPHDfilter < handle
             %update
             counter = 0;
             for i = 1:n_meas
+                %when the measurement is empty
+                if isempty(meas(i).points)
+                	return
+                end
                 weightsum = 0;
                 mantissas = [];
                 exponents = [];
