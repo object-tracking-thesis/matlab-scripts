@@ -4,7 +4,7 @@ class = cell(1,Num);
 for i=1:Num
     i
     tic 
-    [clusters{i} class{i}] = clusterLidar(cleanedFrames{i},0.7,70);
+    [clusters{i} class{i}] = clusterLidar(cleanedFrames{i},1.0,100);
     sub = cell(1,length(unique(class{i})));
     for j = 1:length(unique(class{i}))
         classes = unique(class{i});

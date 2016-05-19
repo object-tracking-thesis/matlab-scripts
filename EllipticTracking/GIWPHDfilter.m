@@ -15,8 +15,8 @@ classdef GIWPHDfilter < handle
         tau = 5;
         sigma = 2;
         d = 2;
-        min_survival_weight = 0.00001;
-        min_merge_dist = 0.1;
+        min_survival_weight = 0.0001;
+        min_merge_dist = 1;
         max_gaussians = 50;
         number_of_targets = 0;
         index = 1;

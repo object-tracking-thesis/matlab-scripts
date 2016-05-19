@@ -90,8 +90,8 @@ for i=1:50
     end
 end
 
-save data/nn_clusters_kitti_static_crossing_cyclist.mat clusterObjects
-save data/isCarMat_kitti_static_crossing_cyclist.mat isCarMat
+%save data/nn_clusters_kitti_static_crossing_cyclist.mat clusterObjects
+%save data/isCarMat_kitti_static_crossing_cyclist.mat isCarMat
 %save data/nn_clusters_1600_1800.mat clusterObjects
 %save data/isCarMat_1600_1600_1800.mat isCarMat
 
@@ -125,7 +125,7 @@ end
 
 %% plot the clusters in their respective colors
 figure
-for i=1:50
+for i=1:1
     i
     pcshow(clusteredPC{i})
     %axis([20 200 -80 0 60 80])

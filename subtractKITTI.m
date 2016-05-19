@@ -3,8 +3,8 @@ clear all;
 clc;
 
 %% load geometrical data for static
-%pathWalls = 'static/kitti_crossing_static_walls.txt';
-pathWalls = 'static/kitti_crossing_cyclist_static_walls.txt';
+pathWalls = 'static/kitti_crossing_static_walls.txt';
+%pathWalls = 'static/kitti_crossing_cyclist_static_walls.txt';
 walls = kittiwalls2matlab(pathWalls);
 
 %% test plot all walls and poles
@@ -17,8 +17,8 @@ end
 %% load lidar and oxts data for livesys
 path1 = '~/Downloads/thesis/share/pcap_scenarios/';
 %path2 = 'car/';
-%path2 = 'kitti_static_crossing/';
-path2 = 'kitti_static_crossing_cyclist/';
+path2 = 'kitti_static_crossing/';
+%path2 = 'kitti_static_crossing_cyclist/';
 path3 = 'oxts/';
 %path4 = 'pcd/1600to2200/';
 path4 = 'pcd/';
@@ -48,7 +48,7 @@ tic
 %TODO wrong rotation order for kitti static cyclist crossing
 liveFrames = cell(1,Num);
 for i=1:Num
-    liveFrames{i} = lidarData{i}*rotationMatrixXYZ(oxts{i}(4),oxts{i}(5),oxts{i}(6));
+    liveFrames{i} = lidarData{i}*rotationMatrixXYZ(-oxts{i}(4),-oxts{i}(5),-oxts{i}(6));
 end
 toc
 

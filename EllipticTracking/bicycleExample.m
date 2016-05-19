@@ -26,6 +26,9 @@ end
 %% motion and measurement model
 %constant velocity
 T = 0.1;
+theta = 1;
+sigma = 2;
+d = 2;
 F = [1      T       (1/2)*T^2;
      0      1       T;
      0      0       exp(-T/theta)];
@@ -57,7 +60,7 @@ giw_comps = [];
 for i=start_seq:end_seq
     figure(1);
     giwphd_filter.predict;
-    meas = [giwMeasComp(bicycleClusters_xy{i})];
+    meas = [giwMeasComp(bicycleClusters_xy{i},3)];
     giwphd_filter.update(meas);
     giwphd_filter.get_number_of_targets;
     est = giwphd_filter.get_best_estimates;
