@@ -247,8 +247,7 @@ classdef GIWPHDfilter < handle
             number_of_targets = this.number_of_targets;
         end
         
-        function best_estimates = get_best_estimates(this)
-            this.number_of_targets
+        function best_estimates = get_best_estimates(this)            
             this.weight_sort_components;
             n = round(this.number_of_targets);
             best_estimates = [];
