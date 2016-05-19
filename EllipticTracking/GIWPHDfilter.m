@@ -102,20 +102,18 @@ classdef GIWPHDfilter < handle
                         -((v/2)*log(det(V)));
                     f3 = (gamma_2d_log(v/2))...
                         -(gamma_2d_log(this.giw_comps(j).v/2));
-                    logw = f1+f2+f3;                                       
+                    logw_scale = f1+f2+f3;
+                    scale = vpa(exp(sym(logw_scale)),5);
+                    w = scale*this.giw_comps(j).weight;
                     %w = exp(logw) 
                     
-                    weightsum = weightsum+logw;
+                    weightsum = weightsum+w;
                     ind = this.giw_comps(j).index;                    
-                    curr_giw_comps(counter) = giwComp(mu,P,v,V,this.giw_comps(j).weight,logw,ind);
+                    curr_giw_comps(counter) = giwComp(mu,P,v,V,w,logw_scale,ind);
                 end
-                %normalizing the weights and updating with the actual
-                %exp-weight
-                weightsum
-                for j = counter-n_pred+1:counter
-                    (curr_giw_comps(j).logw/weightsum)
-                    curr_giw_comps(j).weight = exp((curr_giw_comps(j).logw/weightsum))*curr_giw_comps(j).weight;
-                    curr_giw_comps(j).weight
+                %normalizing the weights with the weightsum for the entire partition              
+                for j = counter-n_pred+1:counter                    
+                    curr_giw_comps(j).weight = curr_giw_comps(j).weight/weightsum;
                 end
             end
             
