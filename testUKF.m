@@ -76,7 +76,7 @@ figure(fig)
 plot(xhat(1,:),'ko')
 
 %%
-nMGPS = 1;
+nMGPS = 2;
 nObsSt = 1;
 nSt = 2;
 st0 = x0;
@@ -89,26 +89,7 @@ ukf.predictMoments(f);
 ukf.predSt
 ukf.predCov
 
-ukf.updateMoments({h}, Z(1))
-ukf.upSt
-ukf.upCov
-
-disp('k = 2')
-ukf.predictMoments(f);
-ukf.predSt
-ukf.predCov
-
-ukf.updateMoments({h}, Z(2))
-ukf.upSt
-ukf.upCov
-
-
-disp('k = 3')
-ukf.predictMoments(f);
-ukf.predSt
-ukf.predCov
-
-ukf.updateMoments({h}, Z(3))
+ukf.updateMoments({h h}, [Z(1);Z(1)])
 ukf.upSt
 ukf.upCov
 
