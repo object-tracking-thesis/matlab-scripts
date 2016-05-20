@@ -2,7 +2,7 @@
 load data/kitti_crossing_114_clusters.mat
 n = length(clusters);
 start_seq = 1;
-end_seq = 10;
+end_seq = 114;
 
 %% plot the clusters
 % figure

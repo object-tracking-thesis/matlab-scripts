@@ -7,8 +7,8 @@ classdef GIWPHDfilter < handle
         H
         R
         T
-        ps = 0.98;
-        pd = 0.98;
+        ps = 0.90;
+        pd = 0.90;
         p_gamma = 262;
         p_beta = 1;
         theta = 1;
@@ -16,8 +16,8 @@ classdef GIWPHDfilter < handle
         sigma = 2;
         d = 2;
         min_survival_weight = 0.0001;
-        min_merge_dist = 500;
-        max_gaussians = 50;
+        min_merge_dist = 50;
+        max_comps = 50;
         number_of_targets = 0;
         index = 1;
     end
@@ -100,8 +100,8 @@ classdef GIWPHDfilter < handle
                     P = this.giw_comps(j).P - K*S*K';
                     v = this.giw_comps(j).v + n_points;
                     V = this.giw_comps(j).V + N + meas(i).scatter;             
-                    %calculate new weight
-                    %TODO fix weighting
+                    
+                    %calculate new weight as a log-likelihood
                     f1 = (-this.p_gamma*log(exp(1)) + n_points*log(this.p_gamma) + log(this.pd))...
                         -(n_points*log(this.p_beta) + (this.d/2)*(n_points*log(pi) + log(n_points) + log(S)));
                     f2 = ((this.giw_comps(j).v/2)*log(det(this.giw_comps(j).V)))...
@@ -111,12 +111,15 @@ classdef GIWPHDfilter < handle
                     logw_scale = f1+f2+f3;
                     [mantissa, base10_exponent] = base10_mantissa_exponent(exp(1),logw_scale);
                     
+                    %the mantissa is updated with the old weight to keep
+                    %track of that information
+                    mantissa = mantissa*this.giw_comps(j).weight;
                     mantissas = [mantissas mantissa];
                     exponents = [exponents base10_exponent];
                     ind = this.giw_comps(j).index;                    
-                    curr_giw_comps(counter) = giwComp(mu,P,v,V,0,ind);
+                    curr_giw_comps(counter) = giwComp(mu,P,v,V,this.giw_comps(j).weight,ind);
                 end
-                %normalizing the weights with the weightsum for the entire partition  
+                %normalizing the weights with the weightsum for the entire measurement  
                 curr_giw_comps(counter-n_pred+1:counter) = ...
                     this.normalize_weights(curr_giw_comps(counter-n_pred+1:counter), exponents, mantissas);
             end
@@ -125,22 +128,30 @@ classdef GIWPHDfilter < handle
             this.weight_sort_components;
             this.prune;
             this.merge;
-            %keep only the max_gaussians best components
-            if length(this.giw_comps) > this.max_gaussians             
-                this.giw_comps = this.giw_comps(1:this.max_gaussians);
-            end
-            %this.recalculate_weights(weightsum_before_prune)
+            %keep only the max_comps best components
+            if length(this.giw_comps) > this.max_comps             
+                this.giw_comps = this.giw_comps(1:this.max_comps);
+            end            
         end
         
         function giws = normalize_weights(this, giws, exponents, mantissas)
-            exponents_norm = exponents-repmat(min(exponents),1,length(exponents));           
-            exponents_norm = exponents_norm.*(50/(max(exponents_norm)+1));
-            expe = exp(exponents_norm);
+            %some exponent preprocessing because matlab will choke on all
+            %exponentials above ~50 and below ~-50
+            %therefore: first normalize all towards the min exponent, then
+            %normalize the max to be +50 and lower all others relatively to
+            %that and finally have the lowest exponents be -10
+            %now matlab can safely calculate the exponentials but we still
+            %retain the relative difference between the high-weighted
+            %components and the very low-weighted components are irrelevant
+            %anyways
+            exponents_norm = exponents-repmat(min(exponents),1,length(exponents));
+            exponents_norm = exponents_norm-repmat((max(exponents_norm)-50),1,length(exponents_norm));            
+            exponents_norm(exponents_norm < -10) = -10;            
+            expe = exp(exponents_norm);            
             weights = mantissas.*expe;
-            weights = weights./sum(weights);
-            max(weights);
+            norm_weights = weights./sum(weights);         
             for i = 1:length(giws)                    
-                giws(i).weight = weights(i);                
+                giws(i).weight = norm_weights(i);                
             end
         end
         
@@ -182,10 +193,16 @@ classdef GIWPHDfilter < handle
                 ind = [];
                 
                 %check all subsequent components if they are closeby
-                for j=(i+1):length(this.giw_comps)                    
-                    proximity = (this.giw_comps(j).mu-this.giw_comps(i).mu)' ...
+                for j=(i+1):length(this.giw_comps)
+                    %emphasis on spatially close targets as opposed to
+                    %targets with similar velocities/accelerations
+                    statej = this.giw_comps(j).mu;
+                    statej(1:2) = statej(1:2).*50;
+                    statei = this.giw_comps(i).mu;
+                    statei(1:2) = statei(1:2).*50;
+                    proximity = (statej-statei)' ...
                         *inv(kron(this.giw_comps(i).P,this.giw_comps(i).V)/(this.giw_comps(i).v+3-3*this.d-2))...
-                        *(this.giw_comps(j).mu-this.giw_comps(i).mu)
+                        *(statej-statei);
                     
                     if proximity < this.min_merge_dist
                         weightsum = weightsum + this.giw_comps(j).weight;
