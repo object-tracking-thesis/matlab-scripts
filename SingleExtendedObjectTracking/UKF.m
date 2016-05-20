@@ -1,3 +1,10 @@
+%
+% this = UKF(Q,R, nMGPS, nObsSt, nSt, st0, cov0)
+%   [] = predictMoments(f)
+%   [] = updateMoments(hCell, assignedZ)
+%   [] = setNrMGPS(N)
+% 
+
 classdef UKF < handle
    properties
        predSP % sigma points for prediction
@@ -25,13 +32,13 @@ classdef UKF < handle
    
     methods
         
-        function this = UKF(Q,R, nMGPS, nObsSt, nSt, st0, cov0)            
+        function this = UKF(Q,R, nMGPS, nObsSt, nSt, st0, cov0)         
             % Constructor, 
             % Entire class assumes that W0 = 1 - n/3, i.e. Wi = 1/6;            
             this.Q = Q;
             this.R = R;
             
-            this.nMGPS  = nMGPS;  % How many h-functions to we get
+            this.nMGPS  = nMGPS;  % How many h-functions do we get
             this.nObsSt = nObsSt; % How many states will we observe through h-functions 
             
             this.nSt = nSt;       % Nr of states in statevector             
@@ -42,7 +49,7 @@ classdef UKF < handle
                         
         end
                 
-        function [] = predictMoments(this, f)
+        function [] = predictMoments(this, f)                           
             
             [SP, W] = this.generatePoints(this.upSt, this.upCov);
 
@@ -69,7 +76,7 @@ classdef UKF < handle
 
         end
         
-        function [] = updateMoments(this, hCell, assignedZ)
+        function [] = updateMoments(this, hCell, assignedZ)             
             
             [SP, W] = this.generatePoints(this.predSt, this.predCov);
             
@@ -126,8 +133,7 @@ classdef UKF < handle
             
         end
         
-
-        function [SP, W] = generatePoints(this, st, cov)            
+        function [SP, W] = generatePoints(this, st, cov)                
            SP = zeros(this.nSt, this.nSP);
            W  = ones(1,this.nSP)*(1/6);
            W(1) = 1 - this.nSt/3;
@@ -140,6 +146,9 @@ classdef UKF < handle
                SP(:,j+1)          = st + sqrt(3).*P5(:,j); % j:th colum of P5
                SP(:,j+1+this.nSt) = st - sqrt(3).*P5(:,j);               
            end                                 
+        end
+        function [] = setNrMGPS(this, N)
+            this.nMGPS = N;
         end
     end
     

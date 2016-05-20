@@ -20,6 +20,7 @@ for N = 1:length(carClusters)
     Ntg(:,1:2) = Ntg(:,1:2) - repmat([egoPosition{1}(1), egoPosition{1}(2)],length(Ntg),1);
     
     figure(f)
+    subplot(2,1,1)
     hold on; grid on
     op = 0.8;
     plot(Ntg(:,1), Ntg(:,2),'x','Color',op.*[1 1 1]);
@@ -64,19 +65,24 @@ for N = 1:length(carClusters)
     
     axis([-30 5 -50 5])
     axis equal
+
+    subplot(2,1,2)
+        plot(t,v); hold on
+        stem(t(N), v(N))
+
     
     Mid = mean(filtNtg);
     Msave(N, 1) = Mid(1);
     Msave(N, 2) = Mid(2);
     
-%     now = 1;
-%     while now
-%         keydown = waitforbuttonpress;
-%         if keydown == 1
-%             now = 0;
-%         end
-%     end
-    pause(0.1)
+    now = 1;
+    while now
+        keydown = waitforbuttonpress;
+        if keydown == 1
+            now = 0;
+        end
+    end
+    %pause(0.1)
 end
 %end
 
@@ -101,7 +107,8 @@ fig = figure;
 v = sqrt(pl_v(:,1).^2 + pl_v(:,2).^2);
 
 fig = figure;
-    plot(t,v)
+    plot(t,v); hold on
+    stem(t(1+31), v(1+31))
 
 
 

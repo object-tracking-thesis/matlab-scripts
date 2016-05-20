@@ -7,11 +7,7 @@
 % [orderedMgps, orderedJacobs] = constructMGPs(corner, predictedState, w_viewed, l_viewed)
 %                    assignedZ = assignMgps(clusterZ, predictedState)
 %
-% ============= TODO ============
-% The way that the class has changed from v1 has made it so that N cant be
-% equal to 0. This should be fixed, since as of now the lowest possible nr
-% of MGPS is 3+2*1 = 5.
-%
+
 classdef MGPgenerator2 < handle
     properties%(Access = private)
         mgpFunCorner1_w;
@@ -174,8 +170,8 @@ classdef MGPgenerator2 < handle
                 mgp_corner = this.evaluateFunction(symFun_w, predictedState, K, 0, 0);
                 jac_corner = this.evaluateJacobian(symJac_w, predictedState, K, 0, 0);
             else
-                symFun_w = @(x) [];
-                symJac_w = @(x) [];
+                symFun_w = '[nan nan]';%@(x) [];
+                symJac_w = 'nan*ones(2,7)';%@(x) [];
             end
             
             if l_viewed > 0.5
@@ -183,8 +179,8 @@ classdef MGPgenerator2 < handle
                 mgp_corner = this.evaluateFunction(symFun_l, predictedState, K, 0, 0);
                 jac_corner = this.evaluateJacobian(symJac_l, predictedState, K, 0, 0);
             else
-                symFun_l = @(x) [];
-                symJac_l = @(x) [];
+                symFun_l = '[nan nan]';%@(x) [];
+                symJac_l = 'nan*ones(2,7)';%@(x) [];
             end
                         
             h = 1:K;
@@ -201,6 +197,7 @@ classdef MGPgenerator2 < handle
                 if p > 1
                     p = 1;
                 end
+                
                 mgps_l(j,:)  = this.evaluateFunction(symFun_l, predictedState, K, j, p);
                 jac_l(:,:,j) = this.evaluateJacobian(symJac_l, predictedState, K, j, p);                
             end
@@ -214,10 +211,18 @@ classdef MGPgenerator2 < handle
             % DO WE EVEN NEED THIS ANYMORE?????
             % -----
             % Find unique MGPS
-            [~, idx] = uniquetol(orderedMgps, 'ByRows',true); % Find index of unique rows (i.e. MGPs)
-            idx = sort(idx);
-            orderedMgps = orderedMgps(idx,:);
-            orderedJacobs = orderedJacobs(:,:,idx);
+%             [~, idx] = uniquetol(orderedMgps, 'ByRows',true); % Find index of unique rows (i.e. MGPs)
+%             idx = sort(idx);
+%             orderedMgps = orderedMgps(idx,:);
+%             orderedJacobs = orderedJacobs(:,:,idx);
+            
+            % Remove NAN
+            
+            A = isnan(orderedMgps);
+            idx = A(:,1);
+            
+            orderedMgps(idx,:) = [];
+            orderedJacobs(:,:,idx) = [];
             
         end
         
