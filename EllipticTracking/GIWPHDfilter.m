@@ -16,7 +16,7 @@ classdef GIWPHDfilter < handle
         sigma = 2;
         d = 2;
         min_survival_weight = 0.0001;
-        min_merge_dist = 1;
+        min_merge_dist = 500;
         max_gaussians = 50;
         number_of_targets = 0;
         index = 1;
@@ -125,16 +125,22 @@ classdef GIWPHDfilter < handle
             this.weight_sort_components;
             this.prune;
             this.merge;
+            %keep only the max_gaussians best components
+            if length(this.giw_comps) > this.max_gaussians             
+                this.giw_comps = this.giw_comps(1:this.max_gaussians);
+            end
+            %this.recalculate_weights(weightsum_before_prune)
         end
         
         function giws = normalize_weights(this, giws, exponents, mantissas)
-            exponents_norm = exponents-repmat(min(exponents),1,length(exponents));             
+            exponents_norm = exponents-repmat(min(exponents),1,length(exponents));           
             exponents_norm = exponents_norm.*(50/(max(exponents_norm)+1));
             expe = exp(exponents_norm);
             weights = mantissas.*expe;
             weights = weights./sum(weights);
+            max(weights);
             for i = 1:length(giws)                    
-                giws(i).weight = weights(i);
+                giws(i).weight = weights(i);                
             end
         end
         
@@ -160,19 +166,13 @@ classdef GIWPHDfilter < handle
             end
             this.giw_comps(to_delete) = [];
             weightsum_before_prune = sum(weightvec);
-            this.number_of_targets = weightsum_before_prune;
-            
-            
-            if length(this.giw_comps) > this.max_gaussians             
-                this.giw_comps = this.giw_comps(1:this.max_gaussians);
-            end
-            
-            this.recalculate_weights(weightsum_before_prune)
+            this.number_of_targets = weightsum_before_prune;                                   
         end
         
         %merging closeby targets
         function merge(this)
-            i = 1;
+            this.weight_sort_components;
+            i = 1;            
             while i < length(this.giw_comps)
                 weightsum = this.giw_comps(i).weight;
                 mu_sum = this.giw_comps(i).weight.*this.giw_comps(i).mu; 
@@ -183,9 +183,9 @@ classdef GIWPHDfilter < handle
                 
                 %check all subsequent components if they are closeby
                 for j=(i+1):length(this.giw_comps)                    
-                    proximity = (this.giw_comps(i).mu-this.giw_comps(j).mu)' ...
-                        *kron(inv(this.giw_comps(i).P),this.giw_comps(i).V)/(this.giw_comps(i).v+3-3*this.d-2)...
-                        *(this.giw_comps(i).mu-this.giw_comps(j).mu);
+                    proximity = (this.giw_comps(j).mu-this.giw_comps(i).mu)' ...
+                        *inv(kron(this.giw_comps(i).P,this.giw_comps(i).V)/(this.giw_comps(i).v+3-3*this.d-2))...
+                        *(this.giw_comps(j).mu-this.giw_comps(i).mu)
                     
                     if proximity < this.min_merge_dist
                         weightsum = weightsum + this.giw_comps(j).weight;
@@ -211,12 +211,16 @@ classdef GIWPHDfilter < handle
                     this.giw_comps(i).P = P_sum;
                     this.giw_comps(i).v = v_sum;
                     this.giw_comps(i).V = V_sum;
-                    this.giw_comps(i).weight = weightsum;
+                    this.giw_comps(i).weight = weightsum;                    
                     this.giw_comps(ind) = [];                 
-                end
-                
-                %check if there are still duplicate indices left and
-                %reassign their index if need be
+                end                                
+                i = i+1;
+            end
+            
+            this.weight_sort_components;
+            %check if there exist duplicate indices and
+            %reassign their index in that case
+            for i=1:(length(this.giw_comps)-1)
                 for j=(i+1):length(this.giw_comps)
                     curr_ind = this.giw_comps(i).index;
                     if this.giw_comps(j).index == curr_ind
@@ -240,10 +244,12 @@ classdef GIWPHDfilter < handle
             for j = 1:length(this.giw_comps)
                 this.giw_comps(i).weight = ...
                     this.giw_comps(i).weight*weight_ratio;
+                this.giw_comps(i).weight
             end
         end
         
         function number_of_targets = get_number_of_targets(this)
+            this.number_of_targets
             number_of_targets = this.number_of_targets;
         end
         

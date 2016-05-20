@@ -1,8 +1,8 @@
 %% load data
 load data/kitti_crossing_114_clusters.mat
 n = length(clusters);
-start_seq = 25;
-end_seq = 29;
+start_seq = 1;
+end_seq = 10;
 
 %% plot the clusters
 % figure
@@ -40,31 +40,31 @@ H = [1 0 0];
 R = 0.00015*diag(ones(1,d));
 
 %% birth components
-means = cell(1,4);
-covariances = cell(1,4);
-weights = cell(1,4);
-dofs = cell(1,4);
-scales = cell(1,4);
-means{1} = [0 0 0 0 0 0]';
-means{2} = [7 11 10 -5 0 0]';
-means{3} = [-9 19.5 10 -5 0 0]';
-means{4} = [-12 -0.4 -3 -10 0 0]';
+means = cell(1,3);
+covariances = cell(1,3);
+weights = cell(1,3);
+dofs = cell(1,3);
+scales = cell(1,1);
+means{1} = [0 -12 0 5 0 0]';
+%means{2} = [7 11 10 -5 0 0]';
+means{2} = [-9 19.5 10 -5 0 0]';
+means{3} = [-12 -0.4 -3 -10 0 0]';
 covariances{1} = 0.1*diag(ones(1,3));
 covariances{2} = 0.1*diag(ones(1,3));
 covariances{3} = 0.1*diag(ones(1,3));
-covariances{4} = 0.1*diag(ones(1,3));
+% covariances{4} = 0.1*diag(ones(1,3));
 weights{1} = 0.005;
 weights{2} = 0.005;
 weights{3} = 0.005;
-weights{4} = 0.005;
+% weights{4} = 0.005;
 dofs{1} = 7;
 dofs{2} = 7;
 dofs{3} = 7;
-dofs{4} = 7;
+% dofs{4} = 7;
 scales{1} = diag([1 1]);
 scales{2} = diag([1 1]);
 scales{3} = diag([1 1]);
-scales{4} = diag([1 1]);
+% scales{4} = diag([1 1]);
 
 %% run filter recursion
 giwphd_filter = GIWPHDfilter;
