@@ -2,7 +2,7 @@
 load data/kitti_crossing_114_clusters.mat
 n = length(clusters);
 start_seq = 1;
-end_seq = 114;
+end_seq = 60;
 
 %% plot the clusters
 % figure
@@ -47,15 +47,15 @@ dofs = cell(1,3);
 scales = cell(1,1);
 means{1} = [0 -12 0 5 0 0]';
 %means{2} = [7 11 10 -5 0 0]';
-means{2} = [-9 19.5 10 -5 0 0]';
+means{2} = [-13 20 10 -5 0 0]';
 means{3} = [-12 -0.4 -3 -10 0 0]';
 covariances{1} = 0.1*diag(ones(1,3));
 covariances{2} = 0.1*diag(ones(1,3));
 covariances{3} = 0.1*diag(ones(1,3));
 % covariances{4} = 0.1*diag(ones(1,3));
-weights{1} = 0.005;
-weights{2} = 0.005;
-weights{3} = 0.005;
+weights{1} = 0.1;
+weights{2} = 0.1;
+weights{3} = 0.1;
 % weights{4} = 0.005;
 dofs{1} = 7;
 dofs{2} = 7;
@@ -71,12 +71,12 @@ giwphd_filter = GIWPHDfilter;
 giwphd_filter.set_birth_rfs(means, covariances, dofs, scales, weights);
 giwphd_filter.set_model_parameters(F,Q,H,R,T);
 giw_comps = [];
-for i=start_seq:end_seq
+for i=start_seq:end_seq   
     figure(1);
     for j=1:length(clusters_xy{i})
         color = [0.9, 0.9, 0.9];
         plot(clusters_xy{i}(j).points(1,:),clusters_xy{i}(j).points(2,:),'x','Color',color)
-        axis([-25 25 -25 25])
+        axis([-30 30 -30 30])
         hold on
     end    
     giwphd_filter.predict;    

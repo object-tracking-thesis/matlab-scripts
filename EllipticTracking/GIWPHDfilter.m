@@ -16,7 +16,7 @@ classdef GIWPHDfilter < handle
         sigma = 2;
         d = 2;
         min_survival_weight = 0.0001;
-        min_merge_dist = 50;
+        min_merge_dist = 0.0005;
         max_comps = 50;
         number_of_targets = 0;
         index = 1;
@@ -47,8 +47,14 @@ classdef GIWPHDfilter < handle
             this.T = T;
         end
         
-        % run predictions, for both birth RFS and existing targets
+        % run predictions, for existing targets
         function predict(this)
+            %new birth_rfs indices
+            for i = 1:length(this.birth_rfs)
+                this.birth_rfs(i).index = this.index;
+                this.index = this.index+1;
+            end
+            %prediction for all previous targets
             for i = 1:length(this.giw_comps)
                 this.giw_comps(i).weight = this.ps*this.giw_comps(i).weight;
                 this.giw_comps(i).mu = kron(this.F,eye(this.d))*this.giw_comps(i).mu;
@@ -101,7 +107,7 @@ classdef GIWPHDfilter < handle
                     v = this.giw_comps(j).v + n_points;
                     V = this.giw_comps(j).V + N + meas(i).scatter;             
                     
-                    %calculate new weight as a log-likelihood
+                    %calculate new weight-scale as a log-likelihood
                     f1 = (-this.p_gamma*log(exp(1)) + n_points*log(this.p_gamma) + log(this.pd))...
                         -(n_points*log(this.p_beta) + (this.d/2)*(n_points*log(pi) + log(n_points) + log(S)));
                     f2 = ((this.giw_comps(j).v/2)*log(det(this.giw_comps(j).V)))...
@@ -238,11 +244,11 @@ classdef GIWPHDfilter < handle
             %check if there exist duplicate indices and
             %reassign their index in that case
             for i=1:(length(this.giw_comps)-1)
-                for j=(i+1):length(this.giw_comps)
-                    curr_ind = this.giw_comps(i).index;
-                    if this.giw_comps(j).index == curr_ind
-                        this.index = this.index+1;
+                curr_ind = this.giw_comps(i).index;
+                for j=(i+1):length(this.giw_comps)                    
+                    if this.giw_comps(j).index == curr_ind                        
                         this.giw_comps(j).index = this.index;
+                        this.index = this.index+1;
                     end
                 end
                 i = i+1;
@@ -266,7 +272,6 @@ classdef GIWPHDfilter < handle
         end
         
         function number_of_targets = get_number_of_targets(this)
-            this.number_of_targets
             number_of_targets = this.number_of_targets;
         end
         
