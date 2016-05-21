@@ -8,7 +8,7 @@ function points = removePointsInsideCube(cube, points)
 
 %TODO why -4 in the z direction?
 %cube = cube'
-[px, py, pz] = cubePlanes(cube(1:3)',cube(4),cube(5),cube(6),cube(7:9)',-2,cube(3)-4);
+[px, py, pz] = cubePlanes(cube(1:3)',cube(4),cube(5),cube(6),cube(7:9)',-3,cube(3)-4);
 nFaces = size(px,2);
 origin = repmat(cube(1:3)',1,nFaces);
 

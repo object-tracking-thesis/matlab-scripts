@@ -3,8 +3,9 @@ clear all;
 clc;
 
 %% load geometrical data for static
-pathWalls = 'static/kitti_crossing_static_walls.txt';
+%pathWalls = 'static/kitti_crossing_static_walls.txt';
 %pathWalls = 'static/kitti_crossing_cyclist_static_walls.txt';
+pathWalls = 'static/kitti_campus_01.txt';
 walls = kittiwalls2matlab(pathWalls);
 
 %% test plot all walls and poles
@@ -17,8 +18,9 @@ end
 %% load lidar and oxts data for livesys
 path1 = '~/Downloads/thesis/share/pcap_scenarios/';
 %path2 = 'car/';
-path2 = 'kitti_static_crossing/';
+%path2 = 'kitti_static_crossing/';
 %path2 = 'kitti_static_crossing_cyclist/';
+path2 = 'kitti_campus_01/';
 path3 = 'oxts/';
 %path4 = 'pcd/1600to2200/';
 path4 = 'pcd/';
@@ -54,9 +56,10 @@ toc
 
 %% plot live frames vs. static geo map
 figure;
-for j=1:Num
+for j=1:1
     test = pointCloud(liveFrames{j});
     pcshow(test)
+    zoom(2)
     hold on
     for i = 1:size(walls,1)
         plotCubes(walls{i}(1:3)',walls{i}(4),walls{i}(5),walls{i}(6),walls{i}(7:9),-2,walls{i}(3)-3)
@@ -84,7 +87,7 @@ for i=1:Num
     % sort walls by closest to current position first
     before = size(cleanedFrames{i},1);
     currentPos = [0 0 0]';
-    currentPos = repmat(currentPos',11,1);
+    currentPos = repmat(currentPos',length(walls),1);
     [trash idx] = sort([sum(abs(mWalls(:,1:3)-currentPos),2)], 'ascend');
     mWalls = mWalls(idx,:);
     % remove all points that are within walls
