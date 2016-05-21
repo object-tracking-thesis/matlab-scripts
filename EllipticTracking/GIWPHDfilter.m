@@ -7,8 +7,8 @@ classdef GIWPHDfilter < handle
         H
         R
         T
-        ps = 0.90;
-        pd = 0.90;
+        ps = 0.98;
+        pd = 0.98;
         p_gamma = 262;
         p_beta = 1;
         theta = 1;
