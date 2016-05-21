@@ -1,5 +1,5 @@
 %
-% this = UKF(Q,R, nMGPS, nObsSt, nSt, st0, cov0)
+% this = UKF(Q,R, nObsSt, nSt, st0, cov0)
 %   [] = predictMoments(f)
 %   [] = updateMoments(hCell, assignedZ)
 %   [] = setNrMGPS(N)
@@ -27,18 +27,20 @@ classdef UKF < handle
        nSP % Number of sigma points 
        nSt % Number of states 
        
+       yPred % predicted measurement
+       S % Predicted measurement covariance 
        
    end
    
     methods
         
-        function this = UKF(Q,R, nMGPS, nObsSt, nSt, st0, cov0)         
+        function this = UKF(Q,R, nObsSt, nSt, st0, cov0)         
             % Constructor, 
             % Entire class assumes that W0 = 1 - n/3, i.e. Wi = 1/6;            
             this.Q = Q;
             this.R = R;
             
-            this.nMGPS  = nMGPS;  % How many h-functions do we get
+           % this.nMGPS  = nMGPS;  % How many h-functions do we get
             this.nObsSt = nObsSt; % How many states will we observe through h-functions 
             
             this.nSt = nSt;       % Nr of states in statevector             
@@ -49,7 +51,13 @@ classdef UKF < handle
                         
         end
                 
-        function [] = predictMoments(this, f)                           
+        function [] = predictMoments(this, f, varargin)                           
+            % ONLY FOR IMM USE
+            if length(varargin) == 2
+                this.upSt = varargin{1};
+                this.upCov = varargin{2};
+            end
+            
             
             [SP, W] = this.generatePoints(this.upSt, this.upCov);
 
@@ -77,15 +85,15 @@ classdef UKF < handle
         end
         
         function [] = updateMoments(this, hCell, assignedZ)             
-            
+            this.setNrMGPS(length(assignedZ)/2)
             [SP, W] = this.generatePoints(this.predSt, this.predCov);
             
             %% Calculate predicted measurement
-            yPred = zeros(this.nObsSt, this.nMGPS); % We have a predicted y for each mgp, where we see the observed states 
+            this.yPred = zeros(this.nObsSt, this.nMGPS); % We have a predicted y for each mgp, where we see the observed states 
             
             for h = 1:this.nMGPS
                 for j = 1:this.nSP
-                    yPred(:,h) = yPred(:,h) + hCell{h}(SP(:,j))*W(j);
+                    this.yPred(:,h) = this.yPred(:,h) + hCell{h}(SP(:,j))*W(j);
                 end
             end
                         
@@ -98,7 +106,7 @@ classdef UKF < handle
             for j = 1:this.nSP
                yD = [];
                for h = 1:this.nMGPS
-                  yD = [yD; hCell{h}(SP(:,j))-yPred(:,h)]; 
+                  yD = [yD; hCell{h}(SP(:,j))-this.yPred(:,h)]; 
                end
                yDiff(:,j) = yD; % Each column of yDiff should contain h(SP) - ypred for each SP
             end
@@ -113,19 +121,19 @@ classdef UKF < handle
             
             %% Calculate S
             
-            S = zeros(this.nMGPS*this.nObsSt);
+            this.S = zeros(this.nMGPS*this.nObsSt);
             
             for j = 1:this.nSP
-                S = S + yDiff(:,j)*yDiff(:,j)'*W(j);
+                this.S = this.S + yDiff(:,j)*yDiff(:,j)'*W(j);
             end
             
-            S = S + this.R*eye(this.nMGPS*this.nObsSt);
+            this.S = this.S + this.R*eye(this.nMGPS*this.nObsSt);
             
             %% Calculate Parameters of interest                         
-            K = Pxy*inv(S);                        
+            K = Pxy*inv(this.S);                        
             
-            this.upSt  = this.predSt  + K*(assignedZ - reshape(yPred, this.nMGPS*this.nObsSt, 1));
-            this.upCov = this.predCov - K*S*K';
+            this.upSt  = this.predSt  + K*(assignedZ - reshape(this.yPred, this.nMGPS*this.nObsSt, 1));
+            this.upCov = this.predCov - K*this.S*K';
             % Assign values to class
             this.upSP = SP;
             this.upW  = W;
@@ -147,6 +155,7 @@ classdef UKF < handle
                SP(:,j+1+this.nSt) = st - sqrt(3).*P5(:,j);               
            end                                 
         end
+        
         function [] = setNrMGPS(this, N)
             this.nMGPS = N;
         end

@@ -79,7 +79,7 @@ for k = 1:nrIter
         nObsSt = 2;
         nSt = 7;
 
-        ukf = UKF(Q,R, nMGPS, nObsSt, nSt, x0, P0);
+        ukf = UKF(Q,R, nObsSt, nSt, x0, P0);
         tic
         ukf.predictMoments(f);
         predictedState = ukf.predSt;
