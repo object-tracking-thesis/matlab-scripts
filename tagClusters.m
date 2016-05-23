@@ -33,8 +33,8 @@ figure('WindowKeyPressFcn', @keyPress)
 %fCar = @(src,evt) evalin('base','isCarMat(i,j) = 2;');
 %hButton1 = uicontrol( 'Units', 'normalized', 'Position', [0.1 0.1 0.1 0.1], 'Style', 'pushbutton', 'Tag', 'button1', 'String', 'Clutter', 'callback', fClutter);
 %hButton2 = uicontrol( 'Units', 'normalized', 'Position', [0.3 0.1 0.1 0.1], 'Style', 'pushbutton', 'Tag', 'button2', 'String', 'Car', 'callback', fCar);
-%isCarMat = ones(Num,25);
-i = 37;
+%isCarMat = ones(Num,50);
+i = 1;
 while i <= Num
     j = 1;
     while j <= length(clusters{i})
@@ -45,7 +45,8 @@ while i <= Num
         %axis([150 250 50 130 60 80])
         %axis([20 200 -80 0 60 80])
         %axis([-50 50 -50 50 -5 10])
-        axis([-30 80 -30 50 -5 10])
+        %axis([-30 80 -30 50 -5 10])
+        axis([-10 50 -50 20 -1 2])
         zoom(1.5)
         waitforbuttonpress;
         j = j+1;
@@ -53,16 +54,58 @@ while i <= Num
     i = i+1;
 end
 
+%% plot frame by frame with clusternumbers assigned
+%isCarMat = ones(Num,50);
+figure;
+i = 31;
+while i <= Num
+    for j = 1:length(clusters{i})
+        cluster = pointCloud(clusters{i}{j});
+        pcshow(cluster)
+        hold on
+        str = sprintf('Frame: %d', i);
+        %title(str);
+        text(45,-15,str)
+        testtxt = strcat('\leftarrow i: ', num2str(j));
+        mu = max(clusters{i}{j});
+        text(double(mu(1)), double(mu(2)), testtxt) 
+        axis([-10 50 -50 20 -1 2])
+        az = -60;
+        el = 60;
+        view(az, el);
+        zoom(1.8)
+        j = j+1;
+    end
+    hold off
+    waitforbuttonpress;
+    i = i+1;
+end
+
 %% convert a vector of frameXclusterNumber to a class matrix
 %1 for walls/clutter/noise
-isCarMat = ones(length(isCarCluster),20);
-for i=1:size(isCarMat,1)
-    %99 if this frame does not contain any desired object
-    if isCarCluster(i) == 99
-        continue
+%isCarMat = ones(length(isCarCluster),20);
+n = 50;
+for i=1:n
+    for j = 1:length(cars(i,:))
+        if ~(cars(i,j) == 0)
+            isCarMat(i,cars(i,j)) = 2;
+        end
     end
-    %2 for car
-    isCarMat(i,isCarCluster(i)) = 2;
+    for j = 1:length(cycles(i,:))
+        if ~(cycles(i,j) == 0)
+            isCarMat(i,cycles(i,j)) = 3;
+        end
+    end
+    for j = 1:length(persons(i,:))
+        if ~(persons(i,j) == 0)
+            isCarMat(i,persons(i,j)) = 4;
+        end
+    end
+    for j = 1:length(groups(i,:))
+        if ~(groups(i,j) == 0)
+            isCarMat(i,groups(i,j)) = 5;
+        end
+    end
 end
 
 %% prepare ground truth cluster data for training the network
@@ -97,7 +140,7 @@ end
 
 %% assign different colors to all clusters found in each frame
 clusteredPC = cell(1,Num);
-for i=1:Num
+for i=1:50
     cluster = [];
     color = [];
     for j = 1:length(clusters{i})
@@ -105,16 +148,24 @@ for i=1:Num
         %assign the same color for all cars
         if isCarMat(i,j) == 2
             pointscolor(:,1)=ceil(255);
+            pointscolor(:,2)=ceil(150);
+            pointscolor(:,3)=ceil(150);
+        elseif isCarMat(i,j) == 3
+            pointscolor(:,1)=ceil(150);
+            pointscolor(:,2)=ceil(255);
+            pointscolor(:,3)=ceil(150);
+        elseif isCarMat(i,j) == 4
+            pointscolor(:,1)=ceil(150);
+            pointscolor(:,2)=ceil(150);
+            pointscolor(:,3)=ceil(255);
+        elseif isCarMat(i,j) == 5
+            pointscolor(:,1)=ceil(200);
             pointscolor(:,2)=ceil(200);
             pointscolor(:,3)=ceil(200);
-        elseif isCarMat(i,j) == 3
-            pointscolor(:,1)=ceil(200);
-            pointscolor(:,2)=ceil(180);
-            pointscolor(:,3)=ceil(180);
         else
-            pointscolor(:,1)=ceil(rand(1)*150);
-            pointscolor(:,2)=ceil(rand(1)*150);
-            pointscolor(:,3)=ceil(rand(1)*150);
+            pointscolor(:,1)=ceil(rand(1)*50);
+            pointscolor(:,2)=ceil(rand(1)*50);
+            pointscolor(:,3)=ceil(rand(1)*50);
         end
         color = [color; pointscolor];
         cluster = [cluster; clusters{i}{j}];
@@ -125,23 +176,26 @@ end
 
 %% plot the clusters in their respective colors
 figure
-for i=1:1
+for i=1:50
     i
     pcshow(clusteredPC{i})
     %axis([20 200 -80 0 60 80])
+    axis([-10 50 -50 20 -1 2])
     zoom(2)
     pause(0.1)
 end
 
 %% cluster cars once again with a lower cutoff for Marko's corner algo
-carClusters = cell(1,150);
-for i=1:150
-    for j = 1:length(clusters{i})
-        if isCarMat(i,j) == 2
-            carClusters{i} = clusters{i}{j};
-        end
+carClusters = cell(1,50);
+for i=1:50
+    carIndices = find(isCarMat(i,:) == 2);
+    carClusters{i} = cell(1,length(carIndices));
+    for j = 1:length(carIndices)        
+        carClusters{i}{j} = clusters{i}{carIndices(j)};        
     end
 end
+
+%%
 carClustersCutOff = cell(1,150);
 classCutOff = cell(1,150);
 for i=1:150
@@ -162,9 +216,14 @@ end
 figure;
 for i=1:Num
     i
-    pcshow(pointCloud(carClustersCutOff{i}{1}))
-    %axis([80 120 -30 -15 60 70])
-    axis([20 200 -80 0 60 80])
-    zoom(2)
+    for j=1:length(carClusters{i})
+        pcshow(pointCloud(carClusters{i}{j}))
+        hold on
+        %axis([80 120 -30 -15 60 70])
+        %axis([20 200 -80 0 60 80])
+        axis([-10 50 -50 20 -1 2])
+        zoom(2)
+    end
     pause(0.1)
+    hold off
 end

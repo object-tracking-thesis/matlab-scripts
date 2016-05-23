@@ -73,7 +73,7 @@ cleanedFrames = cell(1,Num);
 for i = 1:Num
     tic
     i
-    cleanedFrames{i} = gridGroundRemoval(liveFrames{i}, 200, 0.45);
+    cleanedFrames{i} = gridGroundRemoval(liveFrames{i}, 200, 0.35);
     fprintf('before: %6.2f, after: %6.2f\n', [size(liveFrames{i},1) size(cleanedFrames{i},1)]);
     toc
 end
