@@ -28,6 +28,8 @@ classdef CarIMM < handle
         upSt % Updated state estimate
         upCov % Updated covariance estimate
         
+        totLikelihood % likelihood for measurements 
+        
     end    
     methods        
         function this = CarIMM(nObsSt, nSt, st0, cov0, f1, f2, Q1, Q2, rCov, TPM)
@@ -124,12 +126,14 @@ classdef CarIMM < handle
                         
             yPred1 = reshape(yPred1, 2*length(yPred1),1);            
             yPred2 = reshape(yPred2, 2*length(yPred2),1);
-                                    
+    
+            lik1 = mvnpdf(assignedZ, yPred1, S1);
+            lik2 = mvnpdf(assignedZ, yPred2, S2);
             
-            w1 = mvnpdf(assignedZ, yPred1, S1)...
+            w1 = lik1...
                 *(this.TPM(1,1)*this.mixWeights(1) + this.TPM(2,1)*this.mixWeights(2));
             
-            w2 = mvnpdf(assignedZ, yPred2, S2)...
+            w2 = lik2...
                 *(this.TPM(1,2)*this.mixWeights(1) + this.TPM(2,2)*this.mixWeights(2));
             
             if w1 == 0
@@ -139,6 +143,9 @@ classdef CarIMM < handle
                 w2 = 0.01;
                 w1 = 0.99;
             end
+            
+            % Set likelihood for higher-level use 
+            this.totLikelihood = w1*lik1 + w1*lik2;
             
             this.mixWeights = [w1 w2]./(w1 + w2); % Normalize and save
             
