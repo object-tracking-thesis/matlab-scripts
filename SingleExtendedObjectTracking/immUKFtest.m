@@ -113,7 +113,7 @@ for k = 1:nrIter
         predictedState1 = imm.mmPredSt(:,1);
         predictedState2 = imm.mmPredSt(:,2);
     else
-        tic
+        
         imm.mmPredict();
         
         predictedState1 = imm.mmPredSt(:,1);
@@ -135,7 +135,7 @@ for k = 1:nrIter
     assignedZo = reshape(assignedZ1', 2*length(assignedZ1),1);
 
     imm.mmUpdate({mgpHandles1, mgpHandles2}, assignedZo);
-    toc
+    
     upSt = imm.upSt;
     
     stateStorage{k} = upSt;
