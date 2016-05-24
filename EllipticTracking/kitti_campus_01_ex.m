@@ -1,5 +1,6 @@
 %% load data
 load data/kitti_campus_01_186_clusters.mat
+load data/isCarMat_kitti_campus_01_50.mat
 n = length(clusters);
 start_seq = 1;
 end_seq = 50;
@@ -49,9 +50,9 @@ covariances = cell(1,6);
 weights = cell(1,6);
 dofs = cell(1,6);
 scales = cell(1,6);
-means{1} = [0 0 0 -15 0 0]';
+means{1} = [0 0 0 -20 0 0]';
 means{2} = [5 0 0 10 0 0]';
-means{3} = [10 0 0 0 0 0]';
+means{3} = [13 0 0 0 0 0]';
 means{4} = [20 0 0 10 0 0]';
 means{5} = [18 0 0 0 0 0]';
 means{6} = [20 0 0 -15 0 0]';

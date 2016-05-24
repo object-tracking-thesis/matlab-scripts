@@ -1,15 +1,20 @@
 %% load data
 load data/kitti_crossing_114_clusters.mat
+load data/isCarMat_kitti_crossing_114.mat
 n = length(clusters);
 start_seq = 1;
 end_seq = 60;
 
 %% plot the clusters
 % figure
-% for i=start_seq:end_seq
-%     pcshow(pointCloud(clusters{i}))
-%     axis([0 30 0 20 -5 5])
-%     zoom(2)
+% for i=1:1
+%     for j=1:length(clusters{i})
+%         pcshow(pointCloud(clusters{i}{j}))
+%         hold on
+%         axis([-30 30 -30 30 -5 5])
+%         zoom(2)
+%     end
+%     hold off
 %     pause(0.5)
 % end
 

@@ -9,7 +9,7 @@ classdef GIWPHDfilter < handle
         T
         ps = 0.98;
         pd = 0.98;
-        p_gamma = 262;
+        p_gamma = 250;
         p_beta = 1;
         theta = 1;
         tau = 5;
@@ -105,7 +105,7 @@ classdef GIWPHDfilter < handle
                     mu = this.giw_comps(j).mu + kron(K,eye(this.d))*epsilon;
                     P = this.giw_comps(j).P - K*S*K';
                     v = this.giw_comps(j).v + n_points;
-                    V = this.giw_comps(j).V + N + meas(i).scatter;             
+                    V = this.giw_comps(j).V + N + meas(i).scatter;          
                     
                     %calculate new weight-scale as a log-likelihood
                     f1 = (-this.p_gamma*log(exp(1)) + n_points*log(this.p_gamma) + log(this.pd))...
