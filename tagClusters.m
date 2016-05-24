@@ -57,7 +57,7 @@ end
 %% plot frame by frame with clusternumbers assigned
 %isCarMat = ones(Num,50);
 figure;
-i = 31;
+i = 1;
 while i <= Num
     for j = 1:length(clusters{i})
         cluster = pointCloud(clusters{i}{j});
@@ -69,7 +69,7 @@ while i <= Num
         testtxt = strcat('\leftarrow i: ', num2str(j));
         mu = max(clusters{i}{j});
         text(double(mu(1)), double(mu(2)), testtxt) 
-        axis([-10 50 -50 20 -1 2])
+        axis([-10 50 -50 20 -2 3])
         az = -60;
         el = 60;
         view(az, el);
@@ -180,7 +180,7 @@ for i=1:50
     i
     pcshow(clusteredPC{i})
     %axis([20 200 -80 0 60 80])
-    axis([-10 50 -50 20 -1 2])
+    axis([-10 50 -50 20 -2 3])
     zoom(2)
     pause(0.1)
 end

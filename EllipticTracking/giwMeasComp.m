@@ -5,7 +5,7 @@ function giw_meas_comp = giwMeasComp(points, type)
 % center    - vector of the center coordinates
 % scatter   - the scatter matrix of the points
 % n         - number of points
-% type      - type of the measurement (1=clutter, 2=car, 3=bicycle, 4=ped.)
+% type      - type of the measurement (1=clutter, 2=car, 3=bicycle, 4=ped., 5=ped.group)
 
     n = size(points,1);
     points = points';

@@ -4,7 +4,7 @@ class = cell(1,Num);
 for i=1:Num
     i
     tic 
-    [clusters{i} class{i}] = clusterLidar(cleanedFrames{i},1.0,100);
+    [clusters{i} class{i}] = clusterLidar(cleanedFrames{i},0.7,50);
     sub = cell(1,length(unique(class{i})));
     for j = 1:length(unique(class{i}))
         classes = unique(class{i});
@@ -19,7 +19,7 @@ end
 
 %% assign different colors to all clusters found in each frame
 clusteredPC = cell(1,Num);
-for i=1:Num
+for i=1:70
     cluster = [];
     color = [];
     for j = 1:length(clusters{i})
@@ -37,12 +37,14 @@ end
 
 %% plot the clusters in their respective colors
 figure
-for i=1:Num
+for i=1:70
     i
     pcshow(clusteredPC{i})
+    zoom(2)
     hold on
     %plot3(egoPosition{i}(1),egoPosition{i}(2),egoPosition{i}(3),'x')
     %axis([20 200 -80 0 60 80])
+    axis([-10 50 -50 20 -1 2])
     pause(0.3)
     hold off
 end
