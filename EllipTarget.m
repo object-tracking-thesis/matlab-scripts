@@ -22,7 +22,7 @@
 %
 
 classdef EllipTarget < handle
-    properties      
+    properties (Access = public)
         %motion model
         T       %sampling time
         theta   %maneuver correlation time (higher means smaller acceleration prediction)
@@ -54,7 +54,11 @@ classdef EllipTarget < handle
     
     methods
         %% Constructor
-        function this = EllipTarget(x0, P0)
+        function this = EllipTarget()
+
+        end
+
+        function [] = init(this, x0, P0)
             % motion model
             this.T = 0.1;
             this.theta = 1;
@@ -72,35 +76,38 @@ classdef EllipTarget < handle
             
             % prior state
             this.x = x0;
-            this.P = P0;
+            this.P = 0.1*diag(ones(1,3));
             this.v = 7;
             this.V = diag([1 1]);
         end
-        
         %% API functions
         function [] = predict(this)
             this.x = kron(this.F,eye(this.d))*this.x;
             this.P = this.F*this.P*this.F' + this.Q;
             temp_v = this.v;
             this.v = exp(-this.T/this.tau)*this.v;
-            this.V = ((this.v-this.d-1)/(temp_v-this.d-1)) .* this.V;            
+            this.V = ((this.v-this.d-1)/(temp_v-this.d-1)) .* this.V;                   
         end
         
-        function [mantissa, base10_exponent] = calcLikelihood(this, clusterZ)
-            meas = giwMeasComp(clusterZ);
+        function [mantissa, base10_exponent] = calcLikelihood(this, clusterZ)            
+            %meas = giwMeasComp(clusterZ);            
+            meas = clusterZ;
+            
+            %update components
             this.Khat = this.P*this.H';
-            this.Shat = this.H*this.Khat;                
+            this.Shat = this.H*this.Khat;            
             this.zhat = kron(this.H,eye(this.d))*this.x;
+            
+            %likelihood components
             this.S = this.Shat + 1/meas.n;
-            this.epsilon = meas.center - this.zhat;
-            
-            N = (this.epsilon*this.epsilon')/this.S;
+            this.epsilon = meas.center - this.zhat;            
+            N = inv(this.S)*(this.epsilon*this.epsilon');
             newv = this.v + meas.n;
-            newV = this.V + N + meas.scatter;
+            newV = this.V + N + meas.scatter;                        
             
-            %calculate new weight-scale as a log-likelihood 
-            f1 = (-this.p_gamma*log(exp(1)) + n_points*log(this.p_gamma) + log(this.pd))...
-                -(n_points*log(this.p_beta) + (this.d/2)*(n_points*log(pi) + log(n_points) + log(S)));
+            %calculate new weight-scale as a log-likelihood
+            f1 = (-this.p_gamma*log(exp(1)) + meas.n*log(this.p_gamma) + log(this.pd))...
+                -(meas.n*log(this.p_beta) + (this.d/2)*(meas.n*log(pi) + log(meas.n) + log(this.S)));
             f2 = ((this.v/2)*log(det(this.V)))...
                 -((newv/2)*log(det(newV)));
             f3 = (gamma_2d_log(newv/2))...
@@ -116,9 +123,13 @@ classdef EllipTarget < handle
         end
         
         function [] = update(this)
-            K = this.Khat/this.S;
+            K = this.Khat*inv(this.S);
             this.x = this.x + kron(K,eye(this.d))*this.epsilon;
-            this.P = this.P - K*this.S*K';
+            this.P
+            this.P = this.P - (K*this.S*K');
+            this.P
+            K
+            this.S
         end
         
         function [st, cov, dof, scale] = getState(this)
@@ -126,6 +137,17 @@ classdef EllipTarget < handle
             cov = this.P;
             dof = this.v;
             scale = this.V;
+        end
+        
+        % Make a copy of a handle object.
+        function new = copy(this)
+            % Instantiate new object of the same class.
+            new = feval(class(this));
+            % Copy all non-hidden properties.
+            p = properties(this);
+            for i = 1:length(p)
+                new.(p{i}) = this.(p{i});
+            end
         end
         
     end

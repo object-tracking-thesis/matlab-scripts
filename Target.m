@@ -1,12 +1,12 @@
-% Target class, encapsulation of the underlying classes (ellips, rectangle)
+% Target class, encapsulation of the underlying classes (ellipse, rectangle)
 % Also in charge of initializing targets, as well as switching between the
 % two types when necessary
 %
-%         x0 - state vector for ellips
-%         P0 - covariance vector for ellips
+%         x0 - state vector for ellipse
+%         P0 - covariance vector for ellipse
 %   clusterZ - 3xN matrix
 %      index - indexnumber
-% targetType - character indicating targetType, 'c' - car, 'e' - ellips
+% targetType - character indicating targetType, 'c' - car, 'e' - ellipse
 %
 % Constructor: 
 %       this = Target(x0, P0, index)
@@ -22,28 +22,38 @@
 % PHD filter.
 
 classdef Target < handle
-    properties
+    properties (Access = public)
         activeTarget % The active target, either EllipTarget or RectTarget
         targetType   % Target type, 'c' - car, 'e' - ellips
         index        % PHD index
         likelihood   % Value of likelihood
+        weight
         
         upSt         % The updated state estimate
-        upCov        % The updated covariance estimate        
+        upCov        % The updated covariance estimate   
+        upv          % The updated shape dof estimate
+        upV          % The updated IW scale estimate   
     end
     
     methods
         %% Constructor
-        function this = Target(x0, P0, index)
-            % 'e' stands for ellips,
+        function this = Target()
+            
+        end
+        
+        function [] = init(this, x0, P0, index, weight)
+            % 'e' stands for ellipse,
             %all targets in birth RFS are set as elliptical targets
             this.targetType = 'e';
             this.index = index;
             this.upSt = x0;
             this.upCov = P0;
+            this.weight = weight;
             % TODO
-            this.activeTarget = EllipTarget(x0, P0);
+            this.activeTarget = EllipTarget;            
+            this.activeTarget.init(x0, P0);
         end
+        
         %% API
         function [] = isNewType(this, targetType)
             % This is the transition function, that is used to convert from
@@ -93,21 +103,56 @@ classdef Target < handle
             this.activeTarget.predict();
         end
         
-        function lik = calcLikelihood(this, clusterZ)
+        function [mantissa, exponent] = calcLikelihood(this, clusterZ)           
             % Storage of S and yPred is delegated the internals of
-            % activeTarget
-            this.likelihood = this.activeTarget.calcLikelihood(clusterZ);
-            lik = this.likelihood;
+            % activeTarget            
+            [mantissa, exponent] = this.activeTarget.calcLikelihood(clusterZ);
         end
         
         function [] = update(this)
             this.activeTarget.update();
-            [this.upSt, this.upCov] = this.activeTarget.getState();
+            [this.upSt, this.upCov, this.upv, this.upV] = this.activeTarget.getState();
         end
         
-        function [upSt, upCov] = getState(this)
+        function [upSt, upCov, upv, upV] = getState(this)
             upSt = this.upSt;
             upCov = this.upCov;
+            upv = this.upv;
+            upV = this.upV;
+        end
+        
+        function [] = setState(this, x, P, v, V)
+            this.upSt = x;
+            this.upCov = P;
+            this.upv = v;
+            this.upV = V;
+        end
+        
+        function w = getWeight(this)
+            w = this.weight;
+        end
+        
+        function [] = setWeight(this, w)
+            this.weight = w;
+        end
+        
+        function i = getIndex(this)
+            i = this.index;
+        end
+        
+        % Make a copy of a handle object.
+        function new = copy(this)
+            % Instantiate new object of the same class.
+            new = feval(class(this));
+            % Copy all non-hidden properties.
+            p = properties(this);
+            for i = 1:length(p)
+                new.(p{i}) = this.(p{i});
+            end
+        end
+        
+        function [] = deepCopy(this)
+            this.activeTarget = this.activeTarget.copy();
         end
         
     end
