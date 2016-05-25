@@ -121,7 +121,7 @@ classdef RectTarget < handle
               % TODO, rewrite imm to support calcLikelihood function
               this.imm.mmUpdate({mgpHandles1, mgpHandles2}, assignedZo);
                 
-              lik = this.imm.totLikelihood;
+              lik = this.imm.totLikelihood;                                          
         end
         
         function [] = update(~)

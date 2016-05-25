@@ -105,6 +105,7 @@ for k = 1:nrIter
     assignedZo = reshape(assignedZ', 2*length(assignedZ),1);
     ukf.setNrMGPS(length(assignedZ));
     ukf.updateMoments(mgpHandles, assignedZo);
+    
     toc
     stateStorage{k} = ukf.upSt;
     % Let's see how we did
@@ -116,6 +117,8 @@ for k = 1:nrIter
     drawMyRide(predictedState, 'c')
     drawMyRide(ukf.upSt,'b')
     
+    plot(ukf.yPred(1,:), ukf.yPred(2,:), 'm*')
+
     plot(assignedZ(:,1), assignedZ(:,2),'g*','MarkerSize',10)
     
       title(sprintf('T = %.1f/%.1f [sec]', k/10,nrIter/10),'FontSize', 24)
@@ -136,14 +139,14 @@ for k = 1:nrIter
          a.FontSize = 10;
          a.BackgroundColor = [1 1 1];
 
-%     now = 1;
-%     while now
-%         keydown = waitforbuttonpress;
-%         if keydown == 1
-%             now = 0;
-%         end
-%     end
-    pause(0.2)
+    now = 1;
+    while now
+        keydown = waitforbuttonpress;
+        if keydown == 1
+            now = 0;
+        end
+    end
+%    pause(0.2)
 
 
 end
