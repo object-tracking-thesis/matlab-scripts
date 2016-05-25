@@ -5,14 +5,20 @@
 %
 %
 % Public Methods:
-%                    this = MGPgenerator3(N)
-% [mgpHandles, assignedZ] = generate(clusterZ, predictedState)            
+%                              this = MGPgenerator4(N, covMGPgate)
+% [gatedMgpHandles, gatedAssignedZ] = generate(clusterZ, predictedState)            
 %
 % Private Methods:
-%             corner = getCarCorner(clusterZ, predictedState)
-%       [mgpHandles] = constructMGPs(corner, predictedState, w_viewed, l_viewed)
-%          assignedZ = assignMgps(clusterZ, predictedState)
-% [wViewed, lViewed] = getViewedLengths(clusterZ, predictedState)
+% [filtClust, massVec1, massVec2, cp] = this.preFilter(clusterZ, lb, ub, gateCov);             
+%                  [wVector, lVector] = this.getVectors(predictedState, massVec1, massVec2);            
+%
+%                              corner = this.getCorner2(predictedState, wVector, lVector);        
+%                  [wViewed, lViewed] = this.getViewLen(filtClust, cp, wVector, lVector);             
+%
+%                           assignedZ = this.selectMeas(filtClust, wVector, lVector, wViewed, lViewed);             
+%                          mgpHandles = this.makeMGPs(corner, predictedState, wViewed, lViewed);             
+%
+%   [gatedMgpHandles, gatedAssignedZ] = this.gateMGPs(assignedZ, mgpHandles);
 %
 
 classdef MGPgenerator4 < handle
@@ -30,16 +36,16 @@ classdef MGPgenerator4 < handle
         mgpFunCorner4_l;
          
         mgpNum;
-        covR; % Measurement covariance for each MGP
+        covMGPgate; % Measurement covariance for each MGP
     end
     
     methods        
-        function this = MGPgenerator4(N, covR)
+        function this = MGPgenerator4(N, covMGPgate)
             % Constructor. Initates the MGPgenerator, where N specifies how
             % many MGPs should be spread out on each side, in addition to
             % the three minimum. 
             this.mgpNum = N;
-            this.covR = covR;
+            this.covMGPgate = covMGPgate;
             % Corner i, width and length MGPs definitions           
             
             this.mgpFunCorner1_w = @(K,h,p) (@(st)... 
@@ -83,63 +89,37 @@ classdef MGPgenerator4 < handle
 
         end
         
-        function [gMgpHandles, gAssignedZ] = generate(this, clusterZ, predictedState)
+        function [gatedMgpHandles, gatedAssignedZ] = generate(this, clusterZ, predictedState)
             % Calls all private functions and returns assigned measurements
             % and their corresponding MPG function handles, for later use
             % in UKF.
             
-            % These should not be hardcoded
+            % These should not be hardcoded, but submitted by the user
             lb = 0.2;
             ub = 0.5;
             gateCov = 0.2^2;
             
-            filtClust = this.preFilter(clusterZ, lb, ub, gateCov);
+            [filtClust, massVec1, massVec2, cp] = this.preFilter(clusterZ, lb, ub, gateCov);
             
-            corner    = this.getCarCorner(filtClust, predictedState);
-            [wV, lV]  = this.getViewedLengths(filtClust, predictedState);
-            assignedZ = this.assignMgpsGating(filtClust, predictedState);            
-            [mgpHandles] = this.constructMGPs(corner, predictedState, wV, lV);
+                             [wVector, lVector] = this.getVectors(predictedState, massVec1, massVec2);
             
-            [gMgpHandles, gAssignedZ] = this.checkGates(assignedZ, mgpHandles);
+                                         corner = this.getCorner2(predictedState, wVector, lVector);
+            
+                             [wViewed, lViewed] = this.getViewLen(filtClust, cp, wVector, lVector);
+            
+                                      assignedZ = this.selectMeas(filtClust, cp, wVector, lVector, wViewed, lViewed);
+            
+                                     mgpHandles = this.makeMGPs(corner, predictedState, wViewed, lViewed);
+            
+              [gatedMgpHandles, gatedAssignedZ] = this.gateMGPs(assignedZ, mgpHandles);
         end
     end
     
     methods (Access = public)
-        function corner = getCarCorner(~,clusterZ, uOp, predictedState) % clusterZ needs Z-axis as well
-            % Car corner definition
-            % 
-            % ii                   iii
-            %  *--------------------*
-            %  |                    |
-            %  |    ----->          |
-            %  |                    |
-            %  *--------------------*
-            %  i                   iv
+        
+        function [filtClust, massVec1, massVec2, cp] = preFilter(~, clusterZ, lb, ub, gateCov)
             
-            % Define rectangle for car
-            p1 = [-0.5 -0.2];
-            p2 = [-0.5  0.2];
-            p3 = [ 0.5  0.2];
-            p4 = [ 0.5 -0.2];
-            rect = [p1; p2; p3; p4];
-            
-            
-            rot = @(phi) [cos(phi) -sin(phi);
-                          sin(phi)  cos(phi)];
-            
-            trans = @(deltaP) repmat(deltaP, 4,1);
-            
-            phi = predictedState(4); % Predicted heading
-            
-            deltaP = mean(clusterZ(:,1:2)); % Mean value of point cloud L-shape
-            
-            modRect = rect*rot(phi)' + trans(deltaP);
-            
-            % cC is the modified rectangle, cP is the cornerPoint
-            distCorner = @(cC, cP) [(sqrt((cC(1,1) - cP(1))^2 + (cC(1,2) - cP(2))^2));...
-                                    (sqrt((cC(2,1) - cP(1))^2 + (cC(2,2) - cP(2))^2));...
-                                    (sqrt((cC(3,1) - cP(1))^2 + (cC(3,2) - cP(2))^2));...
-                                    (sqrt((cC(4,1) - cP(1))^2 + (cC(4,2) - cP(2))^2))];
+            [~, ~, uOp, ~] = cornerPoint(clusterZ, lb, ub); % 0.2 0.5
             
             c1 = uOp(1); c2 = uOp(2);
             n1 = uOp(3); n2 = uOp(4);
@@ -147,20 +127,168 @@ classdef MGPgenerator4 < handle
             xc = (-n1*c1 + n2*c2);
             yc = (-n2*c1 -n1*c2);
             
-%             figure
-%             plot(clusterZ(:,1), clusterZ(:,2),'kx'); axis equal; hold on
-%             M = mean(clusterZ(:,1:2));
-%             plot(M(1), M(2), 'rs')
-%             plot(modRect(:,1), modRect(:,2),'b')            
-%             plot(xc, yc, 'gs')
+            % Formulate all 4 possible L-vectors, to find the ones that are along the data            
+            M = mean(clusterZ(:,1:2));
             
-            distCorner(modRect, [xc yc])
+            v1 = [1, -n1/n2]; v1 = v1./norm(v1,2);
+            v2 = [1,  n2/n1]; v2 = v2./norm(v2,2);
+            v3 = -1.*v1;
+            v4 = -1.*v2;
             
-            [~, corner] = min(distCorner(modRect, [xc yc]));
+            p1 = [xc yc] + v1;
+            p2 = [xc yc] + v2;
+            p3 = [xc yc] + v3;
+            p4 = [xc yc] + v4;
+            
+            d1 = (p1(1) - M(1))^2 + (p1(2) - M(2))^2;
+            d2 = (p2(1) - M(1))^2 + (p2(2) - M(2))^2;
+            d3 = (p3(1) - M(1))^2 + (p3(2) - M(2))^2;
+            d4 = (p4(1) - M(1))^2 + (p4(2) - M(2))^2;
+            
+            % The massVec* are vectors which are in the direction of the point cloud points, from [xc yc]
+            
+            if d1 < d3
+                massVec1 = v1;
+            else
+                massVec1 = v3;
+            end
+            
+            if d2 < d4
+                massVec2 = v2;
+            else
+                massVec2 = v4;
+            end
+            
+            %gateCov = 0.2^2;
+            filtClust = gateRectangular(clusterZ, [xc, yc], massVec1, massVec2, gateCov);            
+            
+            cp = [xc,yc];
+        end
+               
+        function [wVector, lVector] = getVectors(~, predictedState, massVec1, massVec2)
+            
+            vHeading = [cos(predictedState(4)), sin(predictedState(4))];
+            % Find which vector is along length & width
+            if abs(dot(massVec1, vHeading)) < abs(dot(massVec2,vHeading))
+                lVector =  massVec2;
+                wVector =  massVec1;
+            else
+                lVector =  massVec1;
+                wVector =  massVec2;
+            end
+        end
+        
+        function corner = getCorner2(~, predictedState, wVector, lVector)
+            compV = lVector + wVector;
+            
+            phi = predictedState(4);
+    
+            R = [cos(phi) -sin(phi); sin(phi) cos(phi)];
+            
+            % Negate heading            
+            compV = compV*R;
+            
+            angle = mod(atan2(compV(2), compV(1)),2*pi);            
+            
+            if (0 < angle) && (angle < pi/2) % Quadrant 1
+                corner = 1;
+            elseif (pi/2 < angle) &&  (angle < pi) % Quadrant 2
+                corner = 4;
+            elseif (pi < angle) && (angle < 3*pi/2) % Quadrant 3
+                corner = 3;
+            elseif (3*pi/2 < angle) && (angle < 2*pi) % Quadrant 4
+                corner = 2;
+            end
+        end
+        
+        function [wViewed, lViewed] = getViewLen(~, filtClust, cp, wVector, lVector)
+            % Returns the length of the viewed length and width of the car 
+            
+            clusterZ = filtClust(:,1:2);
+
+            xc = cp(1);
+            yc = cp(2);
+                        
+            % Project point cloud points onto each line
+            top = dot(clusterZ, repmat(wVector, length(clusterZ),1),2);
+            widthPoints = [top top] .* repmat(wVector, length(clusterZ), 1);
+            
+            top = dot(clusterZ, repmat(lVector, length(clusterZ),1),2);
+            lengthPoints = [top top] .* repmat(lVector, length(clusterZ), 1);
+            
+            % Project Corners
+            widthCorner  = dot([xc, yc], wVector).*wVector;
+            lengthCorner = dot([xc, yc], lVector).*lVector;
+                        
+            % Calculate euclidian distances between corner and projected points for
+            % each projected line
+                        
+            widthSquaredDist = (repmat(widthCorner(:,1), length(clusterZ), 1) - widthPoints(:,1)).^2 + (repmat(widthCorner(:,2), length(clusterZ), 1) - widthPoints(:,2)).^2;
+            
+            [~, widthIndexMax] = max(widthSquaredDist);
+            
+            lengthSquaredDist = (repmat(lengthCorner(:,1), length(clusterZ), 1) - lengthPoints(:,1)).^2 + (repmat(lengthCorner(:,2), length(clusterZ), 1) - lengthPoints(:,2)).^2;
+            
+            [~, lengthIndexMax] = max(lengthSquaredDist);                      
+            
+            wViewed = norm(widthCorner - widthPoints(widthIndexMax,:),2);
+            
+            lViewed = norm(lengthCorner - lengthPoints(lengthIndexMax,:),2);
+            
+        end
+                        
+        function assignedZ = selectMeas(this, filtClust, cp, wVector, lVector, wViewed, lViewed)
+                                   
+            % N = 1; % Test assumption
+            N = this.mgpNum;
+            
+            xc = cp(1);
+            yc = cp(2);
+            
+            storageCP = [xc yc];
+            
+            storageW = [];
+            storageL = [];
+                        
+            if wViewed > 0.5
+                storageW = zeros(N+1,2); % Storage for the practical Width MGPs
+                
+                for j = 1:N+1
+                    storageW(j,:) = [xc, yc] + wViewed/(N+1)*j*wVector;
+                end
+            end
+            
+            if lViewed > 0.5
+                storageL = zeros(N+1,2); % Storage for the practical Length MGPs                
+                
+                for j = 1:N+1
+                    storageL(j,:) = [xc, yc] + lViewed/(N+1)*j*lVector;
+                end
+            end
+            
+            allStorage = [storageL;
+                          storageCP;
+                          storageW];
+            
+            % This is where 3sigma gating should occur 
+            [idx, dist] = knnsearch(filtClust(:,1:2), allStorage);
+            
+            Nokeep = dist > 3*sqrt(this.covMGPgate);            
+            idxNoKeep = Nokeep.*idx;
+            idxNoKeep = idxNoKeep(idxNoKeep > 0);            
+            
+            % Measurements outside of 3sigma should not be used. Set to NaN
+            % so that they can later on be removed together with their
+            % associated MGPs.
+            filtClust(idxNoKeep, 1:2) = NaN; 
+            
+            chosenMeasurements = filtClust(idx,1:2);
+            
+            assignedZ = chosenMeasurements;
             
         end
         
-        function [mgpHandles] = constructMGPs(this, corner, predictedState, wViewed, lViewed)
+        function [mgpHandles] = makeMGPs(this, corner, predictedState, wViewed, lViewed)
             nrStore = 1+this.mgpNum;
             
             mgpCornerH = cell(1,1);
@@ -216,118 +344,7 @@ classdef MGPgenerator4 < handle
                         
         end
         
-        function assignedZ = assignMgpsGating(this, clusterZ, predictedState, wViewed, lViewed)
-            
-            [~, ~, uOp] = cornerPoint(clusterZ);
-            
-            c1 = uOp(1); c2 = uOp(2);
-            n1 = uOp(3); n2 = uOp(4);
-            
-            xc = (-n1*c1 + n2*c2);
-            yc = (-n2*c1 -n1*c2);            
-            
-            M = mean(clusterZ(:,1:2));
-            
-            % Formulate all 4 possible L-vectors, to find the ones that are along the data
-            
-            v1 = [1, -n1/n2]; v1 = v1./norm(v1,2);
-            v2 = [1,  n2/n1]; v2 = v2./norm(v2,2);
-            v3 = -1.*v1;
-            v4 = -1.*v2;
-            
-            p1 = [xc yc] + v1;
-            p2 = [xc yc] + v2;
-            p3 = [xc yc] + v3;
-            p4 = [xc yc] + v4;
-            
-            d1 = (p1(1) - M(1))^2 + (p1(2) - M(2))^2;
-            d2 = (p2(1) - M(1))^2 + (p2(2) - M(2))^2;
-            d3 = (p3(1) - M(1))^2 + (p3(2) - M(2))^2;
-            d4 = (p4(1) - M(1))^2 + (p4(2) - M(2))^2;
-            
-            % The massVec* are vectors which are in the direction of the point cloud points, from [xc yc]
-            
-            if d1 < d3
-                massVec1 = v1;
-            else
-                massVec1 = v3;
-            end
-            
-            if d2 < d4
-                massVec2 = v2;
-            else
-                massVec2 = v4;
-            end
-            
-            
-            % Define the heading vector
-            vHeading = [cos(predictedState(4)), sin(predictedState(4))];
-            
-            % Find the vectors aligned with length & width of L-shape
-            % Orthogonal vectors have dot product ~ 0, i.e. min dot product must be the
-            % width vector, since it is orthogonal to the heading vector.
-            if abs(dot(massVec1, vHeading)) < abs(dot(massVec2,vHeading))
-                vLength =  massVec2;
-                vWidth  =  massVec1;
-            else
-                vLength =  massVec1;
-                vWidth  =  massVec2;
-            end
-            
-            % N = 1; % Test assumption
-            N = this.mgpNum;
-            % Get the viewed lengths of each side
-            
-            % [wViewed, lViewed] = this.getViewedLengths(clusterZ, predictedState);
-            
-            %wViewed = 1.6016;
-            %lViewed = 4.2166;
-            
-            storageCP = [xc, yc];
-            
-            storageW = [];
-            storageL = [];
-            
-            
-            if wViewed > 0.5
-                storageW = zeros(N+1,2); % Storage for the practical Width MGPs
-                
-                for j = 1:N+1
-                    storageW(j,:) = [xc, yc] + wViewed/(N+1)*j*vWidth;
-                end
-            end
-            
-            if lViewed > 0.5
-                storageL = zeros(N+1,2); % Storage for the practical Length MGPs                
-                
-                for j = 1:N+1
-                    storageL(j,:) = [xc, yc] + lViewed/(N+1)*j*vLength;
-                end
-            end
-            
-            allStorage = [storageL;
-                storageCP;
-                storageW];
-            
-            %% This is where 3sigma gating should occur 
-            [idx, dist] = knnsearch(clusterZ(:,1:2), allStorage);
-            
-            Nokeep = dist > 3*sqrt(this.covR);            
-            idxNoKeep = Nokeep.*idx;
-            idxNoKeep = idxNoKeep(idxNoKeep > 0);            
-            
-            % Measurements outside of 3sigma should not be used. Set to NaN
-            % so that they can later on be removed together with their
-            % associated MGPs.
-            clusterZ(idxNoKeep, 1:2) = NaN; 
-            
-            chosenMeasurements = clusterZ(idx,1:2);
-            
-            assignedZ = chosenMeasurements;
-            
-        end
-        
-        function [gatedMgpHandles, gatedAssignedZ] = checkGates(~, assignedZ, mgpHandles)
+        function [gatedMgpHandles, gatedAssignedZ] = gateMGPs(~, assignedZ, mgpHandles)
             % Checks if any of the assignedZs have 'NaN' values, indicating
             % that the corresponding MGP doesn't have a measurement within
             % 3sigma range. 
@@ -338,127 +355,7 @@ classdef MGPgenerator4 < handle
             gatedMgpHandles = mgpHandles(notNanIndex, :);            
             
         end
-        
-        function [wViewed, lViewed] = getViewedLengths(~, clusterZ, uOp, predictedState)
-            % Returns the length of the viewed length and width of the car 
-            
-%             [~, ~, uOp] = cornerPoint(clusterZ);                        
-            clusterZ = clusterZ(:,1:2);
-            c1 = uOp(1); c2 = uOp(2);
-            n1 = uOp(3); n2 = uOp(4);
-            
-            xc = (-n1*c1 + n2*c2);
-            yc = (-n2*c1 -n1*c2);
-            
-            %figure
-            %plot(clusterZ(:,1), clusterZ(:,2),'kx'); axis equal; hold on
-            %plot(xc, yc, 'gs')
-            
-            % Define the two vectors spanning the L-shape, normalize them
-            v1 = [1, -n1/n2]; v1 = v1./norm(v1,2);
-            v2 = [1,  n2/n1]; v2 = v2./norm(v2,2);
-            
-            % Define the heading vector
-            vHeading = [cos(predictedState(4)), sin(predictedState(4))];
-            
-            % Find the vectors aligned with length & width of L-shape
-            % Orthogonal vectors have dot product ~ 0, i.e. min dot product must be the
-            % width vector, since it is orthogonal to the heading vector.
-            if abs(dot(v1, vHeading)) < abs(dot(v2,vHeading))
-                vLength =  v2;
-                vWidth  =  v1;
-            else
-                vLength =  v1;
-                vWidth  =  v2;
-            end
-            
-            %plot([xc xc+vWidth(1)], [yc yc+vWidth(2)], '-r');
-            %plot([xc xc+vLength(1)], [yc yc+vLength(2)], '-m');
-            
-            % Project point cloud points onto each line
-            top = dot(clusterZ, repmat(vWidth, length(clusterZ),1),2);
-            widthPoints = [top top] .* repmat(vWidth, length(clusterZ), 1);
-            
-            top = dot(clusterZ, repmat(vLength, length(clusterZ),1),2);
-            lengthPoints = [top top] .* repmat(vLength, length(clusterZ), 1);
-            
-            %plot(widthPoints(:,1), widthPoints(:,2), 'x')
-            %plot(lengthPoints(:,1), lengthPoints(:,2), '*')
-            
-            % Project Corners
-            widthCorner  = dot([xc, yc], vWidth).*vWidth;
-            lengthCorner = dot([xc, yc], vLength).*vLength;
-            
-            %plot(widthCorner(1), widthCorner(2), 'gx')
-            %plot(lengthCorner(1), lengthCorner(2), 'gx')
-            
-            % Calculate euclidian distances between corner and projected points for
-            % each projected line
                         
-            widthSquaredDist = (repmat(widthCorner(:,1), length(clusterZ), 1) - widthPoints(:,1)).^2 + (repmat(widthCorner(:,2), length(clusterZ), 1) - widthPoints(:,2)).^2;
-            
-            [~, widthIndexMax] = max(widthSquaredDist);
-            
-            lengthSquaredDist = (repmat(lengthCorner(:,1), length(clusterZ), 1) - lengthPoints(:,1)).^2 + (repmat(lengthCorner(:,2), length(clusterZ), 1) - lengthPoints(:,2)).^2;
-            
-            [~, lengthIndexMax] = max(lengthSquaredDist);          
-
-            %plot(clusterZ(widthIndexMax,1), clusterZ(widthIndexMax,2), 'c*')
-            %plot(clusterZ(lengthIndexMax,1), clusterZ(lengthIndexMax,2), 'cx')
-            
-            
-            wViewed = norm(widthCorner - widthPoints(widthIndexMax,:),2);
-            
-            lViewed = norm(lengthCorner - lengthPoints(lengthIndexMax,:),2);
-            
-        end
-
-        function [filtClust, uOp] = preFilter(~, clusterZ, lb, ub, gateCov)        
-            
-            [~, ~, uOp, ~] = cornerPoint(clusterZ, lb, ub); % 0.2 0.5
-            
-            c1 = uOp(1); c2 = uOp(2);
-            n1 = uOp(3); n2 = uOp(4);
-            
-            xc = (-n1*c1 + n2*c2);
-            yc = (-n2*c1 -n1*c2);
-            
-            % Formulate all 4 possible L-vectors, to find the ones that are along the data            
-            M = mean(clusterZ(:,1:2));
-            
-            v1 = [1, -n1/n2]; v1 = v1./norm(v1,2);
-            v2 = [1,  n2/n1]; v2 = v2./norm(v2,2);
-            v3 = -1.*v1;
-            v4 = -1.*v2;
-            
-            p1 = [xc yc] + v1;
-            p2 = [xc yc] + v2;
-            p3 = [xc yc] + v3;
-            p4 = [xc yc] + v4;
-            
-            d1 = (p1(1) - M(1))^2 + (p1(2) - M(2))^2;
-            d2 = (p2(1) - M(1))^2 + (p2(2) - M(2))^2;
-            d3 = (p3(1) - M(1))^2 + (p3(2) - M(2))^2;
-            d4 = (p4(1) - M(1))^2 + (p4(2) - M(2))^2;
-            
-            % The massVec* are vectors which are in the direction of the point cloud points, from [xc yc]
-            
-            if d1 < d3
-                massVec1 = v1;
-            else
-                massVec1 = v3;
-            end
-            
-            if d2 < d4
-                massVec2 = v2;
-            else
-                massVec2 = v4;
-            end
-            
-            %gateCov = 0.2^2;
-            filtClust = gateRectangular(clusterZ, [xc, yc], massVec1, massVec2, gateCov);            
-        
-        end
         %% ====== INTERNAL (hidden) FUNCTIONS ======                
         function [funHandle] = getGeneralHandle(this, corner, side)
             if strcmp(side, 'w')

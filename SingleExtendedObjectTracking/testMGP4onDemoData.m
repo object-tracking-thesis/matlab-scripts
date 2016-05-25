@@ -79,8 +79,9 @@ P0 = P;
 stateStorage = cell(1,31);
 
 %% Initialize UKF and use it to predict
-fig = figure;
-for k = 1:30%:nrIter
+fig = figure; fig.Position = [100 100 1000 900];
+nrIter = 31;
+for k = 1:nrIter
     if k == 1
         nObsSt = 2;
         nSt = 7;
@@ -98,8 +99,8 @@ for k = 1:30%:nrIter
     % Initialize mgpGen3 and use it to create MGPs
     if k == 1
         N = 1;
-        Rg = 0.1^2;
-        mgpGen4 = MGPgenerator4(N,Rg);
+        covMGPgate = 0.1^2;
+        mgpGen4 = MGPgenerator4(N, covMGPgate);
     end     
     
     lb = 0.2;
@@ -108,48 +109,85 @@ for k = 1:30%:nrIter
     
     clusterZ = car2adj{k};
     
-             [filtClust, uOp] = mgpGen4.preFilter(clusterZ, lb, ub, gateCov);
-                       corner = mgpGen4.getCarCorner(clusterZ, uOp, predictedState)  % This one needs a lot of changing 
-           [wViewed, lViewed] = mgpGen4.getViewedLengths(filtClust, uOp, predictedState);
-                    corner = 3
-                    assignedZ = mgpGen4.assignMgpsGating(filtClust, predictedState, wViewed, lViewed);
-                 [mgpHandles] = mgpGen4.constructMGPs(corner, predictedState, wViewed, lViewed);
+    lb = 0.2;
+    ub = 0.5;
+    gateCov = 0.2^2;
 
-    [gMgpHandles, gAssignedZ] = mgpGen4.checkGates(assignedZ, mgpHandles);
+    [filtClust, massVec1, massVec2, cp] = mgpGen4.preFilter(clusterZ, lb, ub, gateCov);
 
+                     [wVector, lVector] = mgpGen4.getVectors(predictedState, massVec1, massVec2);
 
-     
-      c1 = uOp(1); c2 = uOp(2);
-      n1 = uOp(3); n2 = uOp(4);
-     
-      xc = (-n1*c1 + n2*c2);
-      yc = (-n2*c1 -n1*c2);
+                                 corner = mgpGen4.getCorner2(predictedState, wVector, lVector);
+
+                     [wViewed, lViewed] = mgpGen4.getViewLen(filtClust, cp, wVector, lVector);
+
+                              assignedZ = mgpGen4.selectMeas(filtClust, cp, wVector, lVector, wViewed, lViewed);
+
+                             mgpHandles = mgpGen4.makeMGPs(corner, predictedState, wViewed, lViewed);
+
+      [gatedMgpHandles, gatedAssignedZ] = mgpGen4.gateMGPs(assignedZ, mgpHandles);
+
+      xc = cp(1);
+      yc = cp(2);
     
     % Update UKF
      ukf.upSt(6)
      ukf.upSt(7)
-     assignedZo = reshape(gAssignedZ', 2*length(gAssignedZ),1);          
+     assignedZo = reshape(gatedAssignedZ', 2*length(gatedAssignedZ),1);          
      
-     ukf.updateMoments(gMgpHandles, assignedZo);
-     
+     ukf.updateMoments(gatedMgpHandles, assignedZo);
      % Let's see how well we did
      figure(fig);
-     hold off     
-        plot(clusterZ(:,1), clusterZ(:,2), 'kx')   
-     hold on; axis equal
+         subplot(1,2,1)
+         hold off     
+            plot(clusterZ(:,1), clusterZ(:,2), 'x','Color',0.6*[1 1 1])   
+         hold on; axis equal; grid on
 
-        p1 = plot(gAssignedZ(:,1), gAssignedZ(:,2),'rx'); 
+            %drawMyRide(predictedState, 'k',':')
 
-        p2 = plot(ukf.yPred(1,:), ukf.yPred(2,:),'ms');        
+            drawMyRide(ukf.upSt, 'b')
+            
+            title(sprintf('Timestep k = %i /%i', [k nrIter]), 'FontSize', 20)
+
+            text(double(xc-2), double(yc),sprintf('Corner: %i', corner))
+
+            text(double(xc-2), double(yc-0.50),sprintf('Width: %.2f', ukf.upSt(6)))
+            text(double(xc-2), double(yc-1.00),sprintf('Length: %.2f', ukf.upSt(7)))
+        xlabel('X', 'FontSize', 14);
+        ylabel('Y', 'FontSize', 14);
+        axis([15 22 -18 -2])
         
-        plot(xc, yc, 'gs', 'MarkerFaceColor','g')
-
-     drawMyRide(predictedState, 'c')
+        subplot(1,2,2)
+        hold off     
+        plot(clusterZ(:,1), clusterZ(:,2), 'x','Color',0.6*[1 1 1])   
+        hold on; axis equal; grid on
+        
+        drawMyRide(predictedState, 'k',':')
      
-     drawMyRide(ukf.upSt)
-%     
-%     stateStorage{k} = ukf.upSt;
-     waitforkey
+        drawMyRide(ukf.upSt, 'b')
+        
+        plot(xc, yc, 'gs', 'MarkerFaceColor','g','MarkerFaceColor','g')
+
+        p1 = plot(gatedAssignedZ(:,1), gatedAssignedZ(:,2),'rx'); 
+
+        p2 = plot(ukf.yPred(1,:), ukf.yPred(2,:),'mo');%, 'MarkerFaceColor','m');        
+        
+        for j = 1:size(gatedAssignedZ, 1)
+           plot([gatedAssignedZ(j,1) ukf.yPred(1,j)], [gatedAssignedZ(j,2) ukf.yPred(2,j)], ':r') 
+        end
+        
+        
+        title(sprintf('Timestep k = %i /%i', [k nrIter]), 'FontSize', 20)
+        
+        xlabel('X', 'FontSize', 14);
+        ylabel('Y', 'FontSize', 14);
+        %axis([15 22 -18 -2])
+        axis equal
+
+
+        stateStorage{k} = ukf.upSt;
+     
+        pause(0.5)
 
 end
 
