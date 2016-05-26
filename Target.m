@@ -136,7 +136,6 @@ classdef Target < handle
             this.upV = V;
         end        
         
-        % Make a copy of a handle object.
         function new = copy(this)
             % Instantiate new object of the same class.
             new = feval(class(this));
@@ -145,11 +144,15 @@ classdef Target < handle
             for i = 1:length(p)
                 new.(p{i}) = this.(p{i});
             end
+            
+            for i = 1:length(p)
+               if strcmp(p{i},'activeTarget')
+                   new.(p{i}) = this.(p{i}).copy();
+               end                
+            end
+            
         end
         
-        function [] = deepCopy(this)
-            this.activeTarget = this.activeTarget.copy();
-        end
         
     end
 end
