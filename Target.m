@@ -103,6 +103,14 @@ classdef Target < handle
             this.activeTarget.predict();
         end
         
+        function hasGating = hasGating(this, clusterZ)
+            hasGating = this.activeTarget.gating(clusterZ);
+        end
+        
+        function [] = updateWeightGating(this)
+            this.weight = this.weight * this.activeTarget.pd;
+        end
+        
         function [mantissa, exponent] = calcLikelihood(this, clusterZ)           
             % Storage of S and yPred is delegated the internals of
             % activeTarget            
@@ -126,19 +134,7 @@ classdef Target < handle
             this.upCov = P;
             this.upv = v;
             this.upV = V;
-        end
-        
-        function w = getWeight(this)
-            w = this.weight;
-        end
-        
-        function [] = setWeight(this, w)
-            this.weight = w;
-        end
-        
-        function i = getIndex(this)
-            i = this.index;
-        end
+        end        
         
         % Make a copy of a handle object.
         function new = copy(this)

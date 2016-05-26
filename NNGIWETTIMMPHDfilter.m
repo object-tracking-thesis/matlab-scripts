@@ -2,21 +2,9 @@ classdef NNGIWETTIMMPHDfilter < handle
     properties
         targets = [];
         birth_targets = [];
-        F
-        Q
-        H
-        R
-        T
-        ps = 0.98;
-        pd = 0.98;
-        p_gamma = 250;
-        p_beta = 1;
-        theta = 1;
-        tau = 5;
-        sigma = 2;
         d = 2;
         min_survival_weight = 0.0001;
-        min_merge_dist = 0.0005;
+        min_merge_dist = 0.05;
         max_comps = 50;
         number_of_targets = 0;
         index = 1;
@@ -57,7 +45,27 @@ classdef NNGIWETTIMMPHDfilter < handle
         %contains the NN predictions for each of the measurements with 1
         %being clutter, 2 car, 3 cycle, 4 pedestrian, 5 pedestrian groups
         function update(this, meas)            
-            %preallocation for all updated targets
+            %set pd dynamically depending on whether a measurement was
+            %received inside the gate of that target and update the weight
+            targets_no_gating = [];
+            for i = 1:length(this.targets)
+                gating = 0;
+                for j = 1:length(meas)
+                    gating = this.targets(i).hasGating(meas(j));
+                    if gating
+                        break;
+                    end
+                end
+                %when there was no measurement within the gate              
+                if ~gating
+                    this.targets(i).updateWeightGating;
+                    target = this.targets(i).copy;
+                    target = target.deepCopy;
+                    targets_no_gating = [targets_no_gating target];                    
+                end
+            end
+            
+            %preallocation for all targets to be updated
             n_meas = length(meas);
             n_pred = length(this.targets);
             
@@ -102,6 +110,8 @@ classdef NNGIWETTIMMPHDfilter < handle
             for i = 1:length(this.targets)
                 this.targets(i).update();
             end            
+            
+            this.targets = [this.targets  targets_no_gating];
             
             this.merge;
             %keep only the max_comps best components
@@ -194,7 +204,7 @@ classdef NNGIWETTIMMPHDfilter < handle
                     v_sum = v_sum./weightsum;
                     V_sum = V_sum./weightsum;
                     this.targets(i).setState(mu_sum, P_sum, v_sum, V_sum);
-                    this.targets(i).setWeight(weightsum);                  
+                    this.targets(i).weight = weightsum;                  
                     this.targets(ind) = [];                 
                 end                                
                 i = i+1;
