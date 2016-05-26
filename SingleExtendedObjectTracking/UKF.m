@@ -34,7 +34,9 @@ classdef UKF < handle
    
     methods
         
-        function this = UKF(Q,R, nObsSt, nSt, st0, cov0)         
+        function this = UKF
+        end
+        function init(this, Q,R, nObsSt, nSt, st0, cov0)
             % Constructor, 
             % Entire class assumes that W0 = 1 - n/3, i.e. Wi = 1/6;            
             this.Q = Q;
@@ -160,6 +162,17 @@ classdef UKF < handle
         function [] = setNrMGPS(this, N)
             this.nMGPS = N;
         end
+        
+        function new = copy(this)
+            % Instantiate new object of the same class.
+            new = feval(class(this));
+            % Copy all non-hidden properties.
+            p = properties(this);
+            for i = 1:length(p)
+                new.(p{i}) = this.(p{i});
+            end                                    
+        end
+        
     end
     
 end

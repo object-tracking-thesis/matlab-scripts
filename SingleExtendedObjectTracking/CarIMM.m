@@ -32,7 +32,9 @@ classdef CarIMM < handle
         
     end    
     methods        
-        function this = CarIMM(nObsSt, nSt, st0, cov0, f1, f2, Q1, Q2, rCov, TPM)
+        function this = CarIMM
+        end
+        function init(this, nObsSt, nSt, st0, cov0, f1, f2, Q1, Q2, rCov, TPM)
             % Initializes the IMM filter as well as the underlying UKF's
             % that it will use.
             
@@ -159,7 +161,24 @@ classdef CarIMM < handle
             this.upCov = this.mixWeights(1)*(upCov1 + (upSt1 - this.upSt)*(upSt1 - this.upSt)')...
                         +this.mixWeights(2)*(upCov2 + (upSt2 - this.upSt)*(upSt2 - this.upSt)'); 
             
-        end                
+        end
+        
+        function new = copy(this)
+            % Instantiate new object of the same class.
+            new = feval(class(this));
+            % Copy all non-hidden properties.
+            p = properties(this);
+            for i = 1:length(p)
+                new.(p{i}) = this.(p{i});
+            end
+            
+            for i = 1:length(p)
+               if strcmp(p{i},'ukf1') || strcmp(p{i},'ukf2')
+                   new.(p{i}) = this.(p{i}).copy();
+               end                
+            end
+            
+        end
         
     end
     
