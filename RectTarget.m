@@ -156,6 +156,7 @@ classdef RectTarget < handle
             
             if bool1 || bool2
                 bool = 1;
+                this.Pd = 1;
             else
                 bool = 0;
             end
