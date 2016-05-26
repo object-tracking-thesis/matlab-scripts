@@ -13,24 +13,27 @@
 %             [] = update()
 %  [upSt, upCov] = getState()
 %
-% Dependencies:
+% Dependencies (Classes):
 %  - RectTarget.m
 %    - CarIMM.m
 %      - UKF.m
-%    - MGPgenerator3.m
-%      - cornerPoint.m
-%        - ISED.m
+%    - MGPgenerator4.m
 %
 
 classdef RectTarget < handle
     properties
         imm
-        mgpGen3        
+        mgpGen4
+        Pd
     end
     
     methods
         %% Constructor
-        function this = RectTarget(x0, ~)
+        function this = RectTarget
+        end
+        
+        function init(this, x0, ~)
+            this.Pd = 0.01;
             % THESE NEED MORE TUNING! ALL OF THEM
             % Setup motion model parameters for imm
             
@@ -55,7 +58,7 @@ classdef RectTarget < handle
             
             % model 1 (turning)
                velCov1 = 0.5^2;  % velocity covariance
-            phiDotCov1 = 0.65^2; % turningrate covariance             
+            phiDotCov1 = 0.1^2; % turningrate covariance             
                  wCov1 = 0.03^2; % width covariance
                  lCov1 = 0.05^2; % length covariance           
                  subQ1 = diag([velCov1, phiDotCov1, wCov1, lCov1]);
@@ -79,7 +82,7 @@ classdef RectTarget < handle
             % MOTION COVARIANCE MATRIX
             Q2 = T*gamma2*subQ2*gamma2';
             
-            rCov= 0.1^2; % measurement covaraince (0.1 m)            
+            rCov= 0.2^2; % measurement covaraince (0.1 m)            
             % initial covariance
             cov0 = [ 2.7646    0.0178    0.9622    0.0046   -0.0073   -0.0065    0.0155;
                      0.0178    2.4382   -0.0282    0.0169    0.0110   -0.0117    0.0013;
@@ -97,29 +100,36 @@ classdef RectTarget < handle
             nSt = 7;    % number of states in statevector
             st0 = x0;   % inital state
                         
-            this.imm = CarIMM(nObsSt, nSt, st0, cov0, f1, f2, Q1, Q2, rCov, TPM);
+            this.imm = CarIMM;
+            this.imm.init(nObsSt, nSt, st0, cov0, f1, f2, Q1, Q2, rCov, TPM);
                                 
             N = 4; % number of additional MGPS per side (totMgps = 3+2N)
-            this.mgpGen3 = MGPgenerator3(N);
+            
+            covMGPgate = 0.1^2;
+            this.mgpGen4 = MGPgenerator4(N, covMGPgate);
             
         end
         %% API functions
         function [] = predict(this)
-              this.imm.mmPredict();            
+              this.imm.mmPredict();
+              this.Pd = 0.01;
+              
+              this.imm.mmUpSt = this.imm.mmPredSt;
+              this.imm.mmUpCov = this.imm.mmPredCov;
+  
         end
         
         function lik = calcLikelihood(this, clusterZ)
               predictedState1 = this.imm.mmPredSt(:,1);
-              predictedState2 = this.imm.mmPredSt(:,2);
-            
-              [mgpHandles1, assignedZ1] = this.mgpGen3.generate(clusterZ, predictedState1);
+              predictedState2 = this.imm.mmPredSt(:,2);            
               
-              [mgpHandles2, ~] = this.mgpGen3.generate(clusterZ, predictedState2);
-
-              assignedZo = reshape(assignedZ1', 2*length(assignedZ1),1);
+              [gatedMgpHandles1, gatedAssignedZ1] = this.mgpGen4.generate(clusterZ, predictedState1);
+              [gatedMgpHandles2, ~] = this.mgpGen4.generate(clusterZ, predictedState2);              
+              
+              assignedZo = reshape(gatedAssignedZ1', 2*length(gatedAssignedZ1),1);
 
               % TODO, rewrite imm to support calcLikelihood function
-              this.imm.mmUpdate({mgpHandles1, mgpHandles2}, assignedZo);
+              this.imm.mmUpdate({gatedMgpHandles1, gatedMgpHandles2}, assignedZo);
                 
               lik = this.imm.totLikelihood;                                          
         end
@@ -130,9 +140,50 @@ classdef RectTarget < handle
         end
         
         function [st, cov] = getState(this)
-             st = this.imm.upSt;
-            cov = this.imm.upCov;
+            [upSt, upCov] = this.imm.getState();
+             st = upSt;
+            cov = upCov;
+        end
+        
+        function bool = gating(this, cluster)
+            predictedState1 = this.imm.mmPredSt(:,1);
+            predictedState2 = this.imm.mmPredSt(:,2);
+            
+            p = 1.5;
+            
+            bool1 = carGating(cluster, predictedState1, p);
+            bool2 = carGating(cluster, predictedState2, p);
+            
+            if bool1 || bool2
+                bool = 1;
+                this.Pd = 1;
+            else
+                bool = 0;
+            end
+        end
+        
+        function new = copy(this)
+            % Instantiate new object of the same class.
+            new = feval(class(this));
+            % Copy all non-hidden properties.
+            p = properties(this);
+            for i = 1:length(p)
+                new.(p{i}) = this.(p{i});
+            end
+            
+            for i = 1:length(p)
+               if strcmp(p{i},'imm')
+                   new.(p{i}) = this.(p{i}).copy();
+               end                
+            end
+            
         end
         
     end
 end
+
+
+
+
+
+
