@@ -1,7 +1,9 @@
 %% run an initial prediction with the current NN to help with tagging?
 %obs: you need to train the network first to obtain the Theta values
-isCarMat = ones(Num,20);
-for i=1:150
+%obs: ALWAYS SAVE YOUR CURRENT isCarMat FIRST
+isCarMat = ones(Num,50);
+for i=1:Num
+    offset{i} = [0 0 0]';
     for j = 1:length(clusters{i})
         pointNumber = size(clusters{i}{j},1);
         maxX = max(clusters{i}{j}(:,1));
@@ -34,22 +36,43 @@ figure('WindowKeyPressFcn', @keyPress)
 %hButton1 = uicontrol( 'Units', 'normalized', 'Position', [0.1 0.1 0.1 0.1], 'Style', 'pushbutton', 'Tag', 'button1', 'String', 'Clutter', 'callback', fClutter);
 %hButton2 = uicontrol( 'Units', 'normalized', 'Position', [0.3 0.1 0.1 0.1], 'Style', 'pushbutton', 'Tag', 'button2', 'String', 'Car', 'callback', fCar);
 %isCarMat = ones(Num,50);
-i = 1;
+i = 156;
 while i <= Num
+    cluster = [];
+    color = [];
+    for j = 1:length(clusters{i})
+        pointscolor=uint8(zeros(size(clusters{i}{j},1),3));
+        pointscolor(:,1)=ceil(rand(1)*50);
+        pointscolor(:,2)=ceil(rand(1)*50);
+        pointscolor(:,3)=ceil(rand(1)*50);
+        color = [color; pointscolor];
+        cluster = [cluster; clusters{i}{j}];
+    end
+    frameCluster = pointCloud(cluster);
+    frameCluster.Color = color;
     j = 1;
     while j <= length(clusters{i})
         cluster = pointCloud(clusters{i}{j});
+        pcshow(frameCluster)
+        hold on
         pcshow(cluster)
         str = sprintf('Frame: %d; Cluster: %d', [i j]);
         title(str);
+        testtxt = strcat('\leftarrow i: ', num2str(j));
+        mu = max(clusters{i}{j});
+        text(double(mu(1)), double(mu(2)), testtxt)
         %axis([150 250 50 130 60 80])
         %axis([20 200 -80 0 60 80])
         %axis([-50 50 -50 50 -5 10])
         %axis([-30 80 -30 50 -5 10])
-        axis([-10 50 -50 20 -1 2])
-        zoom(1.5)
+        axis([-10 50 -50 20 -2 3])
+        az = -60;
+        el = 60;
+        view(az, el);
+        zoom(1.8)
         waitforbuttonpress;
         j = j+1;
+        hold off
     end
     i = i+1;
 end
@@ -57,7 +80,7 @@ end
 %% plot frame by frame with clusternumbers assigned
 %isCarMat = ones(Num,50);
 figure;
-i = 1;
+i = 115;
 while i <= Num
     for j = 1:length(clusters{i})
         cluster = pointCloud(clusters{i}{j});
@@ -84,7 +107,7 @@ end
 %% convert a vector of frameXclusterNumber to a class matrix
 %1 for walls/clutter/noise
 %isCarMat = ones(length(isCarCluster),20);
-n = 50;
+n = 114;
 for i=1:n
     for j = 1:length(cars(i,:))
         if ~(cars(i,j) == 0)
@@ -111,7 +134,7 @@ end
 %% prepare ground truth cluster data for training the network
 clusterObjects = [];
 offset = cell(1,Num);
-for i=1:50
+for i=1:Num
     offset{i} = [0 0 0]';
     for j = 1:length(clusters{i})
         pointNumber = size(clusters{i}{j},1);
@@ -140,7 +163,7 @@ end
 
 %% assign different colors to all clusters found in each frame
 clusteredPC = cell(1,Num);
-for i=1:50
+for i=1:Num
     cluster = [];
     color = [];
     for j = 1:length(clusters{i})
@@ -176,7 +199,7 @@ end
 
 %% plot the clusters in their respective colors
 figure
-for i=1:50
+for i=1:Num
     i
     pcshow(clusteredPC{i})
     %axis([20 200 -80 0 60 80])
