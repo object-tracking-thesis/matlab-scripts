@@ -11,6 +11,6 @@ function giw_meas_comp = giwMeasComp(points, type)
     points = points';
     center = mean(points,2);
     points_sub_center = points - repmat(center,1,n);
-    s_matrix = points_sub_center*points_sub_center';
+    s_matrix = points_sub_center*points_sub_center';    
     giw_meas_comp = struct('points',points,'center',center,'scatter',s_matrix,'n',n,'type',type);
 end
