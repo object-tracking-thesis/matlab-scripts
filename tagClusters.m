@@ -24,7 +24,7 @@ for i=1:Num
         
         %save the prediction
         %predict(Theta1, Theta2, cluster)
-        cluster = (cluster-mu)./sigma;
+        cluster = (cluster-mu_nn)./sigma_nn;
         isCarMat(i,j) = predict(Theta1, Theta2, cluster);
     end
 end
@@ -205,12 +205,12 @@ for i=1:Num
     %axis([20 200 -80 0 60 80])
     axis([-10 50 -50 20 -2 3])
     zoom(2)
-    pause(0.1)
+    pause(0.5)
 end
 
 %% cluster cars once again with a lower cutoff for Marko's corner algo
 carClusters = cell(1,50);
-for i=1:50
+for i=1:Num
     carIndices = find(isCarMat(i,:) == 2);
     carClusters{i} = cell(1,length(carIndices));
     for j = 1:length(carIndices)        

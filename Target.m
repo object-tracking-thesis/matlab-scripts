@@ -46,12 +46,11 @@ classdef Target < handle
             %all targets in birth RFS are set as elliptical targets
             this.targetType = 'e';
             this.index = index;
-            this.upSt = x0;
-            this.upCov = P0;
             this.weight = weight;
             % TODO
             this.activeTarget = EllipTarget;            
             this.activeTarget.init(x0, P0);
+            [this.upSt, this.upCov, this.upv, this.upV] = this.activeTarget.getState();
         end
         
         %% API
@@ -101,6 +100,10 @@ classdef Target < handle
         
         function [] = predict(this)
             this.activeTarget.predict();
+            
+            %necessary for all targets that are not detected and skip the
+            %update
+            [this.upSt, this.upCov, this.upv, this.upV] = this.activeTarget.getState();
         end
         
         function hasGating = hasGating(this, clusterZ)

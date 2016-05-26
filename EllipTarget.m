@@ -41,7 +41,7 @@ classdef EllipTarget < handle
         V
         %elliptic target GIW-PHD parameters
         ps = 0.98;
-        pd = 0.98;
+        pd = 0.01; %will get altered by gating function
         p_gamma = 250;
         p_beta = 1;
         %update components
@@ -82,11 +82,20 @@ classdef EllipTarget < handle
         end
         %% API functions
         function [] = predict(this)
+            this.pd = 0.01;
             this.x = kron(this.F,eye(this.d))*this.x;
             this.P = this.F*this.P*this.F' + this.Q;
             temp_v = this.v;
             this.v = exp(-this.T/this.tau)*this.v;
-            this.V = ((this.v-this.d-1)/(temp_v-this.d-1)) .* this.V;                   
+            this.V = ((this.v-this.d-1)/(temp_v-this.d-1)) .* this.V;            
+        end
+        
+        function hasGating = gating(this, clusterZ)
+            %TODO calculate whether the measurement is inside the gate
+            hasGating = ellipGating(this.x, this.V, clusterZ.center, .9973);
+            if hasGating
+                this.pd = 1;
+            end
         end
         
         function [mantissa, base10_exponent] = calcLikelihood(this, clusterZ)            
@@ -125,12 +134,8 @@ classdef EllipTarget < handle
         function [] = update(this)
             K = this.Khat*inv(this.S);
             this.x = this.x + kron(K,eye(this.d))*this.epsilon;
-            this.P
             this.P = this.P - (K*this.S*K');
-            this.P
-            K
-            this.S
-        end
+        end                
         
         function [st, cov, dof, scale] = getState(this)
             st = this.x;

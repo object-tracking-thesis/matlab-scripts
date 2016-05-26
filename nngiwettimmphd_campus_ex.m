@@ -1,9 +1,9 @@
 %% load data
 load data/kitti_campus_01_186_clusters.mat
-load data/isCarMat_kitti_campus_01_50.mat
+load data/isCarMat_kitti_campus_01_186.mat
 n = length(clusters);
 start_seq = 1;
-end_seq = 50;
+end_seq = 186;
 
 %% plot the clusters
 % figure
@@ -23,20 +23,28 @@ clusters_xy = cell(1,n);
 for i=start_seq:end_seq    
     clusters_xy{i} = [];
     for j=1:length(clusters{i})
-        if isCarMat(i,j) == 2 || isCarMat(i,j) == 3 || isCarMat(i,j) == 4 || isCarMat(i,j) == 5
+        if isCarMat(i,j) == 3 || isCarMat(i,j) == 4 || isCarMat(i,j) == 5
             clusters_xy{i} = [clusters_xy{i} giwMeasComp(clusters{i}{j}(:,1:2),2)];
         end
     end
 end
 
 %% birth components
-means = cell(1,6);
-means{1} = [0 0 0 -20 0 0]';
-means{2} = [5 0 0 10 0 0]';
-means{3} = [13 0 0 0 0 0]';
-means{4} = [20 0 0 10 0 0]';
-means{5} = [18 0 0 0 0 0]';
-means{6} = [20 0 0 -15 0 0]';
+means = cell(1,1);
+means{1} = [0 -20 2 2 0 0]';
+means{2} = [-3 -16 2 2 0 0]';
+means{3} = [8 10 -2 0 0 0]';
+means{4} = [28 10 -2 0 0 0]';
+means{5} = [22 10 2 0 0 0]';
+means{6} = [18 9 -1 0 0 0]';
+means{7} = [8 0 2 2 0 0]';
+means{8} = [-10 -25 4 4 0 0]';
+means{9} = [30 3 -6 0 0 0]';
+% means{2} = [5 0 0 10 0 0]';
+% means{3} = [13 0 0 0 0 0]';
+% means{4} = [20 0 0 10 0 0]';
+% means{5} = [18 0 0 0 0 0]';
+% means{6} = [20 0 0 -15 0 0]';
 
 %% run filter recursion
 phd_filter = NNGIWETTIMMPHDfilter;

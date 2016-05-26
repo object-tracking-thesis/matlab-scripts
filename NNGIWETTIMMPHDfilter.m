@@ -3,6 +3,7 @@ classdef NNGIWETTIMMPHDfilter < handle
         targets = [];
         birth_targets = [];
         d = 2;
+        ps = 0.98;
         min_survival_weight = 0.0001;
         min_merge_dist = 0.05;
         max_comps = 50;
@@ -60,7 +61,6 @@ classdef NNGIWETTIMMPHDfilter < handle
                 if ~gating
                     this.targets(i).updateWeightGating;
                     target = this.targets(i).copy;
-                    target = target.deepCopy;
                     targets_no_gating = [targets_no_gating target];                    
                 end
             end
@@ -74,7 +74,6 @@ classdef NNGIWETTIMMPHDfilter < handle
             for i = 1:n_meas
                 for j = 1:n_pred
                     target_copy = this.targets(j).copy;
-                    target_copy.deepCopy;
                     new_targets = [new_targets target_copy];
                 end
             end            

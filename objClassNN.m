@@ -15,7 +15,7 @@ y = data(:,input_layer_size+1);
 
 m = size(X, 1);
 
-[X mu sigma] = featureNormalize(X);
+[X mu_nn sigma_nn] = featureNormalize(X);
 train = X(1:floor(0.6*m),:);
 cv = X(ceil(0.6*m):floor(0.8*m),:);
 test = X(ceil(0.8*m):m,:);
