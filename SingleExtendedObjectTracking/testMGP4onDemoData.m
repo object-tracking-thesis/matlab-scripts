@@ -96,46 +96,47 @@ for k = 1:nrIter
         predictedState = ukf.predSt;    
     end
 
+    predictedCov = ukf.predCov;
     % Initialize mgpGen3 and use it to create MGPs
     if k == 1
-        N = 1;
+        N = 2;
         covMGPgate = 0.1^2;
         mgpGen4 = MGPgenerator4(N, covMGPgate);
     end     
-    
-    lb = 0.2;
-    ub = 0.5;
-    gateCov = 0.2^2;
-    
+        
     clusterZ = car2adj{k};
     
     lb = 0.2;
     ub = 0.5;
     gateCov = 0.2^2;
-
-    [filtClust, massVec1, massVec2, cp] = mgpGen4.preFilter(clusterZ, lb, ub, gateCov);
-
-                     [wVector, lVector] = mgpGen4.getVectors(predictedState, massVec1, massVec2);
-
-                                 corner = mgpGen4.getCorner2(predictedState, wVector, lVector);
-
-                     [wViewed, lViewed] = mgpGen4.getViewLen(filtClust, cp, wVector, lVector);
-
-                              assignedZ = mgpGen4.selectMeas(filtClust, cp, wVector, lVector, wViewed, lViewed);
-
-                             mgpHandles = mgpGen4.makeMGPs(corner, predictedState, wViewed, lViewed);
-
-      [gatedMgpHandles, gatedAssignedZ] = mgpGen4.gateMGPs(assignedZ, mgpHandles);
-
-      xc = cp(1);
-      yc = cp(2);
     
-    % Update UKF
-     ukf.upSt(6)
-     ukf.upSt(7)
-     assignedZo = reshape(gatedAssignedZ', 2*length(gatedAssignedZ),1);          
-     
-     ukf.updateMoments(gatedMgpHandles, assignedZo);
+    if carGating(clusterZ, predictedState, 1.2)        
+        [filtClust, massVec1, massVec2, cp] = mgpGen4.preFilter(clusterZ, lb, ub, gateCov);
+
+                         [wVector, lVector] = mgpGen4.getVectors(predictedState, massVec1, massVec2);
+
+                                     corner = mgpGen4.getCorner2(predictedState, wVector, lVector);
+
+                         [wViewed, lViewed] = mgpGen4.getViewLen(filtClust, cp, wVector, lVector);
+
+                                  assignedZ = mgpGen4.selectMeas(filtClust, cp, wVector, lVector, wViewed, lViewed);
+
+                                 mgpHandles = mgpGen4.makeMGPs(corner, predictedState, wViewed, lViewed);
+
+          [gatedMgpHandles, gatedAssignedZ] = mgpGen4.gateMGPs(assignedZ, mgpHandles);
+
+          xc = cp(1);
+          yc = cp(2);
+
+        % Update UKF
+         assignedZo = reshape(gatedAssignedZ', 2*length(gatedAssignedZ),1);          
+
+         ukf.updateMoments(gatedMgpHandles, assignedZo);
+    else
+       ukf.upSt = predictedState;
+       ukf.upCov = predictedCov;
+    end
+        
      % Let's see how well we did
      figure(fig);
          subplot(1,2,1)
