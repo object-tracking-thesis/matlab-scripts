@@ -34,7 +34,7 @@ classdef CarIMM < handle
     methods        
         function this = CarIMM
         end
-        function init(this, nObsSt, nSt, st0, cov0, f1, f2, Q1, Q2, rCov, TPM)
+        function [] = init(this, nObsSt, nSt, st0, cov0, f1, f2, Q1, Q2, rCov, TPM)
             % Initializes the IMM filter as well as the underlying UKF's
             % that it will use.
             
@@ -60,8 +60,11 @@ classdef CarIMM < handle
             
             
             % Initialize UKFs for each model 
-            this.ukf1 = UKF(Q1, rCov, nObsSt, nSt, st0, cov0);
-            this.ukf2 = UKF(Q2, rCov, nObsSt, nSt, st0, cov0);
+            this.ukf1 = UKF;
+            this.ukf1.init(Q1, rCov, nObsSt, nSt, st0, cov0);
+            
+            this.ukf2 = UKF;
+            this.ukf2.init(Q2, rCov, nObsSt, nSt, st0, cov0);
             
             this.mixWeights = [0.5 0.5];
             
@@ -161,6 +164,15 @@ classdef CarIMM < handle
             this.upCov = this.mixWeights(1)*(upCov1 + (upSt1 - this.upSt)*(upSt1 - this.upSt)')...
                         +this.mixWeights(2)*(upCov2 + (upSt2 - this.upSt)*(upSt2 - this.upSt)'); 
             
+        end
+        
+        function [upSt, upCov] = getState(this)   
+            % Does not affect the filter itself, only for user output
+            % purposes.
+            upSt  = this.mixWeights(1)*this.mmUpSt(:,1) + this.mixWeights(2)*this.mmUpSt(:,2);
+            
+            upCov = this.mixWeights(1)*(this.mmUpCov(:,:,1) + (this.mmUpSt(:,1) - upSt)*(this.mmUpSt(:,1) - upSt)')...
+                   +this.mixWeights(2)*(this.mmUpCov(:,:,2) + (this.mmUpSt(:,2) - upSt)*(this.mmUpSt(:,2) - upSt)'); 
         end
         
         function new = copy(this)
