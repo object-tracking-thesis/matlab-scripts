@@ -20,14 +20,14 @@ for N = 1:length(carClusters)
     Ntg(:,1:2) = Ntg(:,1:2) - repmat([egoPosition{1}(1), egoPosition{1}(2)],length(Ntg),1);
     
     figure(f)
-    subplot(2,1,1)
+   % subplot(2,1,1)
     hold on; grid on
     op = 0.8;
     plot(Ntg(:,1), Ntg(:,2),'x','Color',op.*[1 1 1]);
     EGO = [egoPosition{N}(1)-egoPosition{1}(1), egoPosition{N}(2)-egoPosition{1}(2)];
     plot(EGO(1), EGO(2),'ko');
     
-    text(EGO(1)-2,EGO(2)-2, 'EGO')
+    text(EGO(1)-2,EGO(2)-2, 'EGO')            
     
     %tic
     [m1,m2,uOp, filtNtg] = cornerPoint(Ntg);%, 0.5, 0.4); % 0.3 0.5
@@ -43,6 +43,9 @@ for N = 1:length(carClusters)
         plot(4.*[0 cos(angle(N,i))]+[xc, xc], 4.*[0 sin(angle(N,i))]+[yc, yc], '-g','LineWidth',2)
         plot(0+xc, 0+yc, 'og','LineWidth',2)
     end
+    
+    distance = sqrt((EGO(1) - xc)^2 + (EGO(2) - yc)^2);
+    text(EGO(1)-4, EGO(2)-4, sprintf('Distance; %.2f', distance));
     
     % Test to draw correct angle         
     
@@ -66,9 +69,9 @@ for N = 1:length(carClusters)
     axis([-30 5 -50 5])
     axis equal
 
-    subplot(2,1,2)
-        plot(t,v); hold on
-        stem(t(N), v(N))
+%     subplot(2,1,2)
+%         plot(t,v); hold on
+%         stem(t(N), v(N))
 
     
     Mid = mean(filtNtg);

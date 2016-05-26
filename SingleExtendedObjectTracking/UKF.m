@@ -93,6 +93,7 @@ classdef UKF < handle
             
             for h = 1:this.nMGPS
                 for j = 1:this.nSP
+                    
                     this.yPred(:,h) = this.yPred(:,h) + hCell{h}(SP(:,j))*W(j);
                 end
             end

@@ -1,9 +1,9 @@
 function [m1, m2, uOp, varargout] = cornerPoint(pointCloud, varargin)
 % 
 % 
-%  function [m1, m2, uOp, filtNtg] = cornerPoint(pointCloud)
-%           function [m1, m2, uOp] = cornerPoint(pointCloud, lb, up)
-%           function [m1, m2, uOp] = cornerPoint(pointCloud)
+%  [m1, m2, uOp, filtNtg] = cornerPoint(pointCloud)
+%           [m1, m2, uOp] = cornerPoint(pointCloud, lb, up)
+%           [m1, m2, uOp] = cornerPoint(pointCloud)
 %
 %
 %     c1 = uOp(1); c2 = uOp(2);
@@ -12,7 +12,7 @@ function [m1, m2, uOp, varargout] = cornerPoint(pointCloud, varargin)
 %     xc = (-n1*c1 + n2*c2);
 %     yc = (-n2*c1 -n1*c2);
 %         
-%     angle(N,:) = ones(1,4)*atan2(n2,n1) + [0 1 2 3]*pi/2;
+%     angle = ones(1,4)*atan2(n2,n1) + [0 1 2 3]*pi/2;
 %
 
 Ntg = sortrows(pointCloud,3);
@@ -26,14 +26,18 @@ if length(varargin) == 2 && varargin{1} > 0 && varargin{2} > 0
     N2 = round(length(Ntg)*ub); % 0.4
 
     sortNtg = Ntg(N1:end-N2,1:2);
+    
+    % Remove tailing points
+    if nargout == 4
+        varargout(1) = {Ntg(N1:end-N2,1:3)};
+    end
 else
     sortNtg = Ntg(:,1:2);
-end
-
-
-% Remove tailing points
-if nargout == 4    
-    varargout(1) = {sortNtg};
+    
+    % Remove tailing points
+    if nargout == 4
+        varargout(1) = {sortNtg};
+    end
 end
 
 
@@ -84,6 +88,9 @@ yc = (-n2*c1 -n1*c2);
 
 % Define each vector & normalize it 
 
+% Todo
+% Margin for which points to project 
+%
 V1 = [1 -n1/n2];
 V2 = [1 n2/n1];
 V1 = V1/norm(V1,2);
