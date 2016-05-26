@@ -110,8 +110,8 @@ classdef Target < handle
             hasGating = this.activeTarget.gating(clusterZ);
         end
         
-        function [] = updateWeightGating(this)
-            this.weight = this.weight * this.activeTarget.pd;
+        function [] = updateWeightNoGating(this)
+            this.weight = this.weight * (1-this.activeTarget.pd);
         end
         
         function [mantissa, exponent] = calcLikelihood(this, clusterZ)           

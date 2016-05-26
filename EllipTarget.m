@@ -78,7 +78,7 @@ classdef EllipTarget < handle
             this.x = x0;
             this.P = 0.1*diag(ones(1,3));
             this.v = 7;
-            this.V = diag([1 1]);
+            this.V = diag([0.5 0.5]);
         end
         %% API functions
         function [] = predict(this)
@@ -92,7 +92,7 @@ classdef EllipTarget < handle
         
         function hasGating = gating(this, clusterZ)
             %TODO calculate whether the measurement is inside the gate
-            hasGating = ellipGating(this.x, this.V, clusterZ.center, .9973);
+            hasGating = ellipGating(this.x, this.V, clusterZ.center, .9545);
             if hasGating
                 this.pd = 1;
             end
