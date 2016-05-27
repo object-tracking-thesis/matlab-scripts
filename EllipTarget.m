@@ -41,7 +41,7 @@ classdef EllipTarget < handle
         V
         %elliptic target GIW-PHD parameters
         ps = 0.98;
-        pd = 0.01; %will get altered by gating function
+        Pd = 0.01; %will get altered by gating function
         p_gamma = 250;
         p_beta = 1;
         %update components
@@ -50,6 +50,10 @@ classdef EllipTarget < handle
         zhat
         S
         epsilon
+        %
+        index
+        likelihood
+        weight
     end
     
     methods
@@ -58,7 +62,9 @@ classdef EllipTarget < handle
 
         end
 
-        function [] = init(this, x0, P0)
+        function [] = init(this, x0, P0, index, weight)
+            this.index = index;
+            this.weight = weight;
             % motion model
             this.T = 0.1;
             this.theta = 1;
@@ -82,7 +88,7 @@ classdef EllipTarget < handle
         end
         %% API functions
         function [] = predict(this)
-            this.pd = 0.01;
+            this.Pd = 0.01;
             this.x = kron(this.F,eye(this.d))*this.x;
             this.P = this.F*this.P*this.F' + this.Q;
             temp_v = this.v;
@@ -92,9 +98,9 @@ classdef EllipTarget < handle
         
         function hasGating = gating(this, clusterZ)
             %TODO calculate whether the measurement is inside the gate
-            hasGating = ellipGating(this.x, this.V, clusterZ.center, .9545);
+            hasGating = ellipGating(this.x, this.V, clusterZ.center(1:2), .9545);
             if hasGating
-                this.pd = 1;
+                this.Pd = 1;
             end
         end
         
@@ -109,13 +115,13 @@ classdef EllipTarget < handle
             
             %likelihood components
             this.S = this.Shat + 1/meas.n;
-            this.epsilon = meas.center - this.zhat;            
+            this.epsilon = meas.center(1:2) - this.zhat;            
             N = inv(this.S)*(this.epsilon*this.epsilon');
             newv = this.v + meas.n;
-            newV = this.V + N + meas.scatter;                        
+            newV = this.V + N + meas.scatter(1:2,1:2);                        
             
             %calculate new weight-scale as a log-likelihood
-            f1 = (-this.p_gamma*log(exp(1)) + meas.n*log(this.p_gamma) + log(this.pd))...
+            f1 = (-this.p_gamma*log(exp(1)) + meas.n*log(this.p_gamma) + log(this.Pd))...
                 -(meas.n*log(this.p_beta) + (this.d/2)*(meas.n*log(pi) + log(meas.n) + log(this.S)));
             f2 = ((this.v/2)*log(det(this.V)))...
                 -((newv/2)*log(det(newV)));
@@ -135,7 +141,11 @@ classdef EllipTarget < handle
             K = this.Khat*inv(this.S);
             this.x = this.x + kron(K,eye(this.d))*this.epsilon;
             this.P = this.P - (K*this.S*K');
-        end                
+        end   
+        
+        function [] = updateWeightNoGating(this)
+            this.weight = this.weight * (1-this.Pd);
+        end
         
         function [st, cov, dof, scale] = getState(this)
             st = this.x;
