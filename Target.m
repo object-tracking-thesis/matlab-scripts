@@ -11,11 +11,11 @@
 % Constructor: 
 %       this = Target(x0, P0, index)
 % Methods: (this is also the order in which methods should be called)
-%            [] = isNewType(targetType)
 %            [] = predict()
 %           lik = calcLikelihood(clusterZ) 
 %            [] = update() 
 % [upSt, upCov] = getState()
+%            [] = isNewType(targetType)
 % 
 % ===== TODO =====
 % Implement missing Ellip-specific functions. Modify to fit together with
@@ -28,6 +28,7 @@ classdef Target < handle
         index        % PHD index
         likelihood   % Value of likelihood
         weight
+        NNtag
         
         upSt         % The updated state estimate
         upCov        % The updated covariance estimate   
@@ -54,31 +55,30 @@ classdef Target < handle
         end
         
         %% API
-        function [] = isNewType(this, targetType)
+        function [] = isNewType(this)
             % This is the transition function, that is used to convert from
-            % one target type to another. This is called BEFORE PREDICTION
-            if strcmp(this.targetType, 'e') && strcmp(targetType, 'c') % from 'e' --> 'c'
-                % TODO
-                % Write function that takes the previous elliptical state
-                % estimation and converts it into an initial state for
-                % rectangular tracking. The state vector for rectangular
-                % targets is:
-                %
-                % x0 = [x_k, y_k, v_k, phi_k, phiDot_k, w_k, l_k]';
+            % one target type to another. This is called AFTER UPDATE
+            if strcmp(this.targetType, 'e') && strcmp(this.NNtag, 'c') % from 'e' --> 'c'
                 x = this.upSt(1);
-                y = this.upSt(4);
-                v = sqrt(this.upSt(2)^2 + this.upSt(5)^2);
-                phi = mod(atan2(this.upSt(5),this.upSt(2)),2*pi); % heading
+                y = this.upSt(2);
+                v = sqrt(this.upSt(3)^2 + this.upSt(4)^2);
+                phi = mod(atan2(this.upSt(4),this.upSt(3)),2*pi); % heading
                 phiDot = 0;
                 w = 1.8;
                 l = 4.7;
                 
-                x0 = [x, y, v, phi, phiDot, w, l]';
+                x0 = [x, y, v, phi, phiDot, w, l]'
                 
-                this.activeTarget = RectTarget(x0, []);
+                
+                alpTemp = RectTarget;
+                this.activeTarget = alpTemp;
+                this.activeTarget
+                this.activeTarget.init(x0, 0);
+                this.activeTarget
                 this.targetType = 'c';
-                
-            elseif strcmp(this.targetType, 'c') && strcmp(targetType, 'e') % from 'c' --> 'e'
+            
+                %TODO implement car to ellipse transition
+            elseif strcmp(this.targetType, 'c') && strcmp(this.NNtag, 'e') % from 'c' --> 'e'
                 x  = this.upSt(1);
                 vx = this.upSt(3)*cos(this.upSt(4));
                 ax = 0; % Later, when I have modified rectangular to include acceleration, these values can be set
@@ -111,12 +111,18 @@ classdef Target < handle
         end
         
         function [] = updateWeightNoGating(this)
-            this.weight = this.weight * (1-this.activeTarget.pd);
+            this.weight = this.weight * (1-this.activeTarget.Pd);
         end
         
         function [mantissa, exponent] = calcLikelihood(this, clusterZ)           
             % Storage of S and yPred is delegated the internals of
-            % activeTarget            
+            % activeTarget
+            switch clusterZ.type
+                case 2
+                    this.NNtag = 'c';
+                otherwise
+                    this.NNtag = 'e';
+            end
             [mantissa, exponent] = this.activeTarget.calcLikelihood(clusterZ);
         end
         
@@ -126,10 +132,7 @@ classdef Target < handle
         end
         
         function [upSt, upCov, upv, upV] = getState(this)
-            upSt = this.upSt;
-            upCov = this.upCov;
-            upv = this.upv;
-            upV = this.upV;
+            [upSt, upCov, upv, upV] = this.activeTarget.getState();
         end
         
         function [] = setState(this, x, P, v, V)

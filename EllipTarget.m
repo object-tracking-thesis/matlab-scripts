@@ -154,6 +154,13 @@ classdef EllipTarget < handle
             scale = this.V;
         end
         
+        function [] = setState(this, x, P, v, V)
+            this.x = x;
+            this.P = P;
+            this.v = v;
+            this.V = V;
+        end      
+        
         % Make a copy of a handle object.
         function new = copy(this)
             % Instantiate new object of the same class.

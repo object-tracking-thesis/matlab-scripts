@@ -107,7 +107,7 @@ classdef RectTarget < handle
             this.imm = CarIMM;
             this.imm.init(nObsSt, nSt, st0, cov0, f1, f2, Q1, Q2, rCov, TPM);
                                 
-            N = 4; % number of additional MGPS per side (totMgps = 3+2N)
+            N = 1; % number of additional MGPS per side (totMgps = 3+2N)
             
             covMGPgate = 0.1^2;
             this.mgpGen4 = MGPgenerator4(N, covMGPgate);
@@ -123,7 +123,7 @@ classdef RectTarget < handle
   
         end
         
-        function [mantissa, exponent] = calcLikelihood(this, clusterZ)
+        function lik = calcLikelihood(this, clusterZ)
               predictedState1 = this.imm.mmPredSt(:,1);
               predictedState2 = this.imm.mmPredSt(:,2);   
               
@@ -133,12 +133,12 @@ classdef RectTarget < handle
               assignedZo = reshape(gatedAssignedZ1', 2*size(gatedAssignedZ1,1),1);
               
               if isempty(gatedMgpHandles1{1}) || isempty(gatedMgpHandles2{1}) || isempty(assignedZo)
-                  [mantissa, exponent] = base10_mantissa_exponent(exp(1), 1);
+                  lik = 1;
                   
               else
                   this.imm.mmUpdate({gatedMgpHandles1, gatedMgpHandles2}, assignedZo);
                   
-                  [mantissa, exponent] = base10_mantissa_exponent(exp(1), log(this.imm.totLikelihood));
+                  lik = this.imm.totLikelihood;
               end
         end
         

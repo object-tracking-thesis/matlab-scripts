@@ -110,7 +110,7 @@ classdef MGPgenerator4 < handle
                                       assignedZ = this.selectMeas(filtClust, cp, wVector, lVector, wViewed, lViewed);
             
                                      mgpHandles = this.makeMGPs(corner, predictedState, wViewed, lViewed);
-            
+                                     
               [gatedMgpHandles, gatedAssignedZ] = this.gateMGPs(assignedZ, mgpHandles);
         end
     end
@@ -314,7 +314,7 @@ classdef MGPgenerator4 < handle
             else
                 l_handle = @(K,j,p) [];    % These should be handles to functions that return nothing 
             end
-                        
+            
             h = 1:K;
             
             for j = h;
@@ -333,6 +333,12 @@ classdef MGPgenerator4 < handle
 
             end
             
+%             if (lViewed < 0.5) && (wViewed < 0.5)
+%                 l_handle = this.getGeneralHandle(corner, 'l'); % This should return the general function handle 
+%                 % Generate handle for corner 
+%                 mgpCornerH{1} = l_handle(K, 0, 0);     
+%             end
+            
             % Remove potential empty cells
             mgpLengthH = mgpLengthH(~cellfun(@isempty, mgpLengthH));
             mgpWidthH  = mgpWidthH(~cellfun(@isempty, mgpWidthH));
@@ -348,7 +354,6 @@ classdef MGPgenerator4 < handle
             % Checks if any of the assignedZs have 'NaN' values, indicating
             % that the corresponding MGP doesn't have a measurement within
             % 3sigma range. 
-                        
             notNanIndex = ~isnan(assignedZ(:,1));
             
             gatedAssignedZ = assignedZ(notNanIndex, :);

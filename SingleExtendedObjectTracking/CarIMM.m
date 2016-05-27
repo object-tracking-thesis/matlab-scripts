@@ -131,7 +131,19 @@ classdef CarIMM < handle
                         
             yPred1 = reshape(yPred1, 2*length(yPred1),1);            
             yPred2 = reshape(yPred2, 2*length(yPred2),1);
-    
+%             disp('ukf1 filter')
+%             size(S1)
+%             size(yPred1)
+%             size(assignedZ)
+%             
+%             disp('ukf1 filter')
+%             size(S2)
+%             size(yPred2)
+%             size(assignedZ)
+            
+            S1 = S1 + 0.01 .* eye(length(S1));
+            S2 = S2 + 0.01 .* eye(length(S2));
+            
             lik1 = mvnpdf(assignedZ, yPred1, S1);
             lik2 = mvnpdf(assignedZ, yPred2, S2);
             

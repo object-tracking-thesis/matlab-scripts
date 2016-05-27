@@ -9,6 +9,7 @@ classdef RectPHDfilter < handle
         max_comps = 50;
         number_of_targets = 0;
         index = 1;
+        kk = 0
     end
     
     methods(Access = public)
@@ -50,21 +51,21 @@ classdef RectPHDfilter < handle
             %set pd dynamically depending on whether a measurement was
             %received inside the gate of that target and update the weight
             rectangles_no_gating = [];
-            for i = 1:length(this.rectangles)
-                gating = 0;
-                for j = 1:length(meas)
-                    gating = this.rectangles(i).gating(meas(j));
-                    if gating
-                        break;
-                    end
-                end
-                %when there was no measurement within the gate              
-                if ~gating
-                    this.rectangles(i).updateWeightNoGating;
-                    ellipse_copy = this.rectangles(i).copy;
-                    rectangles_no_gating = [rectangles_no_gating ellipse_copy];                    
-                end
-            end
+%             for i = 1:length(this.rectangles)
+%                 gating = 0;
+%                 for j = 1:length(meas)
+%                     gating = this.rectangles(i).gating(meas(j));
+%                     if gating
+%                         break;
+%                     end
+%                 end
+%                 %when there was no measurement within the gate              
+%                 if ~gating
+%                     this.rectangles(i).updateWeightNoGating;
+%                     ellipse_copy = this.rectangles(i).copy;
+%                     rectangles_no_gating = [rectangles_no_gating ellipse_copy];                    
+%                 end
+%             end
             
             %preallocation for all targets to be updated
             n_meas = length(meas);
@@ -80,25 +81,23 @@ classdef RectPHDfilter < handle
             end            
                    
             %likelihood update
-            counter = 0;
-            for i = 1:n_meas                
-                mantissas = [];
-                exponents = [];
-                for j = 1:n_pred                                        
-                    [mantissa, base10_exponent] = new_rectangles(j+((i-1)*n_pred)).calcLikelihood(meas(i));
-                    
-                    %the mantissa is updated with the old weight to keep
-                    %track of that information
-                    mantissa = mantissa*this.rectangles(j).weight;
-                    
-                    %save mantissas and exponents
-                    mantissas = [mantissas mantissa];
-                    exponents = [exponents base10_exponent];  
-                    counter = counter+1;
+            for i = 1:n_meas      
+                weightsum = 0;
+                for j = 1:n_pred       
+                    this.rectangles(j).weight
+                    w = this.rectangles(j).weight * new_rectangles(j+((i-1)*n_pred)).calcLikelihood(meas(i))             
+                    new_rectangles(j+((i-1)*n_pred)).weight = w;
+                    weightsum = weightsum+w;
                 end
+                weightsum
                 %normalizing the weights with the weightsum for the entire measurement  
-                new_rectangles(counter-n_pred+1:counter) = ...
-                    this.normalize_weights(new_rectangles(counter-n_pred+1:counter), exponents, mantissas);
+                for j=1:n_pred
+                    j
+                    new_rectangles(j+((i-1)*n_pred)).weight
+                    new_rectangles(j+((i-1)*n_pred)).weight = ...
+                        new_rectangles(j+((i-1)*n_pred)).weight/(this.kk+weightsum);
+                    new_rectangles(j+((i-1)*n_pred)).weight
+                end 
             end
             
             this.rectangles = new_rectangles;
@@ -117,15 +116,6 @@ classdef RectPHDfilter < handle
             if length(this.rectangles) > this.max_comps             
                 this.rectangles = this.rectangles(1:this.max_comps);
             end      
-        end        
-        
-        function rectangles = normalize_weights(this, rectangles, exponents, mantissas)
-            expe = exp(exponents);            
-            weights = mantissas.*expe;
-            norm_weights = weights./sum(weights);         
-            for i = 1:length(rectangles)                    
-                rectangles(i).weight = norm_weights(i);                
-            end
         end
         
         function weight_sort_components(this)
@@ -149,6 +139,7 @@ classdef RectPHDfilter < handle
                 end
             end
             this.rectangles(to_delete) = [];
+            weightvec
             weightsum_before_prune = sum(weightvec);
             this.number_of_targets = weightsum_before_prune;                                   
         end

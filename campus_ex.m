@@ -69,6 +69,7 @@ for i=start_seq:end_seq
     
     rect_phd.predict;    
     rect_phd.update(carMeas{i});
+    rect_phd.get_number_of_targets
     rect_est = rect_phd.get_best_estimates;
     
     %plot the target ellipse and the measured points
@@ -90,5 +91,6 @@ for i=start_seq:end_seq
     axis equal
     
     hold off
-    pause(0.5)
+%     pause(0.5)
+    waitforkey
 end

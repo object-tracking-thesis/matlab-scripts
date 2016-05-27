@@ -209,8 +209,8 @@ for i=1:Num
 end
 
 %% cluster cars once again with a lower cutoff for Marko's corner algo
-carClusters = cell(1,50);
-for i=1:Num
+carClusters = cell(1,114);
+for i=1:114
     carIndices = find(isCarMat(i,:) == 2);
     carClusters{i} = cell(1,length(carIndices));
     for j = 1:length(carIndices)        
@@ -237,7 +237,7 @@ for i=1:150
 end
 %%
 figure;
-for i=1:Num
+for i=1:114
     i
     for j=1:length(carClusters{i})
         pcshow(pointCloud(carClusters{i}{j}))
