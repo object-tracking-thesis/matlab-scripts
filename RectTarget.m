@@ -21,10 +21,12 @@
 %
 
 classdef RectTarget < handle
-    properties
+    properties (Access = public)
         imm
         mgpGen4
         Pd
+        index
+        weight
     end
     
     methods
@@ -32,8 +34,10 @@ classdef RectTarget < handle
         function this = RectTarget
         end
         
-        function init(this, x0, ~)
+        function init(this, x0, ~, index, weight)
             this.Pd = 0.01;
+            this.index = index;
+            this.weight = weight;
             % THESE NEED MORE TUNING! ALL OF THEM
             % Setup motion model parameters for imm
             
@@ -119,19 +123,27 @@ classdef RectTarget < handle
   
         end
         
-        function lik = calcLikelihood(this, clusterZ)
+        function [mantissa, exponent] = calcLikelihood(this, clusterZ)
               predictedState1 = this.imm.mmPredSt(:,1);
-              predictedState2 = this.imm.mmPredSt(:,2);            
+              predictedState2 = this.imm.mmPredSt(:,2);   
               
-              [gatedMgpHandles1, gatedAssignedZ1] = this.mgpGen4.generate(clusterZ, predictedState1);
-              [gatedMgpHandles2, ~] = this.mgpGen4.generate(clusterZ, predictedState2);              
+              [gatedMgpHandles1, gatedAssignedZ1] = this.mgpGen4.generate(clusterZ.points', predictedState1);
+              [gatedMgpHandles2, ~] = this.mgpGen4.generate(clusterZ.points', predictedState2);              
               
-              assignedZo = reshape(gatedAssignedZ1', 2*length(gatedAssignedZ1),1);
-
-              % TODO, rewrite imm to support calcLikelihood function
-              this.imm.mmUpdate({gatedMgpHandles1, gatedMgpHandles2}, assignedZo);
-                
-              lik = this.imm.totLikelihood;                                          
+              assignedZo = reshape(gatedAssignedZ1', 2*size(gatedAssignedZ1,1),1);
+              
+              if isempty(gatedMgpHandles1{1}) || isempty(gatedMgpHandles2{1}) || isempty(assignedZo)
+                  [mantissa, exponent] = base10_mantissa_exponent(exp(1), 1);
+                  
+              else
+                  this.imm.mmUpdate({gatedMgpHandles1, gatedMgpHandles2}, assignedZo);
+                  
+                  [mantissa, exponent] = base10_mantissa_exponent(exp(1), log(this.imm.totLikelihood));
+              end
+        end
+        
+        function [] = updateWeightNoGating(this)
+            this.weight = this.weight * (1-this.Pd);
         end
         
         function [] = update(~)
@@ -139,10 +151,12 @@ classdef RectTarget < handle
             % this function exists for interface purposes 
         end
         
-        function [st, cov] = getState(this)
+        function [st, cov, junk1, junk2] = getState(this)
             [upSt, upCov] = this.imm.getState();
              st = upSt;
             cov = upCov;
+            junk1 = [];
+            junk2 = [];
         end
         
         function bool = gating(this, cluster)
@@ -151,8 +165,8 @@ classdef RectTarget < handle
             
             p = 1.5;
             
-            bool1 = carGating(cluster, predictedState1, p);
-            bool2 = carGating(cluster, predictedState2, p);
+            bool1 = carGating(cluster.points', predictedState1, p);
+            bool2 = carGating(cluster.points', predictedState2, p);
             
             if bool1 || bool2
                 bool = 1;

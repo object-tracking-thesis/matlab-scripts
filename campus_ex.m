@@ -34,25 +34,25 @@ for i=start_seq:end_seq
 end
 
 %% birth components
-means = cell(1,1);
-means{1} = [0 -20 2 2 0 0]';
-means{2} = [-3 -16 2 2 0 0]';
-means{3} = [8 10 -2 0 0 0]';
-means{4} = [28 10 -2 0 0 0]';
-means{5} = [22 10 2 0 0 0]';
-means{6} = [18 9 -1 0 0 0]';
-means{7} = [8 0 2 2 0 0]';
-means{8} = [-10 -25 4 4 0 0]';
-means{9} = [30 3 -6 0 0 0]';
-% means{2} = [5 0 0 10 0 0]';
-% means{3} = [13 0 0 0 0 0]';
-% means{4} = [20 0 0 10 0 0]';
-% means{5} = [18 0 0 0 0 0]';
-% means{6} = [20 0 0 -15 0 0]';
+ellipMeans = cell(1,1);
+ellipMeans{1} = [0 -20 2 2 0 0]';
+ellipMeans{2} = [-3 -16 2 2 0 0]';
+ellipMeans{3} = [8 10 -2 0 0 0]';
+ellipMeans{4} = [28 10 -2 0 0 0]';
+ellipMeans{5} = [22 10 2 0 0 0]';
+ellipMeans{6} = [18 9 -1 0 0 0]';
+ellipMeans{7} = [8 0 2 2 0 0]';
+ellipMeans{8} = [-10 -25 4 4 0 0]';
+ellipMeans{9} = [30 3 -6 0 0 0]';
+
+rectMeans = cell(1,1);
+rectMeans{1} = [15 0 4 0 0 1.8 4.7]';
 
 %% run filter recursion
-phd_filter = EllipPHDfilter;
-phd_filter.set_birth_rfs(means);
+ellip_phd = EllipPHDfilter;
+ellip_phd.set_birth_rfs(ellipMeans);
+rect_phd = RectPHDfilter;
+rect_phd.set_birth_rfs(rectMeans);
 targets = [];
 for i=start_seq:end_seq   
     i
@@ -63,25 +63,31 @@ for i=start_seq:end_seq
         axis([-10 50 -50 20])
         hold on
     end    
-    phd_filter.predict;    
-    phd_filter.update(meas{i});
-    phd_filter.get_number_of_targets;
-    est = phd_filter.get_best_estimates;
+    ellip_phd.predict;    
+    ellip_phd.update(meas{i});
+    ellip_est = ellip_phd.get_best_estimates;
+    
+    rect_phd.predict;    
+    rect_phd.update(carMeas{i});
+    rect_est = rect_phd.get_best_estimates;
     
     %plot the target ellipse and the measured points
-    for j=1:length(est)
-        rng(est(j).index)
+    for j=1:length(ellip_est)
+        rng(ellip_est(j).index)
         color =  [rand, rand, rand]; 
-        [mu, P, v, V] = est(j).getState();
+        [mu, P, v, V] = ellip_est(j).getState();
         cov = iwishrnd(V, v);
         [x1,x2,x3] = threeSigmaOverGrid(mu(1:2),cov);                
         plot(x3(1,:),x3(2,:),' --k','Color',color)             
-        testtxt = strcat('\leftarrow i: ', num2str(est(j).index), ', w: ', num2str(est(j).weight));
+        testtxt = strcat('\leftarrow i: ', num2str(ellip_est(j).index), ', w: ', num2str(ellip_est(j).weight));
         text(double(mu(1)), double(mu(2)), testtxt)
-%         [mu, P, v, V] = est(j).getState();
-%         drawMyRide(mu,'r')
+    end
+    for j=1:length(rect_est)
+        [mu, P, v, V] = rect_est(j).getState();
+        drawMyRide(mu,'r')
     end
     text(25, 15, strcat('frame: ', num2str(i)))
+    axis equal
     
     hold off
     pause(0.5)
