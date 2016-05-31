@@ -6,17 +6,18 @@ start_seq = 1;
 end_seq = 186;
 
 %% plot the clusters
-% figure
-% for i=start_seq:end_seq
-%     for j=1:length(clusters{i})
-%         pcshow(pointCloud(clusters{i}{j}))
-%         hold on
-%         axis([-10 50 -50 20 -1 2])
-%         zoom(2)
-%     end
-%     hold off
-%     pause(0.5)
-% end
+figure
+for i=start_seq:end_seq
+    i
+    for j=1:length(clusters{i})
+        pcshow(pointCloud(clusters{i}{j}))
+        hold on
+        axis([-10 50 -50 20 -1 2])
+        zoom(2)
+    end
+    hold off
+    pause(0.3)
+end
 
 %% create the measurement components
 meas = cell(1,n);
