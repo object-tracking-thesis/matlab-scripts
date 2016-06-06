@@ -5,5 +5,5 @@ function [x1, x2, x3] = threeSigmaOverGrid(mu,P)
     % 3 Sigma ellipse position
     x1 = repmat(mu,1,n)+1*sqrtm(P)*[cos(phi);sin(phi)];
     x2 = repmat(mu,1,n)+2*sqrtm(P)*[cos(phi);sin(phi)];
-    x3 = repmat(mu,1,n)+3*sqrtm(P)*[cos(phi);sin(phi)];
+    x3 = repmat(mu,1,n)+4*sqrtm(P)*[cos(phi);sin(phi)];
 end

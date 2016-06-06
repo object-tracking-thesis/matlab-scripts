@@ -82,13 +82,13 @@ classdef EllipTarget < handle
             
             % prior state
             this.x = x0;
-            this.P = 0.1*diag(ones(1,3));
+            this.P = 0.05*diag(ones(1,3));
             this.v = 7;
-            this.V = diag([0.5 0.5]);
+            this.V = diag([1 1]);
         end
         %% API functions
         function [] = predict(this)
-            this.Pd = 0.01;
+            this.Pd = 0.6;
             this.x = kron(this.F,eye(this.d))*this.x;
             this.P = this.F*this.P*this.F' + this.Q;
             temp_v = this.v;
@@ -106,45 +106,80 @@ classdef EllipTarget < handle
         
         function [mantissa, base10_exponent] = calcLikelihood(this, clusterZ)            
             %meas = giwMeasComp(clusterZ);            
-            meas = clusterZ;
-            
-            %update components
-            this.Khat = this.P*this.H';
-            this.Shat = this.H*this.Khat;            
-            this.zhat = kron(this.H,eye(this.d))*this.x;
-            
-            %likelihood components
-            this.S = this.Shat + 1/meas.n;
-            this.epsilon = meas.center(1:2) - this.zhat;            
-            N = inv(this.S)*(this.epsilon*this.epsilon');
-            newv = this.v + meas.n;
-            newV = this.V + N + meas.scatter(1:2,1:2);                        
-            
-            %calculate new weight-scale as a log-likelihood
-            f1 = (-this.p_gamma*log(exp(1)) + meas.n*log(this.p_gamma) + log(this.Pd))...
-                -(meas.n*log(this.p_beta) + (this.d/2)*(meas.n*log(pi) + log(meas.n) + log(this.S)));
-            f2 = ((this.v/2)*log(det(this.V)))...
-                -((newv/2)*log(det(newV)));
-            f3 = (gamma_2d_log(newv/2))...
-                -(gamma_2d_log(this.v/2));
-            logw_scale = f1+f2+f3;
-            
-            %update the shape with the new values
-            this.v = newv;
-            this.V = newV;
-            
-            %return the log likelihood as mantissa and base10 exponent
-            [mantissa, base10_exponent] = base10_mantissa_exponent(exp(1),logw_scale);
+            if ~this.gating(clusterZ)
+                meas = clusterZ;
+
+                %update components
+                this.Khat = this.P*this.H';
+                this.Shat = this.H*this.Khat;            
+                this.zhat = kron(this.H,eye(this.d))*this.x;
+
+                %likelihood components
+                this.S = this.Shat + 1/meas.n;
+                this.epsilon = meas.center(1:2) - this.zhat;            
+                N = inv(this.S)*(this.epsilon*this.epsilon');
+                newv = this.v + meas.n;
+                newV = this.V + N + meas.scatter(1:2,1:2);                        
+
+                %calculate new weight-scale as a log-likelihood
+                f1 = (-this.p_gamma*log(exp(1)) + meas.n*log(this.p_gamma) + log(this.Pd))...
+                    -(meas.n*log(this.p_beta) + (this.d/2)*(meas.n*log(pi) + log(meas.n) + log(this.S)));
+                f2 = ((this.v/2)*log(det(this.V)))...
+                    -((newv/2)*log(det(newV)));
+                f3 = (gamma_2d_log(newv/2))...
+                    -(gamma_2d_log(this.v/2));
+                logw_scale = f1+f2+f3;
+
+                %update the shape with the new values
+                this.v = newv;
+                this.V = newV;
+                
+                mantissa = 1;
+                base10_exponent = -500;
+            else
+                meas = clusterZ;
+
+                %update components
+                this.Khat = this.P*this.H';
+                this.Shat = this.H*this.Khat;            
+                this.zhat = kron(this.H,eye(this.d))*this.x;
+
+                %likelihood components
+                this.S = this.Shat + 1/meas.n;
+                this.epsilon = meas.center(1:2) - this.zhat;            
+                N = inv(this.S)*(this.epsilon*this.epsilon');
+                newv = this.v + meas.n;
+                newV = this.V + N + meas.scatter(1:2,1:2);                        
+
+                %calculate new weight-scale as a log-likelihood
+                f1 = (-this.p_gamma*log(exp(1)) + meas.n*log(this.p_gamma) + log(this.Pd))...
+                    -(meas.n*log(this.p_beta) + (this.d/2)*(meas.n*log(pi) + log(meas.n) + log(this.S)));
+                f2 = ((this.v/2)*log(det(this.V)))...
+                    -((newv/2)*log(det(newV)));
+                f3 = (gamma_2d_log(newv/2))...
+                    -(gamma_2d_log(this.v/2));
+                logw_scale = f1+f2+f3;
+
+                %update the shape with the new values
+                this.v = newv;
+                this.V = newV;
+
+                %return the log likelihood as mantissa and base10 exponent
+                [mantissa, base10_exponent] = base10_mantissa_exponent(exp(1),logw_scale);            
+            end
         end
         
         function [] = update(this)
             K = this.Khat*inv(this.S);
+%             K
+%             this.epsilon
             this.x = this.x + kron(K,eye(this.d))*this.epsilon;
             this.P = this.P - (K*this.S*K');
         end   
         
         function [] = updateWeightNoGating(this)
-            this.weight = this.weight * (1-this.Pd);
+%             this.weight = this.weight * (1-this.Pd);
+            this.weight = this.weight * this.Pd;
         end
         
         function [st, cov, dof, scale] = getState(this)

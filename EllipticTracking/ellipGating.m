@@ -10,7 +10,8 @@ function hasGating = ellipGating(ell_mu, ell_cov, meas_mu, Pg)
     d = meas_mu - ell_mu(1:r);
     cal = d'*inv(ell_cov)*d;
 
-    if (cal < threshold)
+%     if (cal < threshold) & (abs(d) < [3;3])
+    if (abs(d) < [2;2]) & (abs(ell_mu(5)) < 5)
         hasGating = 1;
     else
         hasGating = 0;

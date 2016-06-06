@@ -1,5 +1,5 @@
 %% Setup some parameters
-input_layer_size  = 9;
+input_layer_size  = 1;
 hidden_layer_size = 10;
 num_labels = 5;
 
@@ -17,10 +17,10 @@ m = size(X, 1);
 
 [X mu_nn sigma_nn] = featureNormalize(X);
 train = X(1:floor(0.6*m),:);
-cv = X(ceil(0.6*m):floor(0.8*m),:);
+cv = X(ceil(0.6*m):floor(1.0*m),:);
 test = X(ceil(0.8*m):m,:);
 ytrain = y(1:floor(0.6*m),:);
-ycv = y(ceil(0.6*m):floor(0.8*m),:);
+ycv = y(ceil(0.6*m):floor(1.0*m),:);
 ytest = y(ceil(0.8*m):m,:);
 
 %% Initializing Parameters
@@ -34,7 +34,7 @@ initial_nn_params = [initial_Theta1(:) ; initial_Theta2(:)];
 fprintf('\nTraining Neural Network... \n')
 
 %parameters for the gradient descent
-options = optimset('MaxIter', 500);
+options = optimset('MaxIter', 200);
 lambda = 1;
 
 %shorthand function for the cost function
@@ -63,15 +63,22 @@ toc
 %fprintf('\nTrain Set Accuracy: %f\n', mean(double(pred2 == ytrain)) * 100);
 
 %precision/recall
-PredY = [pred ycv]; %predictions and real outputs in one vector alongside each other
-tp = sum(PredY(:,1)==1 & PredY(:,2)==1);
-tn = sum(PredY(:,1)==2 & PredY(:,2)==2);
-fp = sum(PredY(:,1)==1 & PredY(:,2)==2);
-fn = sum(PredY(:,1)==2 & PredY(:,2)==1);
-prec = tp/(tp+fp);
-reca = tp/(tp+fn);
+precs = [];
+recas = [];
+for i=2:num_labels
+    PredY = [pred ycv]; %predictions and real outputs in one vector alongside each other
+    tp = sum(PredY(:,1)==1 & PredY(:,2)==1);
+    tn = sum(PredY(:,1)==i & PredY(:,2)==i);
+    fp = sum(PredY(:,1)==1 & PredY(:,2)==i);
+    fn = sum(PredY(:,1)==i & PredY(:,2)==1);
+    prec = tp/(tp+fp);
+    reca = tp/(tp+fn);
+    precs = [precs prec];
+    recas = [recas reca];
+end
 
-fprintf('\nCV Set Precision: %f\n', prec);
-fprintf('\nCV Set Recall: %f\n', reca);
-
-PredY
+fprintf('\nCV Set Precision: %f\n', mean(precs));
+fprintf('\nCV Set Recall: %f\n', mean(recas));
+precs
+recas
+%PredY

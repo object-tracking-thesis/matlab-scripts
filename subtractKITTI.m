@@ -9,11 +9,15 @@ pathWalls = 'static/kitti_campus_01.txt';
 walls = kittiwalls2matlab(pathWalls);
 
 %% test plot all walls and poles
-figure;
+%figure;
+subplot(1,2,2)
 hold on
 for i = 1:size(walls,1)
-    plotCubes(walls{i}(1:3)',walls{i}(4),walls{i}(5),walls{i}(6),walls{i}(7:9),0,0)
+    plotCubes(walls{i}(1:3)',walls{i}(4),walls{i}(5),walls{i}(6),walls{i}(7:9),-1,walls{i}(3)-3)
 end
+xlabel('x')
+ylabel('y')
+zlabel('z')
 
 %% load lidar and oxts data for livesys
 path1 = '~/Downloads/thesis/share/pcap_scenarios/';
@@ -37,13 +41,18 @@ for i=1:Num
 end
 
 %% plot lidarData
-figure;
-for j=1:Num
-    test = lidarData{j};
+%figure;
+subplot(1,2,1)
+for j=1:1
+    %test = lidarData{j};
+    test = pointCloud(liveFrames{j});
     pcshow(test)
     zoom(2)
     pause(0.3)
 end
+xlabel('x')
+ylabel('y')
+zlabel('z')
 
 %% rotate the frames into lat lon coordinate system (x is east, y is north)
 tic
@@ -100,9 +109,13 @@ end
 
 %% plot cleaned frames vs. static geo map
 figure;
-for j=1:Num
+for j=1:1
     pcshow(cleanedFrames{j})
-    zoom(2)
+    zoom(1.45)
+    axis([-20 50 -40 20 -4 4])
+    xlabel('x')
+    ylabel('y')
+    zlabel('z')
 %     hold on
 %     for i = 1:length(walls)
 %         plotCubes(walls{i}(1:3)',walls{i}(4),walls{i}(5),walls{i}(6),walls{i}(7:9),-0.5,walls{i}(3)-2)

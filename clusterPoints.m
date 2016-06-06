@@ -37,14 +37,17 @@ end
 
 %% plot the clusters in their respective colors
 figure
-for i=1:70
+for i=1:1
     i
     pcshow(clusteredPC{i})
-    zoom(2)
+    zoom(1.4)
     hold on
     %plot3(egoPosition{i}(1),egoPosition{i}(2),egoPosition{i}(3),'x')
     %axis([20 200 -80 0 60 80])
-    axis([-10 50 -50 20 -1 2])
+    axis([-20 50 -40 20 -4 4])
+    xlabel('x')
+    ylabel('y')
+    zlabel('z')
     pause(0.3)
     hold off
 end
