@@ -54,9 +54,6 @@ classdef EllipPHDfilter < handle
                 isMeas = 0;
                 for j = 1:length(this.ellipses)                    
                     isMeas = this.ellipses(j).gating(meas(i));
-                    if meas(i).type == 3 & isMeas
-                        this.ellipses(j).x
-                    end
                     if isMeas
                         break;
                     end

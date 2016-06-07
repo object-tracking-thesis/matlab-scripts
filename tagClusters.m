@@ -20,7 +20,7 @@ for i=1:Num
         density = pointNumber/volume;
         distToEgo = sqrt(sum((center-offset{i}(1:3)').^2));
         
-        cluster = [pointNumber density center w l h distToEgo];
+        cluster = [w l h density pointNumber/distToEgo center];
         
         %save the prediction
         %predict(Theta1, Theta2, cluster)
@@ -152,7 +152,7 @@ for i=1:Num
         density = pointNumber/volume;
         distToEgo = sqrt(sum((center-offset{i}(1:3)').^2));
         label = isCarMat(i,j);
-        clusterObjects = [clusterObjects; w l h density pointNumber/distToEgo label];
+        clusterObjects = [clusterObjects; w l h density pointNumber/distToEgo center label];
     end
 end
 

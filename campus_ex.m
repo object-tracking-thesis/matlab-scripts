@@ -63,8 +63,10 @@ ellip_phd.set_birth_rfs(ellipMeans);
 % rect_phd = RectPHDfilter;
 % rect_phd.set_birth_rfs(rectMeans);
 targets = [];
+ellip_phd_estimates = cell(1,end_seq);
 for i=start_seq:end_seq   
     i
+    estimates = [];
     figure(1);
     for j=1:length(meas{i})
         color = [0.9, 0.9, 0.9];
@@ -86,12 +88,15 @@ for i=start_seq:end_seq
         rng(ellip_est(j).index)
         color =  [rand, rand, rand]; 
         [mu, P, v, V] = ellip_est(j).getState();
+        est = giwPHDEstimate(mu, v, V, ellip_est(j).index);
+        estimates = [estimates est];
         cov = iwishrnd(V, v);
         [x1,x2,x3] = threeSigmaOverGrid(mu(1:2),cov);                
         plot(x3(1,:),x3(2,:),' --k','Color',color)             
         testtxt = strcat('\leftarrow i: ', num2str(ellip_est(j).index), ', w: ', num2str(ellip_est(j).weight));
         text(double(mu(1)), double(mu(2)), testtxt)
     end
+    ellip_phd_estimates{i} = estimates;
 %     for j=1:length(rect_est)
 %         [mu, P, v, V] = rect_est(j).getState();
 %         drawMyRide(mu,'r')
