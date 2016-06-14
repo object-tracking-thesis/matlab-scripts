@@ -62,9 +62,9 @@ classdef RectTarget < handle
             
             % model 1 (turning)
                velCov1 = 0.5^2;  % velocity covariance
-            phiDotCov1 = 0.1^2; % turningrate covariance             
-                 wCov1 = 0.03^2; % width covariance
-                 lCov1 = 0.05^2; % length covariance           
+            phiDotCov1 = 1^2; % turningrate covariance             
+                 wCov1 = 0.01^2; % width covariance
+                 lCov1 = 0.02^2; % length covariance           
                  subQ1 = diag([velCov1, phiDotCov1, wCov1, lCov1]);
             gamma1 = [0 0 1 0 0 0 0 ;
                       0 0 0 0 1 0 0 ;
@@ -75,9 +75,9 @@ classdef RectTarget < handle
             
             % model 2 (no turning)
                velCov2 = 0.5^2;  % velocity covariance
-               phiCov2 = 0.30^2; % heading covariance             
-                 wCov2 = 0.03^2; % width covariance
-                 lCov2 = 0.05^2; % length covariance            
+               phiCov2 = 0.1^2; % heading covariance             
+                 wCov2 = 0.01^2; % width covariance
+                 lCov2 = 0.02^2; % length covariance            
                  subQ2 = diag([velCov2, phiCov2, wCov2, lCov2]);
             gamma2 = [0 0 1 0 0 0 0;
                       0 0 0 1 0 0 0;
@@ -86,7 +86,7 @@ classdef RectTarget < handle
             % MOTION COVARIANCE MATRIX
             Q2 = T*gamma2*subQ2*gamma2';
             
-            rCov= 0.2^2; % measurement covaraince (0.1 m)            
+            rCov= 0.15^2; % measurement covaraince (0.1 m)            
             % initial covariance
             cov0 = [ 2.7646    0.0178    0.9622    0.0046   -0.0073   -0.0065    0.0155;
                      0.0178    2.4382   -0.0282    0.0169    0.0110   -0.0117    0.0013;
@@ -97,8 +97,8 @@ classdef RectTarget < handle
                      0.0155    0.0013   -0.0006    0.0318    0.0174   -0.0087    1.0037];
             
             % IMM parameters (mode prior)
-            TPM = [0.50 0.50;
-                   0.50 0.50];
+            TPM = [0.70 0.30;
+                   0.30 0.70];
             
             nObsSt = 2; % number of observed states (how many states do we measure)
             nSt = 7;    % number of states in statevector
@@ -107,7 +107,7 @@ classdef RectTarget < handle
             this.imm = CarIMM;
             this.imm.init(nObsSt, nSt, st0, cov0, f1, f2, Q1, Q2, rCov, TPM);
                                 
-            N = 1; % number of additional MGPS per side (totMgps = 3+2N)
+            N = 2; % number of additional MGPS per side (totMgps = 3+2N)
             
             covMGPgate = 0.1^2;
             this.mgpGen4 = MGPgenerator4(N, covMGPgate);
@@ -127,8 +127,8 @@ classdef RectTarget < handle
               predictedState1 = this.imm.mmPredSt(:,1);
               predictedState2 = this.imm.mmPredSt(:,2);   
               
-              [gatedMgpHandles1, gatedAssignedZ1] = this.mgpGen4.generate(clusterZ.points', predictedState1);
-              [gatedMgpHandles2, ~] = this.mgpGen4.generate(clusterZ.points', predictedState2);              
+              [gatedMgpHandles1, gatedAssignedZ1] = this.mgpGen4.generate(clusterZ, predictedState1);
+              [gatedMgpHandles2, ~] = this.mgpGen4.generate(clusterZ, predictedState2);              
               
               assignedZo = reshape(gatedAssignedZ1', 2*size(gatedAssignedZ1,1),1);
               
@@ -151,12 +151,12 @@ classdef RectTarget < handle
             % this function exists for interface purposes 
         end
         
-        function [st, cov, junk1, junk2] = getState(this)
+        function [st, cov, w1, w2] = getState(this)
             [upSt, upCov] = this.imm.getState();
              st = upSt;
             cov = upCov;
-            junk1 = [];
-            junk2 = [];
+            w1 = this.imm.mixWeights(1);
+            w2 = this.imm.mixWeights(2);
         end
         
         function bool = gating(this, cluster)
@@ -165,8 +165,8 @@ classdef RectTarget < handle
             
             p = 1.5;
             
-            bool1 = carGating(cluster.points', predictedState1, p);
-            bool2 = carGating(cluster.points', predictedState2, p);
+            bool1 = carGating(cluster, predictedState1, p);
+            bool2 = carGating(cluster, predictedState2, p);
             
             if bool1 || bool2
                 bool = 1;
