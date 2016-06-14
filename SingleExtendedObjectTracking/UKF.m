@@ -149,8 +149,7 @@ classdef UKF < handle
            W  = ones(1,this.nSP)*(1/6);
            W(1) = 1 - this.nSt/3;
            
-           P5 = chol(cov,'lower'); % Cholesky sqr of matrix 
-           
+           P5 = chol(cov,'lower'); % Cholesky sqr of matrix           
            SP(:,1) = st; % SP-0
            
            for j = 1:this.nSt               
