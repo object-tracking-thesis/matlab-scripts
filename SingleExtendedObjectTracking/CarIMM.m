@@ -144,8 +144,16 @@ classdef CarIMM < handle
             S1 = S1 + 0.01 .* eye(length(S1));
             S2 = S2 + 0.01 .* eye(length(S2));
             
+            try
             lik1 = mvnpdf(assignedZ, yPred1, S1);
+            catch me
+                lik1 = 1;
+            end
+            try
             lik2 = mvnpdf(assignedZ, yPred2, S2);
+            catch me
+                lik2 = 1;
+            end
             
             w1 = lik1...
                 *(this.TPM(1,1)*this.mixWeights(1) + this.TPM(2,1)*this.mixWeights(2));
