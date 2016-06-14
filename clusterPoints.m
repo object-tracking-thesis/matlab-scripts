@@ -19,7 +19,7 @@ end
 
 %% assign different colors to all clusters found in each frame
 clusteredPC = cell(1,Num);
-for i=1:70
+for i=1:1
     cluster = [];
     color = [];
     for j = 1:length(clusters{i})
@@ -48,6 +48,7 @@ for i=1:1
     xlabel('x')
     ylabel('y')
     zlabel('z')
+    legend('clusters')
     pause(0.3)
     hold off
 end

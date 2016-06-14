@@ -74,7 +74,7 @@ phd_filter = PHDfilter;
 phd_filter.set_birth_rfs(means, covariances, weights);
 phd_filter.set_model_parameters(F,Q,H,R);
 
-for i=1:70
+for i=1:186
     figure(1);
     pcshow(clusteredPC{i})
     zoom(2)

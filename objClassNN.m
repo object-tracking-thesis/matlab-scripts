@@ -1,5 +1,5 @@
 %% Setup some parameters
-input_layer_size  = 6;
+input_layer_size  = 5;
 hidden_layer_size = 10;
 num_labels = 5;
 
