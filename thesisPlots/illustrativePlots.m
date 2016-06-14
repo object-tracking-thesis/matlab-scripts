@@ -92,8 +92,7 @@ txtPoint4 = txtPoint*R(phi + pi/2);
 
 fig = figure; fig.Position = [250 250 1000 1000];
 fig.Name = 'rectExample';
-
-    subplot(1,2,1)
+    
     plot(P(:,1), P(:,2),'-k'); hold on; box off
     plot(P(:,1), P(:,2), 'ok','MarkerFaceColor','k','MarkerSize',4)
     plot(head(:,1),head(:,2),'k-')
@@ -121,7 +120,7 @@ fig.Name = 'rectExample';
     text(-0.2, 0.12,'$w$')
     
     
-        axis equal; axis([-.5 1 -.25 1.25])
+        axis equal; axis([-.5 1 -.25 1.25]); axis square
         xlabel('$X$')
         ylabel('$Y$')
 
@@ -130,36 +129,36 @@ fig.Name = 'rectExample';
         set(gca,'ytick',[])
         set(gca,'yticklabel',[])    
 
-    subplot(1,2,2)
-    
-        load carClustersCutOff.mat
-        load egoPosition.mat
-        % Get a frame,
-        N  = 10;
-        carClusters = carClustersCutOff;
-        [~, ~, ~, filtNtg] = cornerPoint(carClusters{30}, 0.4, 0.3);
-        plot(filtNtg(:,1),filtNtg(:,2),'r.'); box off
-        axis equal; axis square; axis([85 90 -34.5 -28.5])
+%     subplot(1,2,2)
+%     
+%         load carClustersCutOff.mat
+%         load egoPosition.mat
+%         % Get a frame,
+%         N  = 10;
+%         carClusters = carClustersCutOff;
+%         [~, ~, ~, filtNtg] = cornerPoint(carClusters{30}, 0.4, 0.3);
+%         plot(filtNtg(:,1),filtNtg(:,2),'r.'); box off
+%         axis equal; axis square; axis([85 90 -34.5 -28.5])
+% 
+%         xlabel('$X$')
+%         ylabel('$Y$')
+% 
+%         set(gca,'xtick',[])
+%         set(gca,'xticklabel',[])
+%         set(gca,'ytick',[])
+%         set(gca,'yticklabel',[])    
 
-        xlabel('$X$')
-        ylabel('$Y$')
-
-        set(gca,'xtick',[])
-        set(gca,'xticklabel',[])
-        set(gca,'ytick',[])
-        set(gca,'yticklabel',[])    
-
-        
-        
-        
-
-path = '/Users/markocotra/thesis/matlab-scripts/thesisPlots/';
-    print(fig,strcat(path,fig.Name),'-depsc','-tiff','-cmyk','-r300','-opengl')
-
-
-
-
-
+%         
+%         
+%         
+% 
+ path = '/Users/markocotra/Desktop/';
+     print(fig,strcat(path,fig.Name),'-depsc','-tiff','-cmyk','-r300')%,'-opengl')
+% 
+% 
+% 
+% 
+% 
 
 
 
