@@ -8,6 +8,7 @@ Num = length(D(not([D.isdir])));
 lidarData = cell(1,Num);
 
     for j = 1:Num
+        j
         lidarData{j} = pcd2matlab(strcat(path,D(j).name)); 
     end
 
