@@ -80,7 +80,7 @@ end
 %% plot frame by frame with clusternumbers assigned
 %isCarMat = ones(Num,50);
 figure;
-i = 138;
+i = 1;
 while i <= Num
     for j = 1:length(clusters{i})
         cluster = pointCloud(clusters{i}{j});
@@ -152,7 +152,7 @@ for i=1:Num
         density = pointNumber/volume;
         distToEgo = sqrt(sum((center-offset{i}(1:3)').^2));
         label = isCarMat(i,j);
-        clusterObjects = [clusterObjects; w l h density pointNumber/distToEgo center label];
+        clusterObjects = [clusterObjects; w l h density pointNumber/distToEgo label];
     end
 end
 

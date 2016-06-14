@@ -3,7 +3,7 @@ load data/kitti_campus_01_186_clusters.mat
 load data/isCarMat_kitti_campus_01_186.mat
 n = length(clusters);
 start_seq = 1;
-end_seq = 186;
+end_seq = 70;
 
 %% plot the clusters
 % figure
@@ -63,6 +63,7 @@ ellip_phd.set_birth_rfs(ellipMeans);
 % rect_phd = RectPHDfilter;
 % rect_phd.set_birth_rfs(rectMeans);
 targets = [];
+i2 = [];
 ellip_phd_estimates = cell(1,end_seq);
 for i=start_seq:end_seq   
     i
@@ -88,8 +89,11 @@ for i=start_seq:end_seq
         rng(ellip_est(j).index)
         color =  [rand, rand, rand]; 
         [mu, P, v, V] = ellip_est(j).getState();
-        est = giwPHDEstimate(mu, v, V, ellip_est(j).index);
+        est = giwPHDEstimate(mu, P, v, V, ellip_est(j).index);
         estimates = [estimates est];
+        if ellip_est(j).index == 15
+            i2 = [i2 est];
+        end
         cov = iwishrnd(V, v);
         [x1,x2,x3] = threeSigmaOverGrid(mu(1:2),cov);                
         plot(x3(1,:),x3(2,:),' --k','Color',color)             

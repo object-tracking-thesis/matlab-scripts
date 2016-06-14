@@ -209,11 +209,11 @@ classdef PHDfilter < handle
         end
         
         function best_estimates = get_best_estimates(this)
-            n = round(this.number_of_targets);
+            n = ceil(this.number_of_targets);
             best_estimates = [];
             if n > 0
                 if n > length(this.gaussians)
-                    n = length(this.gaussians)
+                    n = length(this.gaussians);
                 end
                 best_estimates = this.gaussians(1:n);
             end

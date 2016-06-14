@@ -42,12 +42,13 @@ end
 
 %% plot lidarData
 %figure;
-subplot(1,2,1)
+% subplot(1,2,1)
+figure;
 for j=1:1
     %test = lidarData{j};
     test = pointCloud(liveFrames{j});
     pcshow(test)
-    zoom(2)
+    zoom(1.4)
     pause(0.3)
 end
 xlabel('x')
