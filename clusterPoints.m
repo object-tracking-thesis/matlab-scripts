@@ -19,7 +19,7 @@ end
 
 %% assign different colors to all clusters found in each frame
 clusteredPC = cell(1,Num);
-for i=1:1
+for i=1:Num
     cluster = [];
     color = [];
     for j = 1:length(clusters{i})
@@ -37,18 +37,13 @@ end
 
 %% plot the clusters in their respective colors
 figure
-for i=1:1
+for i=1:Num
     i
     pcshow(clusteredPC{i})
     zoom(1.4)
-    hold on
-    %plot3(egoPosition{i}(1),egoPosition{i}(2),egoPosition{i}(3),'x')
-    %axis([20 200 -80 0 60 80])
     axis([-20 50 -40 20 -4 4])
     xlabel('x')
     ylabel('y')
     zlabel('z')
-    legend('clusters')
     pause(0.3)
-    hold off
 end

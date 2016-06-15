@@ -1,13 +1,10 @@
 %% Setup some parameters
-input_layer_size  = 5;
+input_layer_size  = 8;
 hidden_layer_size = 10;
 num_labels = 5;
 
 %% Loading the data
 fprintf('Loading Data ...\n')
-% Load Training Data
-%load lisa_data.mat
-%load data/nn_clusters_kitti_static_crossing.mat
 data = clusterObjects(randperm(size(clusterObjects,1)),:); %shuffling the data
 
 X = data(:,1:input_layer_size);
@@ -76,7 +73,9 @@ for i=2:num_labels
     precs = [precs prec];
     recas = [recas reca];
 end
+PredY
 
+%evaluation outputs
 fprintf('\nCV Set Precision: %f\n', mean(precs));
 fprintf('\nCV Set Recall: %f\n', mean(recas));
 precs

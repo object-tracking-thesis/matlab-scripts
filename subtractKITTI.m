@@ -2,15 +2,14 @@
 clear all;
 clc;
 
-%% load geometrical data for static
+%% load geometrical data for static map objects
 %pathWalls = 'static/kitti_crossing_static_walls.txt';
 %pathWalls = 'static/kitti_crossing_cyclist_static_walls.txt';
 pathWalls = 'static/kitti_campus_01.txt';
 walls = kittiwalls2matlab(pathWalls);
 
-%% test plot all walls and poles
-%figure;
-subplot(1,2,2)
+%% test plot static objects
+figure;
 hold on
 for i = 1:size(walls,1)
     plotCubes(walls{i}(1:3)',walls{i}(4),walls{i}(5),walls{i}(6),walls{i}(7:9),-1,walls{i}(3)-3)
@@ -35,18 +34,18 @@ lidarData = loadLidarDir(strcat(path1,path2,path4));
 
 Num = length(lidarData);
 
+%take away unnecessary data for our purpose
 for i=1:Num
     oxts{i}(2:end,:) = [];
     lidarData{i}(:,4:7) = [];
 end
 
 %% plot lidarData
-%figure;
-% subplot(1,2,1)
 figure;
-for j=1:1
-    %test = lidarData{j};
-    test = pointCloud(liveFrames{j});
+for j=1:Num
+    %pointCloud is a class from a matlab lib, but you could also simply plot
+    %the point data with plot3
+    test = pointCloud(lidarData{j});
     pcshow(test)
     zoom(1.4)
     pause(0.3)
@@ -57,7 +56,6 @@ zlabel('z')
 
 %% rotate the frames into lat lon coordinate system (x is east, y is north)
 tic
-%TODO wrong rotation order for kitti static cyclist crossing
 liveFrames = cell(1,Num);
 for i=1:Num
     liveFrames{i} = lidarData{i}*rotationMatrixXYZ(-oxts{i}(4),-oxts{i}(5),-oxts{i}(6));
@@ -66,7 +64,7 @@ toc
 
 %% plot live frames vs. static geo map
 figure;
-for j=1:1
+for j=1:Num
     test = pointCloud(liveFrames{j});
     pcshow(test)
     zoom(2)
@@ -93,8 +91,8 @@ mWalls = cell2mat(walls);
 for i=1:Num
     tic
     i
-    % remove points that are within the walls
-    % sort walls by closest to current position first
+    % remove points that are within the static objects
+    % sort static objects by closest to current position first
     before = size(cleanedFrames{i},1);
     currentPos = [0 0 0]';
     currentPos = repmat(currentPos',length(walls),1);
@@ -108,22 +106,14 @@ for i=1:Num
     toc
 end
 
-%% plot cleaned frames vs. static geo map
+%% plot cleaned frames
 figure;
-for j=1:1
+for j=1:Num
     pcshow(cleanedFrames{j})
     zoom(1.45)
     axis([-20 50 -40 20 -4 4])
     xlabel('x')
     ylabel('y')
     zlabel('z')
-%     hold on
-%     for i = 1:length(walls)
-%         plotCubes(walls{i}(1:3)',walls{i}(4),walls{i}(5),walls{i}(6),walls{i}(7:9),-0.5,walls{i}(3)-2)
-%     end
-%     for i = 1:length(poles)
-%         plotCylinder(poles{i}(2:4)',poles{i}(1),poles{i}(5)+poles{i}(4),poles{i}(6))
-%     end
-%     hold off
     pause(0.3)
 end

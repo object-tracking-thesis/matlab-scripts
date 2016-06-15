@@ -1,29 +1,34 @@
 %% load data
+%we saved the clustered data and loaded it here for convenience, but the
+%data are in principal the clusters from "clusterPoints.m" and the object
+%matrix "isCarMat" from "tagClusters.m"
 load data/kitti_campus_01_186_clusters.mat
 load data/isCarMat_kitti_campus_01_186.mat
 n = length(clusters);
 start_seq = 1;
-end_seq = 70;
+end_seq = Num;
 
 %% plot the clusters
-% figure
-% for i=start_seq:end_seq
-%     i
-%     for j=1:length(clusters{i})
-%         pcshow(pointCloud(clusters{i}{j}))
-%         hold on
-%         axis([-10 50 -50 20 -1 2])
-%         zoom(2)
-%     end
-%     hold off
-%     pause(0.3)
-% end
+plotYes = 0;
+figure;
+if plotYes
+    for i=start_seq:end_seq
+        i
+        for j=1:length(clusters{i})
+            pcshow(pointCloud(clusters{i}{j}))
+            hold on
+            axis([-10 50 -50 20 -1 2])
+            zoom(2)
+        end
+        hold off
+        pause(0.3)
+    end
+end
 
 %% create the measurement components
+%eventually this logic should be moved into the filter to weigh down 
 meas = cell(1,n);
 carMeas = cell(1,n);
-% pedMeas = cell(1,n);
-% cycMeas = cell(1,n);
 for i=start_seq:end_seq    
     meas{i} = [];
     carMeas{i} = [];
@@ -33,15 +38,11 @@ for i=start_seq:end_seq
         elseif isCarMat(i,j) == 3 || isCarMat(i,j) == 4 || isCarMat(i,j) == 5
             meas{i} = [meas{i} giwMeasComp(clusters{i}{j}(:,1:3),isCarMat(i,j))];
         end
-%         elseif isCarMat(i,j) == 3
-%             cycMeas{i} = [cycMeas{i} giwMeasComp(clusters{i}{j}(:,1:3),isCarMat(i,j))];
-%         elseif isCarMat(i,j) == 4
-%             pedMeas{i} = [pedMeas{i} giwMeasComp(clusters{i}{j}(:,1:3),isCarMat(i,j))];
-%         end
     end
 end
 
 %% birth components
+% for now, just set them roundabout to the expected target spawning points
 ellipMeans = cell(1,9);
 ellipMeans{1} = [0 -20 2 2 0 0]';
 ellipMeans{2} = [-3 -16 2 2 0 0]';
@@ -79,11 +80,6 @@ for i=start_seq:end_seq
     ellip_phd.update(meas{i});
     ellip_est = ellip_phd.get_best_estimates;
     
-%     rect_phd.predict;    
-%     rect_phd.update(carMeas{i});
-%     rect_phd.get_number_of_targets
-%     rect_est = rect_phd.get_best_estimates;
-    
     %plot the target ellipse and the measured points
     for j=1:length(ellip_est)
         rng(ellip_est(j).index)
@@ -101,14 +97,9 @@ for i=start_seq:end_seq
         text(double(mu(1)), double(mu(2)), testtxt)
     end
     ellip_phd_estimates{i} = estimates;
-%     for j=1:length(rect_est)
-%         [mu, P, v, V] = rect_est(j).getState();
-%         drawMyRide(mu,'r')
-%     end
     text(25, 15, strcat('frame: ', num2str(i)))
     axis equal
     
     hold off
-    pause(0.01)
-%     waitforkey
+    pause(0.1)
 end

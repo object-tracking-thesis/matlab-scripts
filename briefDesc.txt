@@ -1,14 +1,17 @@
+General Data pre-processing (for KITTI data) --> subtractKITTI.m (includes ground removal and static map removal)
 
+Clustering --> clusterPoints.m
 
+Tagging, Predicting, creating feature vectors for the Neural Network  --> tagClusters.m
+
+Training a single hidden layer, fully connected neural network --> objClassNN.m
+
+Elliptical Target Tracking --> EllipPHDFilter.m
 
 Car Cluster pre-processing --> MGPgenerator4.m (All preprocessing sker här, samt att välja ut MGPs för varje target)
+	Testfil att köra allt med: campus_ex.m
 
 Rectangular Target Tracking --> PHDinstance3.m (Väldigt basic filter, ingen merge)
-								CarTarget.m    (Enkapsulering. Kan bytas ut mot ett IMM block, för detta ex används bara en motion modell)
-								UKFmod.m 	   (UKF där man kan gå in i koden och ändra om hur S beräknas, ifall man får problem med matrisen. Kolla rapporten för att förstå mer).
-
-
-Testfil att köra allt med:
-newPHDtests.m
-
-
+	CarTarget.m	(Enkapsulering. Kan bytas ut mot ett IMM block, för detta ex används bara en motion modell)
+	UKFmod.m	(UKF där man kan gå in i koden och ändra om hur S beräknas, ifall man får problem med matrisen. Kolla rapporten för att förstå mer).
+	Testfil att köra allt med: newPHDtests.m
